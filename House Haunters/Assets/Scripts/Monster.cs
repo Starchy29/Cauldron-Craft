@@ -2,12 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Monster : MonoBehaviour
+public class Monster : GridEntity
 {
     [SerializeField] private MonsterName monsterType;
 
-    private bool onPlayerTeam;
-    public bool OnPlayerTeam { get { return onPlayerTeam; } }
+    public bool OnPlayerTeam { get; private set; }
 
     private MonsterType monsterStats;
     private int health;

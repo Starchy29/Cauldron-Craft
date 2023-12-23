@@ -5,6 +5,7 @@ using UnityEngine;
 public class WorldTile : MonoBehaviour
 {
     public bool Walkable { get; private set; }
+    public bool BlocksVision { get; private set; }
 
     public virtual void OnTileEntered(Monster arrival) { }
 }

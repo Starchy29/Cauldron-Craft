@@ -4,6 +4,7 @@ using System;
 using UnityEngine;
 
 public enum MonsterName {
+    Temporary,
     LostSoul,
     Demon,
     Flytrap,
@@ -26,6 +27,11 @@ public class MonsterData
     // define the stats and abilities of all monster types
     private MonsterData() {
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
+
+        monsterTypes[(int)MonsterName.Temporary] = new MonsterType(PrefabContainer.Instance.TempMonsterPrefab,
+            Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+            10, 5
+        );
     }
 
     public MonsterType GetMonsterData(MonsterName name) {

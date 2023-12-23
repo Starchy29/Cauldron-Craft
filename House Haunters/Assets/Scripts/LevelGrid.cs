@@ -42,7 +42,7 @@ public class LevelGrid : MonoBehaviour
         return result;
     }
 
-    private Monster GetMonsterOnTile(Vector2Int tile) {
+    public Monster GetMonsterOnTile(Vector2Int tile) {
         if(tile.x < 0 || tile.y < 0 || tile.x > width - 1 || tile.y > height - 1) {
             return null;
         }

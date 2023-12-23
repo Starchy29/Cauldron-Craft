@@ -10,6 +10,8 @@ public class MenuManager : MonoBehaviour
 
     public bool UseKBMouse { get; set; }
 
+    private Vector3Int hoveredTile;
+
     void Start() {
         UseKBMouse = true;
     }
@@ -17,8 +19,16 @@ public class MenuManager : MonoBehaviour
     void Update() {
         if(UseKBMouse && Mouse.current != null) {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            Vector3Int tile = LevelGrid.Instance.Tiles.WorldToCell(mousePos);
-            TileSelector.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld(tile);
+            hoveredTile = LevelGrid.Instance.Tiles.WorldToCell(mousePos);
+            TileSelector.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld(hoveredTile);
+
+            if(Mouse.current.leftButton.wasPressedThisFrame) {
+                Select(hoveredTile);   
+            }
         }
+    }
+
+    private void Select(Vector3Int tile) {
+        Monster selected = LevelGrid.Instance.GetMonsterOnTile((Vector2Int)tile);
     }
 }

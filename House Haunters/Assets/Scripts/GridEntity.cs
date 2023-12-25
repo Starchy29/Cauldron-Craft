@@ -7,6 +7,6 @@ public class GridEntity : MonoBehaviour
     public Vector2Int Tile { get; set; }
 
     void OnDestroy() {
-        LevelGrid.Instance.ClearTile(Tile);
+        LevelGrid.Instance.ClearEntity(Tile);
     }
 }

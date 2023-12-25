@@ -6,22 +6,46 @@ using UnityEngine.Tilemaps;
 // Must be attached to the tilemap. Vector2Ints store x as the column and y as the row
 public class LevelGrid : MonoBehaviour
 {
+    [SerializeField] private GameObject TileHighlightPrefab;
+
+    public const int width = 10;
+    public const int height = 6;
+
     private GridEntity[,] entityGrid;
     private WorldTile[,] environmentGrid;
-
-    private const int width = 20;
-    private const int height = 20;
+    private GameObject[] tileHighlights;
 
     public static LevelGrid Instance { get; private set; }
-
     public Tilemap Tiles { get; private set; }
 
     void Awake() {
         Instance = this;
         Tiles = GetComponent<Tilemap>();
 
-        entityGrid = new GridEntity[width, height];
-        environmentGrid = new WorldTile[width, height];
+        entityGrid = new GridEntity[height, width];
+        environmentGrid = new WorldTile[height, width];
+
+        tileHighlights = new GameObject[50];
+        for(int i = 0; i < 50; i++) {
+            tileHighlights[i] = Instantiate(TileHighlightPrefab);
+            tileHighlights[i].SetActive(false);
+        }
+
+        Dictionary<TileType, WorldTile> typeToData = new Dictionary<TileType, WorldTile>() {
+            { TileType.Ground, new WorldTile(true, false, 1) },
+            { TileType.Pit, new WorldTile(false, false, 1) },
+            { TileType.Wall, new WorldTile(false, true, 3) }
+        };
+
+        for(int y = 0; y < height; y++) {
+            for(int x = 0; x < width; x++) {
+                TypedTile tile = Tiles.GetTile<TypedTile>(new Vector3Int(x, y, 0));
+                environmentGrid[y, x] = typeToData[tile == null ? TileType.Ground : tile.Type];
+            }
+        }
+
+        Camera.main.transform.position = new Vector3(width / 2, height / 2, Camera.main.transform.position.z);
+        Debug.Log("moved camera from LevelGrid.cs");
     }
 
     
@@ -29,15 +53,15 @@ public class LevelGrid : MonoBehaviour
         
     }
 
-    public List<Monster> FindMonstersInRange(Vector2Int spot, int range, bool? onPlayerTeam = null) {
-        List<Monster> result = new List<Monster>();
+    public List<Vector2Int> GetTilesInRange(Vector2Int spot, int range, bool squareArea) {
+        List<Vector2Int> result = new List<Vector2Int>();
 
         for(int x = -range; x <= range; x++) {
-            int width = range == 1 ? 1 : range - Mathf.Abs(x); // melee attacks allow the extra diagonals
+            int width = squareArea || range == 1 ? range : range - Mathf.Abs(x);
             for(int y = -width; y <= width; y++) {
-                Monster monster = GetEntityOnTile(spot + new Vector2Int(x, y)).GetComponent<Monster>();
-                if(monster != null && (onPlayerTeam == null || onPlayerTeam.Value == monster.OnPlayerTeam)) {
-                    result.Add(monster);
+                Vector2Int tile = spot + new Vector2Int(x, y);
+                if(IsInGrid(tile)) {
+                    result.Add(tile);
                 }
             }
         }
@@ -45,12 +69,16 @@ public class LevelGrid : MonoBehaviour
         return result;
     }
 
-    public GridEntity GetEntityOnTile(Vector2Int tile) {
-        if(tile.x < 0 || tile.y < 0 || tile.x > width - 1 || tile.y > height - 1) {
-            return null;
-        }
-
+    public GridEntity GetEntity(Vector2Int tile) {
         return entityGrid[tile.y, tile.x];
+    }
+
+    public WorldTile GetTile(Vector2Int tile) {
+        return environmentGrid[tile.y, tile.x];
+    }
+
+    public bool IsInGrid(Vector2Int tile) {
+        return tile.x >= 0 && tile.y >= 0 && tile.x < width && tile.y < height;
     }
 
     public void SpawnEntity(GameObject prefab, Vector2Int tile) {
@@ -60,6 +88,7 @@ public class LevelGrid : MonoBehaviour
 
         GameObject spawned = Instantiate(prefab);
         entityGrid[tile.y, tile.x] = spawned.GetComponent<GridEntity>();
+        entityGrid[tile.y, tile.x].Tile = tile;
         spawned.transform.position = Tiles.GetCellCenterWorld((Vector3Int)tile);
     }
 
@@ -67,10 +96,26 @@ public class LevelGrid : MonoBehaviour
         Vector2Int previousTile = entity.Tile;
         entityGrid[previousTile.y, previousTile.x] = null;
         entityGrid[tile.y, tile.x] = entity;
+        entity.Tile = tile;
         entity.transform.position = Tiles.GetCellCenterWorld((Vector3Int)tile);
     }
 
-    public void ClearTile(Vector2Int tile) {
+    public void ClearEntity(Vector2Int tile) {
         entityGrid[tile.y, tile.x] = null;
+    }
+
+    public void HighlightTiles(List<Vector2Int> tiles) {
+        foreach(GameObject tileHighlight in tileHighlights) {
+            tileHighlight.SetActive(false);
+        }
+
+        if(tiles == null) {
+            return;
+        }
+
+        for(int i = 0; i < tiles.Count; i++) {
+            tileHighlights[i].SetActive(true);
+            tileHighlights[i].transform.position = Tiles.GetCellCenterWorld((Vector3Int)tiles[i]);
+        }
     }
 }

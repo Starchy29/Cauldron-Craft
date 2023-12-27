@@ -19,20 +19,25 @@ public class MenuManager : MonoBehaviour
     private SelectionState state;
     private Vector3Int? hoveredTile;
     private Monster selectedMonster;
-    private Stack<Vector2Int> path;
+    private LevelGrid level;
+    private Camera gameCamera;
+
+    private List<Vector2Int> selectableTiles;
 
     void Start() {
         UseKBMouse = true;
         state = SelectionState.Monster;
+        level = LevelGrid.Instance;
+        gameCamera = Camera.main;
     }
 
     void Update() {
         if(UseKBMouse && Mouse.current != null) {
-            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            Vector3Int tile = LevelGrid.Instance.Tiles.WorldToCell(mousePos);
-            if(LevelGrid.Instance.IsInGrid((Vector2Int)tile)) {
+            Vector3 mousePos = gameCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            Vector3Int tile = level.Tiles.WorldToCell(mousePos);
+            if(level.IsInGrid((Vector2Int)tile)) {
                 hoveredTile = tile;
-                TileSelector.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld(hoveredTile.Value);
+                TileSelector.transform.position = level.Tiles.GetCellCenterWorld(hoveredTile.Value);
                 TileSelector.SetActive(true);
             } else {
                 hoveredTile = null;
@@ -48,7 +53,7 @@ public class MenuManager : MonoBehaviour
     private void Select(Vector2Int selectedTile) {
         switch(state) {
             case SelectionState.Monster:
-                GridEntity selectedEntity = LevelGrid.Instance.GetEntity(selectedTile);
+                GridEntity selectedEntity = level.GetEntity(selectedTile);
                 if(selectedEntity == null || selectedEntity.GetComponent<Monster>() == null) {
                     return;
                 }
@@ -57,18 +62,20 @@ public class MenuManager : MonoBehaviour
                 state = SelectionState.Movement;
 
                 // determine which tiles can be walked to
-                List<Vector2Int> walkableTiles = LevelGrid.Instance.GetTilesInRange(selectedTile, selectedMonster.Stats.Speed, false)
+                selectableTiles = level.GetTilesInRange(selectedTile, selectedMonster.Stats.Speed, false)
                     .Filter((Vector2Int tile) => { return selectedMonster.FindPath(tile) != null; });
-                walkableTiles.Remove(selectedTile);
-                LevelGrid.Instance.HighlightTiles(walkableTiles);
+                selectableTiles.Remove(selectedTile);
+                level.ColorTiles(selectableTiles, TileHighlighter.State.Highlighted);
+                level.ColorTiles(selectedTile, TileHighlighter.State.Selected);
                 break;
 
             case SelectionState.Movement:
                 // move monster
                 List<Vector2Int> path = selectedMonster.FindPath(selectedTile);
                 if(path != null) {
-                    LevelGrid.Instance.MoveEntity(selectedMonster, selectedTile);
-                    LevelGrid.Instance.HighlightTiles(null);
+                    level.MoveEntity(selectedMonster, selectedTile);
+                    level.ColorTiles(null, TileHighlighter.State.Highlighted);
+                    level.ColorTiles(null, TileHighlighter.State.Selected);
                     state = SelectionState.Monster;
                 }
                 break;

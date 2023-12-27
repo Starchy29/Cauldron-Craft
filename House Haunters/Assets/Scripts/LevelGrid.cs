@@ -8,12 +8,12 @@ public class LevelGrid : MonoBehaviour
 {
     [SerializeField] private GameObject TileHighlightPrefab;
 
-    public const int width = 10;
-    public const int height = 6;
+    public const int width = 12;
+    public const int height = 8;
 
     private GridEntity[,] entityGrid;
     private WorldTile[,] environmentGrid;
-    private GameObject[] tileHighlights;
+    private TileHighlighter[,] tileHighlights;
 
     public static LevelGrid Instance { get; private set; }
     public Tilemap Tiles { get; private set; }
@@ -24,12 +24,7 @@ public class LevelGrid : MonoBehaviour
 
         entityGrid = new GridEntity[height, width];
         environmentGrid = new WorldTile[height, width];
-
-        tileHighlights = new GameObject[50];
-        for(int i = 0; i < 50; i++) {
-            tileHighlights[i] = Instantiate(TileHighlightPrefab);
-            tileHighlights[i].SetActive(false);
-        }
+        tileHighlights = new TileHighlighter[height, width];
 
         Dictionary<TileType, WorldTile> typeToData = new Dictionary<TileType, WorldTile>() {
             { TileType.Ground, new WorldTile(true, false, 1) },
@@ -41,6 +36,9 @@ public class LevelGrid : MonoBehaviour
             for(int x = 0; x < width; x++) {
                 TypedTile tile = Tiles.GetTile<TypedTile>(new Vector3Int(x, y, 0));
                 environmentGrid[y, x] = typeToData[tile == null ? TileType.Ground : tile.Type];
+
+                tileHighlights[y, x] = Instantiate(TileHighlightPrefab).GetComponent<TileHighlighter>();
+                tileHighlights[y, x].transform.position = Tiles.GetCellCenterWorld(new Vector3Int(x, y, 0));
             }
         }
 
@@ -104,9 +102,12 @@ public class LevelGrid : MonoBehaviour
         entityGrid[tile.y, tile.x] = null;
     }
 
-    public void HighlightTiles(List<Vector2Int> tiles) {
-        foreach(GameObject tileHighlight in tileHighlights) {
-            tileHighlight.SetActive(false);
+    // lights up notable tiles for the player. can overlap with selected tiles
+    public void ColorTiles(List<Vector2Int> tiles, TileHighlighter.State colorType) {
+        for(int y = 0; y < height; y++) {
+            for(int x = 0; x < width; x++) {
+                tileHighlights[y, x].SetState(colorType, false);
+            }
         }
 
         if(tiles == null) {
@@ -114,8 +115,11 @@ public class LevelGrid : MonoBehaviour
         }
 
         for(int i = 0; i < tiles.Count; i++) {
-            tileHighlights[i].SetActive(true);
-            tileHighlights[i].transform.position = Tiles.GetCellCenterWorld((Vector3Int)tiles[i]);
+            tileHighlights[tiles[i].y, tiles[i].x].SetState(colorType, true);
         }
+    }
+
+    public void ColorTiles(Vector2Int tile, TileHighlighter.State colorType) {
+        ColorTiles(new List<Vector2Int>() { tile }, colorType);
     }
 }

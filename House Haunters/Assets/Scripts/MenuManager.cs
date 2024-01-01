@@ -22,7 +22,8 @@ public class MenuManager : MonoBehaviour
     private LevelGrid level;
     private Camera gameCamera;
 
-    private List<Vector2Int> selectableTiles;
+    private List<Vector2Int> selectableTiles; // delete this
+    private Vector2[] tileGroupCenters;
 
     void Start() {
         UseKBMouse = true;
@@ -80,5 +81,17 @@ public class MenuManager : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    private Vector2[] DetermineCenters(List<List<Vector2Int>> tileGroups) {
+        Vector2[] centers = new Vector2[tileGroups.Count];
+        for(int i = 0; i < tileGroups.Count; i++) {
+            Vector3 center = new Vector2();
+            foreach(Vector2Int tile in tileGroups[i]) {
+                center += level.Tiles.GetCellCenterWorld((Vector3Int)tile);
+            }
+            centers[i] = center / tileGroups[i].Count;
+        }
+        return centers;
     }
 }

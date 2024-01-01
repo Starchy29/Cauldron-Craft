@@ -6,8 +6,10 @@ public static class Global
 {
     public static Vector2Int[] Cardinals = new Vector2Int[4] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
+    #region Functional Programming List Functions
     public delegate bool CheckCondition<T>(T data);
     public delegate int GetValue<T>(T data);
+    public delegate EndType MapValue<StartValue, EndType>(StartValue value);
 
     public static List<T> Filter<T>(this List<T> list, CheckCondition<T> conditionFunc) {
         List<T> result = new List<T>();
@@ -52,6 +54,15 @@ public static class Global
         }
         return result;
     }
+
+    public static List<EndType> Map<StartType, EndType>(this List<StartType> list, MapValue<StartType, EndType> mapFunction) {
+        List<EndType> result = new List<EndType>();
+        foreach(StartType element in list) {
+            result.Add(mapFunction(element));
+        }
+        return result;
+    }
+    #endregion
 
     public static int CalcTileDistance(Vector2Int start, Vector2Int end) {
         return Mathf.Abs(start.x - end.x) + Mathf.Abs(start.y - end.y);

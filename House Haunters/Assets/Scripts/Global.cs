@@ -8,8 +8,9 @@ public static class Global
 
     #region Functional Programming List Functions
     public delegate bool CheckCondition<T>(T data);
-    public delegate int GetValue<T>(T data);
+    public delegate float GetValue<T>(T data);
     public delegate EndType MapValue<StartValue, EndType>(StartValue value);
+    public delegate T ValueCombiner<T>(T current, T next);
 
     public static List<T> Filter<T>(this List<T> list, CheckCondition<T> conditionFunc) {
         List<T> result = new List<T>();
@@ -21,38 +22,46 @@ public static class Global
         return result;
     }
 
-    public static T Max<T>(this List<T> list, GetValue<T> valueCalculator) {
-        if(list.Count == 0) {
+    public static T Max<T>(this T[] array, GetValue<T> valueCalculator) {
+        if(array.Length == 0) {
             return default(T);
         }
         
-        T result = list[0];
-        int max = valueCalculator(list[0]);
-        for(int i = 1; i < list.Count; i++) {
-            int value = valueCalculator(list[i]);
+        T result = array[0];
+        float max = valueCalculator(array[0]);
+        for(int i = 1; i < array.Length; i++) {
+            float value = valueCalculator(array[i]);
             if(value > max) {
                 max = value;
-                result = list[i];
+                result = array[i];
+            }
+        }
+        return result;
+    }
+
+    public static T Min<T>(this T[] array, GetValue<T> valueCalculator) {
+        if(array.Length == 0) {
+            return default(T);
+        }
+        
+        T result = array[0];
+        float min = valueCalculator(array[0]);
+        for(int i = 1; i < array.Length; i++) {
+            float value = valueCalculator(array[i]);
+            if(value < min) {
+                min = value;
+                result = array[i];
             }
         }
         return result;
     }
 
     public static T Min<T>(this List<T> list, GetValue<T> valueCalculator) {
-        if(list.Count == 0) {
-            return default(T);
-        }
-        
-        T result = list[0];
-        int min = valueCalculator(list[0]);
-        for(int i = 1; i < list.Count; i++) {
-            int value = valueCalculator(list[i]);
-            if(value < min) {
-                min = value;
-                result = list[i];
-            }
-        }
-        return result;
+        return list.ToArray().Min(valueCalculator);
+    }
+
+    public static T Max<T>(this List<T> list, GetValue<T> valueCalculator) {
+        return list.ToArray().Max(valueCalculator);
     }
 
     public static List<EndType> Map<StartType, EndType>(this List<StartType> list, MapValue<StartType, EndType> mapFunction) {
@@ -62,7 +71,33 @@ public static class Global
         }
         return result;
     }
+
+    public static T Collapse<T>(this T[] array, ValueCombiner<T> valueCombiner) {
+        if(array.Length == 0) {
+            return default(T);
+        }
+
+        T result = array[0];
+        for(int i = 1; i < array.Length; i++) {
+            result = valueCombiner(result, array[i]);
+        }
+        return result;
+    }
+
+    public static T Collapse<T>(this List<T> list, ValueCombiner<T> valueCombiner) {
+        return list.ToArray().Collapse(valueCombiner);
+    }
     #endregion
+
+    public static int? IndexOf<T>(this T[] array, T value) {
+        for(int i = 0; i < array.Length; i++) {
+            if(array[i].Equals(value)) {
+                return i;
+            }
+        }
+
+        return null;
+    }
 
     public static int CalcTileDistance(Vector2Int start, Vector2Int end) {
         return Mathf.Abs(start.x - end.x) + Mathf.Abs(start.y - end.y);

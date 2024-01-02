@@ -14,12 +14,21 @@ public class Monster : GridEntity
     // shields
 
     void Start() {
-        Stats = MonsterData.Instance.GetMonsterData(monsterType);
+        Stats = MonstersData.Instance.GetMonsterData(monsterType);
         health = Stats.Health;
     }
 
     void Update() {
         
+    }
+
+    // 0 is walk
+    public List<List<Vector2Int>> GetMoveOptions(int moveSlot) {
+        return Stats.Moves[moveSlot].Selection.GetSelectionGroups(this);
+    }
+
+    public void UseMove(int moveSlot, List<Vector2Int> tiles) {
+        Stats.Moves[moveSlot].Use(this, tiles);
     }
 
     // returns null if this monster cannot get to the tile with one movement

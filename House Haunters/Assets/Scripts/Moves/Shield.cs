@@ -2,42 +2,43 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum ShieldStrength {
-    None,
-    Weak,
-    Medium,
-    Strong,
-    Invincible
-}
-
-public class Shield
+public class Shield : Move
 {
-    private int duration;
-    private bool blocksStatus;
-    private ShieldStrength strength;
+    public enum StrengthLevel {
+        None,
+        Weak,
+        Medium,
+        Strong,
+        Invincible
+    }
+
+    public int Duration { get; private set; }
+    public StrengthLevel Strength { get; private set; }
+    public bool BlocksStatus { get; private set; }
+    public bool BlocksOnce { get; private set; }
 
     public float DamageMultiplier { get {
-        switch(strength) {
-            case ShieldStrength.None:
+        switch(Strength) {
+            case StrengthLevel.None:
                 return 1.0f;
-
-            case ShieldStrength.Weak:
+            case StrengthLevel.Weak:
                 return 0.25f;
-
-            case ShieldStrength.Medium:
+            case StrengthLevel.Medium:
                 return 0.5f;
-
-            case ShieldStrength.Strong:
+            case StrengthLevel.Strong:
                 return 0.75f;
-
-            case ShieldStrength.Invincible:
+            case StrengthLevel.Invincible:
                 return 0f;
         }
 
         return 1.0f;
     } }
     
-    public Shield() {
+    public Shield(int cost, Selector selection) : base(cost, selection) {
 
+    }
+
+    public override void Use(Monster user, List<Vector2Int> tiles) {
+        
     }
 }

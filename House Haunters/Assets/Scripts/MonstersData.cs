@@ -12,12 +12,12 @@ public enum MonsterName {
     Mushroom,
 }
 
-public class MonsterData
+public class MonstersData
 {
-    private static MonsterData instance;
-    public static MonsterData Instance { get {
+    private static MonstersData instance;
+    public static MonstersData Instance { get {
         if(instance == null) {
-            instance = new MonsterData();
+            instance = new MonstersData();
         }
         return instance;
     } }
@@ -25,7 +25,7 @@ public class MonsterData
     private MonsterType[] monsterTypes; // index is name enum cast to an int
 
     // define the stats and abilities of all monster types
-    private MonsterData() {
+    private MonstersData() {
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
         monsterTypes[(int)MonsterName.Temporary] = new MonsterType(PrefabContainer.Instance.TempMonsterPrefab,

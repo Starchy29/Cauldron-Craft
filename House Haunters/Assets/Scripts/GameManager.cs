@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     }
 
     void Start() {
-        LevelGrid.Instance.SpawnEntity(MonsterData.Instance.GetMonsterData(MonsterName.Temporary).Prefab, Vector2Int.zero);
+        LevelGrid.Instance.SpawnEntity(MonstersData.Instance.GetMonsterData(MonsterName.Temporary).Prefab, Vector2Int.zero);
     }
 
     void Update() {

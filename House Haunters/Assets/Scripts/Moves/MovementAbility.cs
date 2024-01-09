@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MovementAbility : Move
 {
-    public MovementAbility(int cost, int distance) : base(cost, new MovementSelector(distance)) { }
+    public MovementAbility(int cost, int speedModifier) : base(cost, new MovementSelector(speedModifier)) { }
 
     public override void Use(Monster user, List<Vector2Int> tiles) {
         LevelGrid.Instance.MoveEntity(user, tiles[0]);

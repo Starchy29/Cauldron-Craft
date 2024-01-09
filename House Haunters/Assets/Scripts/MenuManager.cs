@@ -95,14 +95,6 @@ public class MenuManager : MonoBehaviour
                 break;
 
             case SelectedItem.Move:
-                // move monster
-                //List<Vector2Int> path = selectedMonster.FindPath(selectedTile);
-                //if(path != null) {
-                //    level.MoveEntity(selectedMonster, selectedTile);
-                //    level.ColorTiles(null, TileHighlighter.State.Highlighted);
-                //    level.ColorTiles(null, TileHighlighter.State.Selected);
-                //    state = SelectedItem.Monster;
-                //}
                 break;
         }
     }

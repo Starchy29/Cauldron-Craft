@@ -34,11 +34,11 @@ public class Shield : Move
         return 1.0f;
     } }
     
-    public Shield(int cost, Selector selection) : base(cost, selection) {
+    public Shield(int cost, Selector selection) : base(cost, Move.Targets.Allies, selection) {
 
     }
 
-    public override void Use(Monster user, List<Vector2Int> tiles) {
+    protected override void ApplyEffect(Monster user, Vector2Int tile) {
         
     }
 }

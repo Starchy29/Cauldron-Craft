@@ -6,8 +6,7 @@ public class Monster : GridEntity
 {
     [SerializeField] private MonsterName monsterType;
 
-    public bool OnPlayerTeam { get; private set; }
-
+    public Team Controller { get; set; }
     public MonsterType Stats { get; private set; }
     private int health;
     // statuses
@@ -22,7 +21,7 @@ public class Monster : GridEntity
         
     }
 
-    // 0 is walk
+
     public List<List<Vector2Int>> GetMoveOptions(int moveSlot) {
         return Stats.Moves[moveSlot].Selection.GetSelectionGroups(this);
     }
@@ -31,10 +30,15 @@ public class Monster : GridEntity
         Stats.Moves[moveSlot].Use(this, tiles);
     }
 
+    public bool CanStandOn(Vector2Int tile) {
+        WorldTile levelTile = LevelGrid.Instance.GetTile(tile);
+        return !levelTile.IsWall && (levelTile.Walkable || Stats.Flying) && LevelGrid.Instance.GetEntity(tile) == null;
+    }
+
     // returns null if this monster cannot get to the tile with one movement
     public List<Vector2Int> FindPath(Vector2Int endTile) {
         LevelGrid level = LevelGrid.Instance;
-        if(!level.GetTile(endTile).Walkable) {
+        if(!CanStandOn(endTile)) {
             return null;
         }
 
@@ -83,7 +87,7 @@ public class Monster : GridEntity
 
                 bool inOpen = openList.Contains(neighbor);
                 bool inClosed = closedList.Contains(neighbor);
-                int discoveredDistance = distances[nextTile.y, nextTile.x].travelDistance + level.GetTile(neighbor).GetTravelCost(OnPlayerTeam);
+                int discoveredDistance = distances[nextTile.y, nextTile.x].travelDistance + level.GetTile(neighbor).GetTravelCost(this);
                 if(!inOpen && !inClosed) {
                     // found a new route
                     openList.Add(neighbor);

@@ -79,23 +79,15 @@ public class LevelGrid : MonoBehaviour
         return tile.x >= 0 && tile.y >= 0 && tile.x < width && tile.y < height;
     }
 
-    public void SpawnEntity(GameObject prefab, Vector2Int tile) {
-        if(entityGrid[tile.y, tile.x] != null) {
-            Destroy(entityGrid[tile.y, tile.x]);
-        }
-
-        GameObject spawned = Instantiate(prefab);
-        entityGrid[tile.y, tile.x] = spawned.GetComponent<GridEntity>();
+    public void PlaceEntity(GridEntity entity, Vector2Int tile) {
+        entityGrid[tile.y, tile.x] = entity;
         entityGrid[tile.y, tile.x].Tile = tile;
-        spawned.transform.position = Tiles.GetCellCenterWorld((Vector3Int)tile);
+        entity.transform.position = Tiles.GetCellCenterWorld((Vector3Int)tile);
     }
 
     public void MoveEntity(GridEntity entity, Vector2Int tile) {
-        Vector2Int previousTile = entity.Tile;
-        entityGrid[previousTile.y, previousTile.x] = null;
-        entityGrid[tile.y, tile.x] = entity;
-        entity.Tile = tile;
-        entity.transform.position = Tiles.GetCellCenterWorld((Vector3Int)tile);
+        ClearEntity(entity.Tile);
+        PlaceEntity(entity, tile);
     }
 
     public void ClearEntity(Vector2Int tile) {

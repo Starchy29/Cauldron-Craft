@@ -8,13 +8,11 @@ public class Attack : Move
     public int Range { get; private set; }
     public bool StraightShot { get; private set; }
 
-    public Attack(int cost, Selector selection) : base(cost, selection) {
+    public Attack(int cost, Selector selection) : base(cost, Move.Targets.Enemies, selection) {
 
     }
 
-    public override void Use(Monster user, List<Vector2Int> tiles) {
+    protected override void ApplyEffect(Monster user, Vector2Int tile) {
         
     }
-
-    protected virtual void OnEnemyHit() { }
 }

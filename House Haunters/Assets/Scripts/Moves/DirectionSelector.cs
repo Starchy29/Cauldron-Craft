@@ -18,7 +18,7 @@ public class DirectionSelector : Selector
                 Vector2Int testTile = user.Tile + i * direction;
 
                 // stop at walls
-                if(level.GetTile(testTile).BlocksVision) {
+                if(level.GetTile(testTile).IsWall) {
                     break;
                 }
 

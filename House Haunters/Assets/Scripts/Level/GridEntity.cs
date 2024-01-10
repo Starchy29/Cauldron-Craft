@@ -5,8 +5,4 @@ using UnityEngine;
 public class GridEntity : MonoBehaviour
 {
     public Vector2Int Tile { get; set; }
-
-    void OnDestroy() {
-        LevelGrid.Instance.ClearEntity(Tile);
-    }
 }

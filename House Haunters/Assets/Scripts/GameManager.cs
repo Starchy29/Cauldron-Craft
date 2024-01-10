@@ -6,26 +6,45 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    private bool playerTurn;
+    public Team PlayerTeam { get; private set; }
+    public Team EnemyTeam { get; private set; }
+    public Team CurrentTurn { get; private set; }
 
     void Awake() {
         Instance = this;
-        playerTurn = true;
+        PlayerTeam = new Team();
+        EnemyTeam = new Team();
+        CurrentTurn = PlayerTeam;
     }
 
     void Start() {
-        LevelGrid.Instance.SpawnEntity(MonstersData.Instance.GetMonsterData(MonsterName.Temporary).Prefab, Vector2Int.zero);
+        SpawnMonster(MonsterName.Temporary, Vector2Int.zero, PlayerTeam);
     }
 
-    void Update() {
-        if(playerTurn) {
-            return;
+    public void EndTurn() {
+        if(CurrentTurn == PlayerTeam) {
+            CurrentTurn = EnemyTeam;
+        } else {
+            CurrentTurn = PlayerTeam;
+        }
+    }
+
+    public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
+        GameObject spawned = Instantiate(MonstersData.Instance.GetMonsterData(monsterType).Prefab);
+        LevelGrid.Instance.PlaceEntity(spawned.GetComponent<GridEntity>(), startTile);
+        controller.Join(spawned.GetComponent<Monster>());
+    }
+
+    public void DefeatMonster(Monster defeated) {
+        LevelGrid.Instance.ClearEntity(defeated.Tile);
+
+        if(defeated.Controller == PlayerTeam) {
+            PlayerTeam.Remove(defeated);
+        }
+        else if(defeated.Controller == EnemyTeam) {
+            EnemyTeam.Remove(defeated);
         }
 
-        // run the AI's turn
-    }
-
-    public void EndPlayerTurn() {
-        playerTurn = false;
+        Destroy(defeated);
     }
 }

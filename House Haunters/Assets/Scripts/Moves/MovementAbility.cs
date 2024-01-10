@@ -4,9 +4,12 @@ using UnityEngine;
 
 public class MovementAbility : Move
 {
-    public MovementAbility(int cost, int speedModifier) : base(cost, new MovementSelector(speedModifier)) { }
+    // default constructor for a character's regular walk ability
+    public MovementAbility() : base(1, Move.Targets.SpecificTile, new WalkSelector()) {}
 
-    public override void Use(Monster user, List<Vector2Int> tiles) {
-        LevelGrid.Instance.MoveEntity(user, tiles[0]);
+    public MovementAbility(int cooldown, Selector selection) : base(cooldown, Move.Targets.SpecificTile, selection) {}
+
+    protected override void ApplyEffect(Monster user, Vector2Int tile) {
+        LevelGrid.Instance.MoveEntity(user, tile);
     }
 }

@@ -1,19 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 // represents one team of monsters
 public class Team
 {
-    private List<Monster> teammates;
+    public List<Monster> Teammates { get; private set; }
+    public Dictionary<Ingredient, int> Resources { get; private set; }
+
+    public Team() {
+        Teammates = new List<Monster>();
+        Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
+    }
     
     public void Join(Monster monster) {
-        teammates.Add(monster);
+        Teammates.Add(monster);
         monster.Controller = this;
     }
 
     public void Remove(Monster monster) {
-        teammates.Remove(monster);
+        Teammates.Remove(monster);
         monster.Controller = null;
     }
 }

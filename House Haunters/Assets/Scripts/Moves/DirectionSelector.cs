@@ -28,7 +28,7 @@ public class DirectionSelector : Selector
                 }
 
                 GridEntity entity = level.GetEntity(testTile);
-                if(entity != null && entity is Monster && ((Monster)entity).OnPlayerTeam != user.OnPlayerTeam) {
+                if(entity != null && entity is Monster && ((Monster)entity).Controller != user.Controller) {
                     group.Add(testTile);
                     break;
                 }

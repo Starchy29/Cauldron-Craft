@@ -16,11 +16,13 @@ public class MenuManager : MonoBehaviour
 
     public bool UseKBMouse { get; set; }
 
-    private SelectedItem state;
+    private SelectedItem currentSelection;
     private Vector3Int? hoveredTile;
     private Monster selectedMonster;
     private LevelGrid level;
     private Camera gameCamera;
+    private GameManager gameManager;
+    private Team controller;
 
     private List<List<Vector2Int>> tileGroups;
     private Vector2[] tileGroupCenters;
@@ -28,13 +30,20 @@ public class MenuManager : MonoBehaviour
 
     void Start() {
         UseKBMouse = true;
-        state = SelectedItem.None;
+        currentSelection = SelectedItem.None;
         level = LevelGrid.Instance;
         gameCamera = Camera.main;
+        gameManager = GameManager.Instance;
+        controller = gameManager.PlayerTeam;
     }
 
     void Update() {
-        switch(state) {
+        if(controller != gameManager.CurrentTurn) {
+            return;
+            // TO DO: make the visuals update when it's not your turn but disable selection
+        }
+
+        switch(currentSelection) {
             case SelectedItem.None:
                 // look for a monster to select
                 if(UseKBMouse && Mouse.current != null) {
@@ -57,22 +66,23 @@ public class MenuManager : MonoBehaviour
 
             case SelectedItem.Monster:
                 int hoveredIndex = tileGroupCenters.IndexOf(
-                    tileGroupCenters.Min((Vector2 spot) => { return Vector2.Distance((Vector2)GetMousePosition(), spot); })
-                ).Value;
+                    tileGroupCenters.Min((Vector2 spot) => { return Vector2.Distance((Vector2)GetMousePosition(), spot); }))
+                    .Value;
                 level.ColorTiles(tileGroups[hoveredIndex], TileHighlighter.State.Selectable);
 
                 if(Mouse.current.leftButton.wasPressedThisFrame) {
                     selectedMonster.UseMove(0, tileGroups[hoveredIndex]);
                     level.ColorTiles(null, TileHighlighter.State.Highlighted);
                     level.ColorTiles(null, TileHighlighter.State.Selectable);
-                    state = SelectedItem.None;
+                    currentSelection = SelectedItem.None;
+                    GameManager.Instance.EndTurn(controller);
                 }
                 break;
         }
     }
 
     private void Select(Vector2Int selectedTile) {
-        switch(state) {
+        switch(currentSelection) {
             case SelectedItem.None:
                 GridEntity selectedEntity = level.GetEntity(selectedTile);
                 if(selectedEntity == null || !(selectedEntity is Monster)) {
@@ -80,7 +90,7 @@ public class MenuManager : MonoBehaviour
                 }
                     
                 selectedMonster = (Monster)selectedEntity;
-                state = SelectedItem.Monster;
+                currentSelection = SelectedItem.Monster;
 
                 // determine which tiles can be walked to
                 tileGroups = selectedMonster.GetMoveOptions(0);

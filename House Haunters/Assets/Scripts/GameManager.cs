@@ -10,18 +10,33 @@ public class GameManager : MonoBehaviour
     public Team EnemyTeam { get; private set; }
     public Team CurrentTurn { get; private set; }
 
+    private AIController enemyAI;
+
     void Awake() {
         Instance = this;
         PlayerTeam = new Team();
         EnemyTeam = new Team();
         CurrentTurn = PlayerTeam;
+        enemyAI = new AIController(EnemyTeam);
     }
 
     void Start() {
         SpawnMonster(MonsterName.Temporary, Vector2Int.zero, PlayerTeam);
+        SpawnMonster(MonsterName.Temporary, new Vector2Int(4, 4), EnemyTeam);
     }
 
-    public void EndTurn() {
+    void Update() {
+        if(CurrentTurn == EnemyTeam) {
+            // TO DO: wait for animations to end before choosing the next move
+            enemyAI.ChooseMove();
+        }
+    }
+
+    public void EndTurn(Team turnEnder) {
+        if(turnEnder != CurrentTurn) {
+            return;
+        }
+
         if(CurrentTurn == PlayerTeam) {
             CurrentTurn = EnemyTeam;
         } else {

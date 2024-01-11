@@ -10,15 +10,11 @@ public class RangeSelector : Selector
 
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
         LevelGrid level = LevelGrid.Instance;
-
-        List<Vector2Int> reachable = level.GetTilesInRange(user.Tile, Range, false).Filter((Vector2Int tile) => {
-            GridEntity entity = level.GetEntity(tile);
-            return entity != null && entity is Monster && (((Monster)entity).OnPlayerTeam == user.OnPlayerTeam) == SeekAllies; 
-        });
-
-        if(!SelfSelectable) {
-            reachable.Remove(user.Tile);
-        }
-        return reachable.Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
+        return LevelGrid.Instance.GetTilesInRange(user.Tile, Range, false)
+            .Filter((Vector2Int tile) => {
+                GridEntity entity = level.GetEntity(tile);
+                return entity != null && entity is Monster && (SelfSelectable || entity != user) && (((Monster)entity).Controller == user.Controller) == SeekAllies; 
+            })
+            .Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
     }
 }

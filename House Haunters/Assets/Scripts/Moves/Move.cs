@@ -27,13 +27,13 @@ public abstract class Move
             case Targets.Allies:
                 affectedTiles = tiles.Filter((Vector2Int tile) => {
                     GridEntity entity = LevelGrid.Instance.GetEntity(tile);
-                    return entity != null && entity is Monster && ((Monster)entity).OnPlayerTeam == user.OnPlayerTeam;
+                    return entity != null && entity is Monster && ((Monster)entity).Controller == user.Controller;
                 });
                 break;
             case Targets.Enemies:
                 affectedTiles = tiles.Filter((Vector2Int tile) => {
                     GridEntity entity = LevelGrid.Instance.GetEntity(tile);
-                    return entity != null && entity is Monster && ((Monster)entity).OnPlayerTeam != user.OnPlayerTeam;
+                    return entity != null && entity is Monster && ((Monster)entity).Controller != user.Controller;
                 });
                 break;
             case Targets.Floor:

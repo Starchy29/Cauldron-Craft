@@ -34,7 +34,7 @@ public class Shield : Move
         return 1.0f;
     } }
     
-    public Shield(int cost, Selector selection) : base(cost, Move.Targets.Allies, selection) {
+    public Shield(int cost, Selector selection) : base(cost, MoveType.Shield, Targets.Allies, selection) {
 
     }
 

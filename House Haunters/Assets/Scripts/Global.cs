@@ -2,6 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public delegate void MonsterTrigger(Monster monster);
+public delegate void Trigger();
+
+public enum StatusEffect {
+    Regeneration,
+    Strength,
+    Haste,
+    Energy,
+
+    Poison,
+    Fear,
+    Slowness,
+    Drowsiness,
+    Cursed,
+    Haunted
+}
+
 public static class Global
 {
     public static Vector2Int[] Cardinals = new Vector2Int[4] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };

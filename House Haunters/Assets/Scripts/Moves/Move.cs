@@ -11,14 +11,24 @@ public abstract class Move
         SpecificTile
     }
 
+    public enum MoveType {
+        Movement,
+        Attack,
+        Shield,
+        Status,
+        Zone
+    }
+
     public Selector Selection { get; private set; }
     public Targets TargetType { get; private set; }
+    public MoveType Type { get; private set; }
     public int Cooldown { get; private set; }
 
-    public Move(int cooldown, Targets targetType, Selector selection) {
+    public Move(int cooldown, MoveType type, Targets targetType, Selector selection) {
         Cooldown = cooldown;
         Selection = selection;
         TargetType = targetType;
+        Type = type;
     }
 
     public void Use(Monster user, List<Vector2Int> tiles) {

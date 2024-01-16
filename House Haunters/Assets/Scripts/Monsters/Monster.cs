@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Monster : GridEntity
 {
@@ -9,18 +10,60 @@ public class Monster : GridEntity
     public Team Controller { get; set; }
     public MonsterType Stats { get; private set; }
     private int health;
-    // statuses
+    private int[] cooldowns;
+    private Dictionary<StatusEffect, int> effectDurations;
     // shields
+
+    public Trigger OnTurnStart;
+    public Trigger OnTurnEnd;
+    public int MovesLeft { get; private set; }
+
+    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? 2 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
+    public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
     void Start() {
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         health = Stats.Health;
+        effectDurations = new Dictionary<StatusEffect, int>(Enum.GetValues(typeof(StatusEffect)).Length);
+        cooldowns = new int[Stats.Moves.Length];
+
+        OnTurnStart += RefreshMoves;
+        OnTurnEnd += DecreaseCooldowns;
+        OnTurnEnd += StatusEndTurnEffects;
     }
 
     void Update() {
         
     }
 
+    public void Heal(int amount) {
+        health += amount;
+        if(health > Stats.Health) {
+            health = Stats.Health;
+        }
+    }
+
+    public void TakeDamage(int amount) {
+        if(HasStatus(StatusEffect.Haunted)) {
+            amount = Mathf.FloorToInt(amount * 1.5f);
+        }
+
+        health -= amount;
+        if(health <= 0) {
+            //Die();
+        }
+    }
+
+    public bool HasStatus(StatusEffect status) {
+        TileEffect tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
+        return effectDurations[status] > 0 || (tileEffect != null && tileEffect.AppliedStatus == status);
+    }
+
+    public void ApplyStatus(StatusEffect status, int duration) {
+        if(effectDurations[status] < duration) {
+            effectDurations[status] = duration;
+        }
+    }
 
     public List<List<Vector2Int>> GetMoveOptions(int moveSlot) {
         return Stats.Moves[moveSlot].Selection.GetSelectionGroups(this);
@@ -28,6 +71,14 @@ public class Monster : GridEntity
 
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
         Stats.Moves[moveSlot].Use(this, tiles);
+        cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
+        MovesLeft--;
+    }
+
+    public bool CanUse(int moveSlot) {
+        Move move = Stats.Moves[moveSlot];
+        return cooldowns[moveSlot] == 0 &&
+            (!HasStatus(StatusEffect.Cursed) || move.Type == Move.MoveType.Attack || move.Type == Move.MoveType.Movement);
     }
 
     public bool CanStandOn(Vector2Int tile) {
@@ -110,7 +161,33 @@ public class Monster : GridEntity
         public Vector2Int? previous;
         public int travelDistance;
         public int distanceToEnd;
-
         public int Estimate { get { return travelDistance + distanceToEnd; } }
+    }
+
+    private void RefreshMoves() {
+        MovesLeft = 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Energy) ? -1 : 0);
+    }
+
+    private void DecreaseCooldowns() {
+        for(int i = 0; i < cooldowns.Length; i++) {
+            if(cooldowns[i] > 0) {
+                cooldowns[i]--;
+            }
+        }
+    }
+
+    private void StatusEndTurnEffects() {
+        if(HasStatus(StatusEffect.Regeneration)) {
+            Heal(1);
+        }
+        if(HasStatus(StatusEffect.Poison)) {
+            TakeDamage(1);
+        }
+
+        foreach(StatusEffect status in Enum.GetValues(typeof(StatusEffect))) {
+            if(effectDurations[status] > 0) {
+                effectDurations[status]--;
+            }
+        }
     }
 }

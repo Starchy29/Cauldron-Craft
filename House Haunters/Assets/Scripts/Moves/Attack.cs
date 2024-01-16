@@ -5,14 +5,17 @@ using UnityEngine;
 public class Attack : Move
 {
     public int Damage { get; private set; }
-    public int Range { get; private set; }
-    public bool StraightShot { get; private set; }
 
-    public Attack(int cost, Selector selection) : base(cost, Move.Targets.Enemies, selection) {
+    public delegate void CombatTrigger(Monster attacker, Monster hitMonster);
+    private CombatTrigger OnHit;
 
+    public Attack(int cooldown, int damage, Selector selection) : base(cooldown, MoveType.Attack, Targets.Enemies, selection) {
+        Damage = damage;
     }
 
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
-        
+        Monster hitMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
+        hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier));
+        OnHit(user, hitMonster);
     }
 }

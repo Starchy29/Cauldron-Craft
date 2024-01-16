@@ -6,7 +6,6 @@ public class Attack : Move
 {
     public int Damage { get; private set; }
 
-    public delegate void CombatTrigger(Monster attacker, Monster hitMonster);
     private CombatTrigger OnHit;
 
     public Attack(int cooldown, int damage, Selector selection) : base(cooldown, MoveType.Attack, Targets.Enemies, selection) {

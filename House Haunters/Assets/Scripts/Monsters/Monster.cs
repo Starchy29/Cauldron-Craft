@@ -12,11 +12,11 @@ public class Monster : GridEntity
     private int health;
     private int[] cooldowns;
     private Dictionary<StatusEffect, int> effectDurations;
-    // shields
 
     public Trigger OnTurnStart;
     public Trigger OnTurnEnd;
     public int MovesLeft { get; private set; }
+    public Shield CurrentShield { get; private set; }
 
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? 2 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
@@ -28,8 +28,7 @@ public class Monster : GridEntity
         cooldowns = new int[Stats.Moves.Length];
 
         OnTurnStart += RefreshMoves;
-        OnTurnEnd += DecreaseCooldowns;
-        OnTurnEnd += StatusEndTurnEffects;
+        OnTurnEnd += EndTurn;
     }
 
     void Update() {
@@ -43,9 +42,21 @@ public class Monster : GridEntity
         }
     }
 
-    public void TakeDamage(int amount) {
-        if(HasStatus(StatusEffect.Haunted)) {
-            amount = Mathf.FloorToInt(amount * 1.5f);
+    public void TakeDamage(int amount, bool applyMultipliers = true) {
+        if(applyMultipliers) {
+            float multiplier = 1f;
+            if(HasStatus(StatusEffect.Haunted)) {
+                multiplier *= 1.5f;
+            }
+            if(CurrentShield != null) {
+                multiplier *= CurrentShield.DamageMultiplier;
+                if(CurrentShield.BlocksOnce) {
+                    CurrentShield = null;
+                }
+            }
+            if(multiplier != 1f) {
+                amount = Mathf.FloorToInt(amount * multiplier);
+            }
         }
 
         health -= amount;
@@ -60,7 +71,14 @@ public class Monster : GridEntity
     }
 
     public void ApplyStatus(StatusEffect status, int duration) {
-        if(effectDurations[status] < duration) {
+        if(CurrentShield != null && CurrentShield.BlocksStatus) {
+            if(CurrentShield.BlocksOnce) {
+                CurrentShield = null;
+            }
+            return;
+        }
+
+        if(duration > effectDurations[status]) {
             effectDurations[status] = duration;
         }
     }
@@ -79,6 +97,10 @@ public class Monster : GridEntity
         Move move = Stats.Moves[moveSlot];
         return cooldowns[moveSlot] == 0 &&
             (!HasStatus(StatusEffect.Cursed) || move.Type == Move.MoveType.Attack || move.Type == Move.MoveType.Movement);
+    }
+
+    public void ApplyShield(Shield shield) {
+        CurrentShield = shield;
     }
 
     public bool CanStandOn(Vector2Int tile) {
@@ -168,15 +190,23 @@ public class Monster : GridEntity
         MovesLeft = 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Energy) ? -1 : 0);
     }
 
-    private void DecreaseCooldowns() {
+    private void EndTurn() {
+        // decrease cooldowns
         for(int i = 0; i < cooldowns.Length; i++) {
             if(cooldowns[i] > 0) {
                 cooldowns[i]--;
             }
         }
-    }
 
-    private void StatusEndTurnEffects() {
+        // reduce the shield duration
+        if(CurrentShield != null) {
+            CurrentShield.Duration--;
+            if(CurrentShield.Duration <= 0) {
+                CurrentShield = null;
+            }
+        }
+
+        // handle status effects
         if(HasStatus(StatusEffect.Regeneration)) {
             Heal(1);
         }

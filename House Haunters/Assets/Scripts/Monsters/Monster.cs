@@ -154,7 +154,7 @@ public class Monster : GridEntity
             // update the neighbors
             foreach(Vector2Int direction in Global.Cardinals) {
                 Vector2Int neighbor = nextTile + direction;
-                if(!level.IsInGrid(neighbor) || !level.GetTile(neighbor).Walkable) {
+                if(!level.IsInGrid(neighbor) || !CanStandOn(neighbor)) {
                     continue; // walls and pits are not navigable
                 }
 

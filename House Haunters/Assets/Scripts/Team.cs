@@ -23,4 +23,22 @@ public class Team
         Teammates.Remove(monster);
         monster.Controller = null;
     }
+
+    public void StartTurn() {
+        foreach(Monster teammate in Teammates) {
+            teammate.OnTurnStart();
+        }
+    }
+
+    public void EndTurn() {
+        if(GameManager.Instance.CurrentTurn != this) {
+            return;
+        }
+
+        foreach(Monster teammate in Teammates) {
+            teammate.OnTurnEnd();
+        }
+
+        GameManager.Instance.PassTurn(this);
+    }
 }

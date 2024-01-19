@@ -32,12 +32,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void EndTurn(Team turnEnder) {
-        if(turnEnder != CurrentTurn) {
-            return;
-        }
-
-        if(CurrentTurn == PlayerTeam) {
+    public void PassTurn(Team turnEnder) {
+        if(turnEnder == PlayerTeam) {
             CurrentTurn = EnemyTeam;
         } else {
             CurrentTurn = PlayerTeam;

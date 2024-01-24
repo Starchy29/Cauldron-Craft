@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class MovementAbility : Move
 {
-    // default constructor for a character's regular walk ability
-    public MovementAbility() : base(1, MoveType.Movement, Targets.SpecificTile, new WalkSelector()) {}
+    // constructor for a default walk move
+    public MovementAbility() : base(1, MoveType.Movement, Targets.Traversable, new RangeSelector((Monster user) => user.CurrentSpeed, false, false)) {}
 
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
         LevelGrid.Instance.MoveEntity(user, tile);

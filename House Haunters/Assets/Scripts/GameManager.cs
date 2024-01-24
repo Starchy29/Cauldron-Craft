@@ -16,8 +16,7 @@ public class GameManager : MonoBehaviour
         Instance = this;
         PlayerTeam = new Team();
         EnemyTeam = new Team();
-        CurrentTurn = PlayerTeam;
-        enemyAI = new AIController(EnemyTeam);
+        enemyAI = new AIController();
     }
 
     void Start() {
@@ -26,9 +25,15 @@ public class GameManager : MonoBehaviour
     }
 
     void Update() {
+        if(CurrentTurn == null) {
+            // start the game
+            CurrentTurn = PlayerTeam;
+            CurrentTurn.StartTurn();
+        }
+
         if(CurrentTurn == EnemyTeam) {
             // TO DO: wait for animations to end before choosing the next move
-            enemyAI.ChooseMove();
+            enemyAI.ChooseMove(EnemyTeam);
         }
     }
 
@@ -38,6 +43,7 @@ public class GameManager : MonoBehaviour
         } else {
             CurrentTurn = PlayerTeam;
         }
+        CurrentTurn.StartTurn();
     }
 
     public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {

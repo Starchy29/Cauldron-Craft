@@ -5,6 +5,7 @@ using UnityEngine;
 public delegate void MonsterTrigger(Monster monster);
 public delegate void CombatTrigger(Monster user, Monster target);
 public delegate void Trigger();
+public delegate int MonsterValue(Monster monster);
 
 public enum StatusEffect {
     Regeneration,
@@ -16,6 +17,7 @@ public enum StatusEffect {
     Fear,
     Slowness,
     Drowsiness,
+    Frozen,
     Cursed,
     Haunted
 }

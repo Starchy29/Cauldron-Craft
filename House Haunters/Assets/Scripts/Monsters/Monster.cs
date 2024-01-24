@@ -15,8 +15,9 @@ public class Monster : GridEntity
 
     public Trigger OnTurnStart;
     public Trigger OnTurnEnd;
-    public int MovesLeft { get; private set; }
     public Shield CurrentShield { get; private set; }
+    public int MovesLeft { get; private set; }
+    public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Energy) ? -1 : 0); } }
 
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? 2 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
@@ -24,11 +25,16 @@ public class Monster : GridEntity
     void Start() {
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         health = Stats.Health;
-        effectDurations = new Dictionary<StatusEffect, int>(Enum.GetValues(typeof(StatusEffect)).Length);
         cooldowns = new int[Stats.Moves.Length];
 
         OnTurnStart += RefreshMoves;
         OnTurnEnd += EndTurn;
+
+        StatusEffect[] statuses = (StatusEffect[])Enum.GetValues(typeof(StatusEffect));
+        effectDurations = new Dictionary<StatusEffect, int>(statuses.Length);
+        foreach(StatusEffect status in statuses) {
+            effectDurations[status] = 0;
+        }
     }
 
     void Update() {
@@ -36,6 +42,10 @@ public class Monster : GridEntity
     }
 
     public void Heal(int amount) {
+        if(HasStatus(StatusEffect.Cursed)) {
+            return;
+        }
+
         health += amount;
         if(health > Stats.Health) {
             health = Stats.Health;
@@ -84,7 +94,7 @@ public class Monster : GridEntity
     }
 
     public List<List<Vector2Int>> GetMoveOptions(int moveSlot) {
-        return Stats.Moves[moveSlot].Selection.GetSelectionGroups(this);
+        return Stats.Moves[moveSlot].GetOptions(this);
     }
 
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
@@ -95,8 +105,8 @@ public class Monster : GridEntity
 
     public bool CanUse(int moveSlot) {
         Move move = Stats.Moves[moveSlot];
-        return cooldowns[moveSlot] == 0 &&
-            (!HasStatus(StatusEffect.Cursed) || move.Type == Move.MoveType.Attack || move.Type == Move.MoveType.Movement);
+        return move != null && MovesLeft > 0 && cooldowns[moveSlot] == 0 && !(HasStatus(StatusEffect.Frozen) && move.Type == Move.MoveType.Movement) 
+            && GetMoveOptions(moveSlot).Count > 0;
     }
 
     public void ApplyShield(Shield shield) {
@@ -187,7 +197,7 @@ public class Monster : GridEntity
     }
 
     private void RefreshMoves() {
-        MovesLeft = 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Energy) ? -1 : 0);
+        MovesLeft = MaxMoves;
     }
 
     private void EndTurn() {
@@ -211,7 +221,7 @@ public class Monster : GridEntity
             Heal(1);
         }
         if(HasStatus(StatusEffect.Poison)) {
-            TakeDamage(1);
+            TakeDamage(1, false);
         }
 
         foreach(StatusEffect status in Enum.GetValues(typeof(StatusEffect))) {

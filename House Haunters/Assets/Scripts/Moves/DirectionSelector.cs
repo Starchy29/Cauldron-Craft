@@ -22,14 +22,17 @@ public class DirectionSelector : Selector
                     break;
                 }
 
+                group.Add(testTile);
                 if(Piercing) {
-                    group.Add(testTile);
                     continue;
                 }
 
-                GridEntity entity = level.GetEntity(testTile);
-                if(entity != null && entity is Monster && ((Monster)entity).Controller != user.Controller) {
-                    group.Add(testTile);
+                groups.Add(group);
+                group = new List<Vector2Int>();
+
+                Monster monster = level.GetMonster(testTile);
+                if(monster != null && monster.Controller != user.Controller) {
+                    // stop when reaching an enemy
                     break;
                 }
             }

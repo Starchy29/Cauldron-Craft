@@ -60,13 +60,11 @@ public abstract class Move
     }
 
     public void Use(Monster user, List<Vector2Int> tiles) {
-        List<Vector2Int> affectedTiles = tiles;
-        
         if(TargetType != Targets.Traversable) { // avoid pathfinding for an already validated path
-            affectedTiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
+            tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
         }
 
-        foreach(Vector2Int tile in affectedTiles) {
+        foreach(Vector2Int tile in tiles) {
             ApplyEffect(user, tile);
         }
     }

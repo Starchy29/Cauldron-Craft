@@ -91,7 +91,6 @@ public class LevelGrid : MonoBehaviour
     public void PlaceEntity(GridEntity entity, Vector2Int tile) {
         entityGrid[tile.y, tile.x] = entity;
         entityGrid[tile.y, tile.x].Tile = tile;
-        entity.transform.position = Tiles.GetCellCenterWorld((Vector3Int)tile);
     }
 
     public void MoveEntity(GridEntity entity, Vector2Int tile) {

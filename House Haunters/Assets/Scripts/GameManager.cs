@@ -47,6 +47,7 @@ public class GameManager : MonoBehaviour
     public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
         GameObject spawned = Instantiate(MonstersData.Instance.GetMonsterData(monsterType).Prefab);
         LevelGrid.Instance.PlaceEntity(spawned.GetComponent<GridEntity>(), startTile);
+        spawned.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)startTile);
         controller.Join(spawned.GetComponent<Monster>());
     }
 

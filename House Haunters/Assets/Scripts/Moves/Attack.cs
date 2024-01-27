@@ -18,6 +18,6 @@ public class Attack : Move
         Monster hitMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
         int startHealth = hitMonster.Health;
         hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier), user);
-        OnHit(user, hitMonster, startHealth - hitMonster.Health);
+        OnHit(user, hitMonster, hitMonster.Health < startHealth ? startHealth - hitMonster.Health : 0);
     }
 }

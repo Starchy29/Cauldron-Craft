@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // an ability that moves straight forward and stops at the first enemy it hits unless it is piercing
-public class DirectionSelector : Selector
+public class DirectionSelector : ISelector
 {
     public int Range { get; private set; }
     public bool Piercing { get; private set; }

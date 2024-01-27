@@ -20,7 +20,7 @@ public abstract class Move
         Zone
     }
 
-    private Selector selection;
+    private ISelector selection;
 
     public Targets TargetType { get; private set; }
     public MoveType Type { get; private set; }
@@ -38,7 +38,7 @@ public abstract class Move
         { Targets.Traversable, IsTraversable }
     };
 
-    public Move(int cooldown, MoveType type, Targets targetType, Selector selection) {
+    public Move(int cooldown, MoveType type, Targets targetType, ISelector selection) {
         Cooldown = cooldown;
         this.selection = selection;
         TargetType = targetType;

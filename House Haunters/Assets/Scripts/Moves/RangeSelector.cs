@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // selects a single item within range
-public class RangeSelector : Selector
+public class RangeSelector : ISelector
 {
     public MonsterValue RangeGetter { get; private set; }
     public bool SelfSelectable { get; private set; }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public delegate void MonsterTrigger(Monster monster);
-public delegate void CombatTrigger(Monster user, Monster target);
 public delegate void Trigger();
 public delegate int MonsterValue(Monster monster);
 

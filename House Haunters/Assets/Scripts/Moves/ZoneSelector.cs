@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // selects a square area within a larger square area
-public class ZoneSelector : Selector
+public class ZoneSelector : ISelector
 {
     public int Radius { get; private set; }
     public int Width { get; private set; }

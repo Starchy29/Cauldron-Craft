@@ -6,15 +6,18 @@ public class Attack : Move
 {
     public int Damage { get; private set; }
 
-    private CombatTrigger OnHit;
+    public delegate void HitTrigger(Monster user, Monster target, int healthLost);
+    private HitTrigger OnHit;
 
-    public Attack(int cooldown, int damage, Selector selection) : base(cooldown, MoveType.Attack, Targets.Enemies, selection) {
+    public Attack(int cooldown, int damage, ISelector selection, HitTrigger hitEffect = null) : base(cooldown, MoveType.Attack, Targets.Enemies, selection) {
         Damage = damage;
+        OnHit = hitEffect;
     }
 
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
         Monster hitMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
-        hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier));
-        OnHit(user, hitMonster);
+        int startHealth = hitMonster.Health;
+        hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier), user);
+        OnHit(user, hitMonster, startHealth - hitMonster.Health);
     }
 }

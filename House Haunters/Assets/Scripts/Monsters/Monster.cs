@@ -9,7 +9,8 @@ public class Monster : GridEntity
 
     public Team Controller { get; set; }
     public MonsterType Stats { get; private set; }
-    private int health;
+    public int Health { get; private set; }
+
     private int[] cooldowns;
     private Dictionary<StatusEffect, int> effectDurations;
 
@@ -24,7 +25,7 @@ public class Monster : GridEntity
 
     void Start() {
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
-        health = Stats.Health;
+        Health = Stats.Health;
         cooldowns = new int[Stats.Moves.Length];
 
         OnTurnStart += RefreshMoves;
@@ -35,6 +36,8 @@ public class Monster : GridEntity
         foreach(StatusEffect status in statuses) {
             effectDurations[status] = 0;
         }
+
+        RefreshMoves();
     }
 
     void Update() {
@@ -46,20 +49,21 @@ public class Monster : GridEntity
             return;
         }
 
-        health += amount;
-        if(health > Stats.Health) {
-            health = Stats.Health;
+        Health += amount;
+        if(Health > Stats.Health) {
+            Health = Stats.Health;
         }
     }
 
-    public void TakeDamage(int amount, bool applyMultipliers = true) {
-        if(applyMultipliers) {
+    public void TakeDamage(int amount, Monster source) {
+        if(source != null) {
             float multiplier = 1f;
             if(HasStatus(StatusEffect.Haunted)) {
                 multiplier *= 1.5f;
             }
             if(CurrentShield != null) {
                 multiplier *= CurrentShield.DamageMultiplier;
+                CurrentShield.OnBlock(source, this);
                 if(CurrentShield.BlocksOnce) {
                     CurrentShield = null;
                 }
@@ -69,8 +73,8 @@ public class Monster : GridEntity
             }
         }
 
-        health -= amount;
-        if(health <= 0) {
+        Health -= amount;
+        if(Health <= 0) {
             //Die();
         }
     }
@@ -221,7 +225,7 @@ public class Monster : GridEntity
             Heal(1);
         }
         if(HasStatus(StatusEffect.Poison)) {
-            TakeDamage(1, false);
+            TakeDamage(1, null);
         }
 
         foreach(StatusEffect status in Enum.GetValues(typeof(StatusEffect))) {

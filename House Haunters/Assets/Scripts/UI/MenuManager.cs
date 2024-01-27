@@ -114,6 +114,8 @@ public class MenuManager : MonoBehaviour
 
             if(SelectPressed()) {
                 controller.EndTurn();
+                selectedMove = null;
+                selectedMonster = null;
             }
             return;
         }
@@ -168,7 +170,7 @@ public class MenuManager : MonoBehaviour
     }
 
     private bool SelectPressed() {
-        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+        return !AnimationsManager.Instance.Animating && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
     }
 
     private bool BackPressed() {

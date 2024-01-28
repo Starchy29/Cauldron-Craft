@@ -30,7 +30,11 @@ public class MonstersData
 
         monsterTypes[(int)MonsterName.Temporary] = new MonsterType(PrefabContainer.Instance.TempMonsterPrefab,
             Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
-            10, 3
+            10, 3, new Move[3] {
+                new Attack("Attack", 0, 4, new RangeSelector(3, false, false)),
+                new Attack("", 0, 4, new RangeSelector(0, false, false)),
+                new Attack("", 0, 4, new RangeSelector(0, false, false))
+            }
         );
     }
 

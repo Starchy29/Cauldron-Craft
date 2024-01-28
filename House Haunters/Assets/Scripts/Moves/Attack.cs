@@ -9,7 +9,9 @@ public class Attack : Move
     public delegate void HitTrigger(Monster user, Monster target, int healthLost);
     private HitTrigger OnHit;
 
-    public Attack(int cooldown, int damage, ISelector selection, HitTrigger hitEffect = null) : base(cooldown, MoveType.Attack, Targets.Enemies, selection) {
+    public Attack(string name, int cooldown, int damage, ISelector selection, string description = "", HitTrigger hitEffect = null) 
+        : base(name, cooldown, MoveType.Attack, Targets.Enemies, selection, description)
+    {
         Damage = damage;
         OnHit = hitEffect;
     }
@@ -18,6 +20,9 @@ public class Attack : Move
         Monster hitMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
         int startHealth = hitMonster.Health;
         hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier), user);
-        OnHit(user, hitMonster, hitMonster.Health < startHealth ? startHealth - hitMonster.Health : 0);
+
+        if(OnHit != null) {
+            OnHit(user, hitMonster, hitMonster.Health < startHealth ? startHealth - hitMonster.Health : 0);
+        }
     }
 }

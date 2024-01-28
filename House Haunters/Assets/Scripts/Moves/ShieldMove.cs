@@ -9,8 +9,8 @@ public class ShieldMove : Move
     public delegate void BonusEffect(Monster user, Monster shielded);
     private BonusEffect OnUse;
     
-    public ShieldMove(int cooldown, ISelector selection, Shield effect, BonusEffect bonusEffect = null) 
-        : base(cooldown, MoveType.Shield, Targets.Allies, selection) 
+    public ShieldMove(string name, int cooldown, ISelector selection, Shield effect, string description = "", BonusEffect bonusEffect = null) 
+        : base(name, cooldown, MoveType.Shield, Targets.Allies, selection, description) 
     {
         AppliedShield = effect;
     }
@@ -18,6 +18,9 @@ public class ShieldMove : Move
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
         Monster selectedMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
         selectedMonster.ApplyShield(new Shield(AppliedShield.StrengthLevel, AppliedShield.Duration, AppliedShield.BlocksStatus, AppliedShield.BlocksOnce));
-        OnUse(user, selectedMonster);
+        
+        if(OnUse != null) {
+            OnUse(user, selectedMonster);
+        }
     }
 }

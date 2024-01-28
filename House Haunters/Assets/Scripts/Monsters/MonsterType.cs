@@ -19,13 +19,16 @@ public class MonsterType
     public Move[] Moves { get; private set; }
     public bool Flying { get; private set; }
 
-    public MonsterType(GameObject prefab, Ingredient ingredient1, Ingredient ingredient2, Ingredient ingredient3, int health, int speed) {
+    public MonsterType(GameObject prefab, Ingredient ingredient1, Ingredient ingredient2, Ingredient ingredient3, int health, int speed, Move[] specialMoves) {
         recipe = new Ingredient[3] { ingredient1, ingredient2, ingredient3 };
         Health = health;
         Speed = speed;
         Prefab = prefab;
 
-        Moves = new Move[4];
+        Moves = new Move[specialMoves.Length + 1];
         Moves[0] = new MovementAbility();
+        for(int i = 1; i < Moves.Length; i++) {
+            Moves[i] = specialMoves[i-1];
+        }
     }
 }

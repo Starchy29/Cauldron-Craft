@@ -5,9 +5,18 @@ using UnityEngine;
 // selects a single item within range
 public class RangeSelector : ISelector
 {
-    public MonsterValue RangeGetter { get; private set; }
+
+    private MonsterValue RangeGetter;
+    private int simpleRange;
+
     public bool SelfSelectable { get; private set; }
     public bool NeedsLineOfSight { get; private set; }
+
+    public RangeSelector(int range, bool selfSelectable, bool needsLineOfSight) {
+        simpleRange = range;
+        SelfSelectable = selfSelectable;
+        NeedsLineOfSight = needsLineOfSight;
+    }
 
     public RangeSelector(MonsterValue rangeFunction, bool selfSelectable, bool needsLineOfSight) {
         RangeGetter = rangeFunction;
@@ -17,7 +26,11 @@ public class RangeSelector : ISelector
 
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
         LevelGrid level = LevelGrid.Instance;
-        return LevelGrid.Instance.GetTilesInRange(user.Tile, RangeGetter(user), false)
+        return LevelGrid.Instance.GetTilesInRange(user.Tile, GetRange(user), false)
             .Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
+    }
+
+    public int GetRange(Monster user) {
+        return RangeGetter == null ? simpleRange : RangeGetter(user);
     }
 }

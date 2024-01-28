@@ -40,10 +40,6 @@ public class Monster : GridEntity
         RefreshMoves();
     }
 
-    void Update() {
-        
-    }
-
     public void Heal(int amount) {
         if(HasStatus(StatusEffect.Cursed)) {
             return;
@@ -63,7 +59,9 @@ public class Monster : GridEntity
             }
             if(CurrentShield != null) {
                 multiplier *= CurrentShield.DamageMultiplier;
-                CurrentShield.OnBlock(source, this);
+                if(CurrentShield.OnBlock != null) {
+                    CurrentShield.OnBlock(source, this);
+                }
                 if(CurrentShield.BlocksOnce) {
                     CurrentShield = null;
                 }
@@ -75,7 +73,9 @@ public class Monster : GridEntity
 
         Health -= amount;
         if(Health <= 0) {
-            //Die();
+            LevelGrid.Instance.ClearEntity(Tile);
+            Controller.Remove(this);
+            Destroy(gameObject);
         }
     }
 

@@ -26,8 +26,8 @@ public abstract class Move
     public MoveType Type { get; private set; }
     public int Cooldown { get; private set; }
 
-    public string Name { get; set; }
-    public string Description { get; set; }
+    public string Name { get; private set; }
+    public string Description { get; private set; }
 
     private delegate bool FilterCheck(Monster user, Vector2Int tile);
     private static Dictionary<Targets, FilterCheck> TargetFilters = new Dictionary<Targets, FilterCheck>() {
@@ -38,11 +38,13 @@ public abstract class Move
         { Targets.Traversable, IsTraversable }
     };
 
-    public Move(int cooldown, MoveType type, Targets targetType, ISelector selection) {
+    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, string description = "") {
         Cooldown = cooldown;
         this.selection = selection;
         TargetType = targetType;
         Type = type;
+        Name = name;
+        Description = description;
     }
 
     // filters down the selection groups to make sure each option has at least one valid target

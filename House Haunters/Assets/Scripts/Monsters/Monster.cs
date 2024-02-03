@@ -130,9 +130,9 @@ public class Monster : GridEntity
         }
 
         // set up data array for pathfinding
-        PathData[,] distances = new PathData[LevelGrid.height, LevelGrid.width];
-        for(int y = 0; y < LevelGrid.height; y++) {
-            for(int x = 0; x < LevelGrid.width; x++) {
+        PathData[,] distances = new PathData[LevelGrid.Instance.Height, LevelGrid.Instance.Width];
+        for(int y = 0; y < LevelGrid.Instance.Height; y++) {
+            for(int x = 0; x < LevelGrid.Instance.Width; x++) {
                 distances[y, x] = new PathData();
             }
         }

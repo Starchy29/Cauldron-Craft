@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public delegate void MonsterTrigger(Monster monster);
 public delegate void Trigger();
@@ -120,5 +121,11 @@ public static class Global
 
     public static int CalcTileDistance(Vector2Int start, Vector2Int end) {
         return Mathf.Abs(start.x - end.x) + Mathf.Abs(start.y - end.y);
+    }
+
+    public static Rect GetObjectArea(GameObject gObj) {
+        Vector2 middle = gObj.transform.position;
+        Vector2 scale = gObj.transform.lossyScale;
+        return new Rect(middle - scale / 2, scale);
     }
 }

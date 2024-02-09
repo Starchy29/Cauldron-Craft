@@ -11,9 +11,11 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private ControlledButton endTurnButton;
 
     public bool UseKBMouse { get; set; }
+
+    private enum SelectionTarget { Monster, Move, Targets }
+    private SelectionTarget state;
     
     private LevelGrid level;
-    private Camera gameCamera;
     private GameManager gameManager;
     private Team controller;
     private ControlledButton[] moveButtons;
@@ -27,9 +29,9 @@ public class MenuManager : MonoBehaviour
     private int? selectedMove;
 
     void Start() {
+        state = SelectionTarget.Monster;
         UseKBMouse = true;
         level = LevelGrid.Instance;
-        gameCamera = Camera.main;
         gameManager = GameManager.Instance;
         controller = gameManager.PlayerTeam;
 
@@ -41,7 +43,8 @@ public class MenuManager : MonoBehaviour
 
     void Update() {
         // reset all visibility
-        Vector3 mousePos = GetMousePosition();
+        InputManager input = InputManager.Instance;
+        Vector3 mousePos = InputManager.Instance.GetMousePosition();
         TileSelector.SetActive(false);
         moveMenu.SetActive(false);
         endTurnButton.Disabled = true;
@@ -49,11 +52,11 @@ public class MenuManager : MonoBehaviour
 
         //  target selection
         if(selectedMove.HasValue) {
-            Vector2 closestMidpoint = tileGroupCenters.Min((Vector2 spot) => { return Vector2.Distance(GetMousePosition(), spot); });
+            Vector2 closestMidpoint = tileGroupCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
             int hoveredTargetIndex = tileGroupCenters.IndexOf(closestMidpoint).Value;
             level.ColorTiles(tileGroups[hoveredTargetIndex], TileHighlighter.State.Selectable);
 
-            if(SelectPressed()) {
+            if(input.SelectPressed()) {
                 // use the move on the hovered target
                 selectedMonster.UseMove(selectedMove.Value, tileGroups[hoveredTargetIndex]);
                 selectedMove = null;
@@ -61,7 +64,7 @@ public class MenuManager : MonoBehaviour
                 level.ColorTiles(null, TileHighlighter.State.Highlighted);
                 level.ColorTiles(null, TileHighlighter.State.Selectable);
             }
-            else if(BackPressed()) {
+            else if(input.BackPressed()) {
                 // go back to move selection of the selected monster
                 selectedMove = null;
                 level.ColorTiles(null, TileHighlighter.State.Highlighted);
@@ -85,7 +88,7 @@ public class MenuManager : MonoBehaviour
                 if(hoveredMove.HasValue) {
                     moveButtons[hoveredMove.Value].Hovered = true;
 
-                    if(moveButtons[hoveredMove.Value].Disabled == false && SelectPressed()) {
+                    if(moveButtons[hoveredMove.Value].Disabled == false && input.SelectPressed()) {
                         selectedMove = hoveredMove.Value;
                         tileGroups = selectedMonster.GetMoveOptions(selectedMove.Value);
                         tileGroupCenters = DetermineCenters(tileGroups);
@@ -96,7 +99,7 @@ public class MenuManager : MonoBehaviour
                         }
                         level.ColorTiles(allTiles, TileHighlighter.State.Highlighted);
                     }
-                    else if(BackPressed()) {
+                    else if(input.BackPressed()) {
                         selectedMonster = null;
                     }
 
@@ -104,7 +107,7 @@ public class MenuManager : MonoBehaviour
                 }
             }
 
-            if(BackPressed()) {
+            if(input.BackPressed()) {
                 selectedMonster = null;
             }
         }
@@ -112,7 +115,7 @@ public class MenuManager : MonoBehaviour
         if(endTurnButton.IsHovered(mousePos)) {
             endTurnButton.Hovered = true;
 
-            if(SelectPressed()) {
+            if(input.SelectPressed()) {
                 controller.EndTurn();
                 selectedMove = null;
                 selectedMonster = null;
@@ -133,7 +136,7 @@ public class MenuManager : MonoBehaviour
             return;
         }
 
-        if(SelectPressed() && hovered is Monster && gameManager.CurrentTurn == controller) {
+        if(input.SelectPressed() && hovered is Monster && gameManager.CurrentTurn == controller) {
             selectedMonster = (Monster)hovered;
 
             // determine which moves are usable
@@ -163,18 +166,5 @@ public class MenuManager : MonoBehaviour
         }
 
         return null;
-    }
-
-    private Vector3 GetMousePosition() {
-        return gameCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-    }
-
-    private bool SelectPressed() {
-        return !AnimationsManager.Instance.Animating && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-    }
-
-    private bool BackPressed() {
-        return Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame
-            || Keyboard.current != null && (Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.backspaceKey.wasPressedThisFrame);
     }
 }

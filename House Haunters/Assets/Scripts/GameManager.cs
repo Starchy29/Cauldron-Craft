@@ -30,7 +30,6 @@ public class GameManager : MonoBehaviour
 
     void Update() {
         if(CurrentTurn == EnemyTeam && !animator.Animating) {
-            // TO DO: wait for animations to end before choosing the next move
             enemyAI.ChooseMove(EnemyTeam);
         }
     }

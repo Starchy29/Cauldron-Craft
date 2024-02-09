@@ -52,6 +52,16 @@ public abstract class Move
         return selection.GetSelectionGroups(user).Filter((List<Vector2Int> selectionGroup) => { return HasValidTarget(user, selectionGroup); });
     }
 
+    // allows the UI to show the range of moves, duplicates are allowed
+    public List<Vector2Int> GetCoveredArea(Monster user) {
+        List<List<Vector2Int>> options = selection.GetSelectionGroups(user);
+        List<Vector2Int> result = new List<Vector2Int>();
+        foreach(List<Vector2Int> option in options) {
+            result.AddRange(option);
+        }
+        return result;
+    }
+
     private bool HasValidTarget(Monster user, List<Vector2Int> selectionGroup) {
         foreach(Vector2Int tile in selectionGroup) {
             if(TargetFilters[TargetType](user, tile)) {
@@ -66,11 +76,14 @@ public abstract class Move
             tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
         }
 
+        QueueAnimations(user, tiles);
+
         foreach(Vector2Int tile in tiles) {
             ApplyEffect(user, tile);
         }
     }
 
+    protected virtual void QueueAnimations(Monster user, List<Vector2Int> tiles) { }
     protected abstract void ApplyEffect(Monster user, Vector2Int tile);
 
     #region filter functions

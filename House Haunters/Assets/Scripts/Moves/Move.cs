@@ -43,7 +43,7 @@ public abstract class Move
         this.selection = selection;
         TargetType = targetType;
         Type = type;
-        Name = name;
+        Name = name == null? "" : name;
         Description = description;
     }
 
@@ -54,7 +54,7 @@ public abstract class Move
 
     // allows the UI to show the range of moves, duplicates are allowed
     public List<Vector2Int> GetCoveredArea(Monster user) {
-        List<List<Vector2Int>> options = selection.GetSelectionGroups(user);
+        List<List<Vector2Int>> options = TargetType == Targets.Traversable ? GetOptions(user) : selection.GetSelectionGroups(user);
         List<Vector2Int> result = new List<Vector2Int>();
         foreach(List<Vector2Int> option in options) {
             result.AddRange(option);

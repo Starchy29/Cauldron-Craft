@@ -11,11 +11,12 @@ public class Monster : GridEntity
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
 
-    private int[] cooldowns;
     private Dictionary<StatusEffect, int> effectDurations;
 
     public Trigger OnTurnStart;
     public Trigger OnTurnEnd;
+
+    public int[] Cooldowns {  get; private set; }
     public Shield CurrentShield { get; private set; }
     public int MovesLeft { get; private set; }
     public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Energy) ? -1 : 0); } }
@@ -26,7 +27,7 @@ public class Monster : GridEntity
     void Start() {
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         Health = Stats.Health;
-        cooldowns = new int[Stats.Moves.Length];
+        Cooldowns = new int[Stats.Moves.Length];
 
         OnTurnStart += RefreshMoves;
         OnTurnEnd += EndTurn;
@@ -103,13 +104,13 @@ public class Monster : GridEntity
 
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
         Stats.Moves[moveSlot].Use(this, tiles);
-        cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
+        Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
         MovesLeft--;
     }
 
     public bool CanUse(int moveSlot) {
         Move move = Stats.Moves[moveSlot];
-        return move != null && MovesLeft > 0 && cooldowns[moveSlot] == 0 && !(HasStatus(StatusEffect.Frozen) && move.Type == Move.MoveType.Movement) 
+        return move != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && !(HasStatus(StatusEffect.Frozen) && move.Type == Move.MoveType.Movement) 
             && GetMoveOptions(moveSlot).Count > 0;
     }
 
@@ -206,9 +207,9 @@ public class Monster : GridEntity
 
     private void EndTurn() {
         // decrease cooldowns
-        for(int i = 0; i < cooldowns.Length; i++) {
-            if(cooldowns[i] > 0) {
-                cooldowns[i]--;
+        for(int i = 0; i < Cooldowns.Length; i++) {
+            if(Cooldowns[i] > 0) {
+                Cooldowns[i]--;
             }
         }
 

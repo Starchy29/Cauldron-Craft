@@ -42,17 +42,13 @@ public class LevelGrid : MonoBehaviour
                 environmentGrid[y, x] = typeToData[tile == null ? TileType.Ground : tile.Type];
 
                 tileHighlights[y, x] = Instantiate(TileHighlightPrefab).GetComponent<TileHighlighter>();
+                tileHighlights[y, x].transform.SetParent(transform);
                 tileHighlights[y, x].transform.position = Tiles.GetCellCenterWorld(new Vector3Int(x, y, 0));
             }
         }
 
         Camera.main.transform.position = new Vector3(Width / 2, Height / 2, Camera.main.transform.position.z);
         Debug.Log("moved camera from LevelGrid.cs");
-    }
-
-    
-    void Update() {
-        
     }
 
     public List<Vector2Int> GetTilesInRange(Vector2Int spot, int range, bool squareArea) {

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5460191317616618675}
   - component: {fileID: 7328903970159804700}
-  - component: {fileID: 4498473553606685831}
+  - component: {fileID: 7659357599667865941}
   m_Layer: 0
   m_Name: Move Button
   m_TagString: Untagged
@@ -85,7 +85,7 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &4498473553606685831
+--- !u!114 &7659357599667865941
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -94,6 +94,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 421641579715167971}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb97374ed83c8224f96715e16334604a, type: 3}
+  m_Script: {fileID: 11500000, guid: 3fc2c18b06f710b4dbb1ab3c2968309d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

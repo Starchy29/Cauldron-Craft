@@ -5,9 +5,9 @@ using UnityEngine;
 public class TileHighlighter : MonoBehaviour
 {
     public enum State {
-        Hovered,
-        Highlighted,
-        Selectable,
+        Highlighted, // just for informatiom
+        Selectable, // shows what can be selected
+        Hovered, // shows that something will be selected if the mouse is clicked
         Selected
     }
 
@@ -43,13 +43,13 @@ public class TileHighlighter : MonoBehaviour
         if(selected) {
             sprite.color = new Color(0f, 0.2f, 0.8f, ALPHA); // blue
         }
-        else if(selectable) {
+        else if(hovered) {
             sprite.color = new Color(0f, 0.8f, 0.2f, ALPHA); // green
         }
-        else if(highlighted) {
+        else if(selectable) {
             sprite.color = new Color(0.0f, 0.8f, 0.8f, ALPHA); // light blue
         }
-        else if(hovered) {
+        else if(highlighted) {
             sprite.color = new Color(0.8f, 0.8f, 0.0f, ALPHA); // yellow
         }
         else {

@@ -516,11 +516,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TileHighlightPrefab: {fileID: 7189623677399933824, guid: 9993292c70a13144a8c02647316b6f4c, type: 3}
---- !u!1 &241239049 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7047402996827753541, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
-  m_PrefabInstance: {fileID: 6529777820429757750}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &399553500
 GameObject:
   m_ObjectHideFlags: 0
@@ -847,7 +842,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TileSelector: {fileID: 1032072155}
-  moveMenu: {fileID: 241239049}
+  moveMenu: {fileID: 6529777820429757751}
   endTurnButton: {fileID: 20864254}
 --- !u!4 &1955350966
 Transform:
@@ -971,3 +966,14 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
+--- !u!114 &6529777820429757751 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3780115821061894427, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
+  m_PrefabInstance: {fileID: 6529777820429757750}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4fb520797e40ba429a04ca76835c81a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

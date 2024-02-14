@@ -23,10 +23,10 @@ public class Shield
     public delegate void BlockEffect(Monster attacker, Monster blocker);
     public BlockEffect OnBlock { get; private set; }
 
-    public Strength StrengthLevel { get; set; }
+    public Strength StrengthLevel { get; private set; }
     public int Duration { get; set; }
-    public bool BlocksStatus { get; set; }
-    public bool BlocksOnce { get; set; }
+    public bool BlocksStatus { get; private set; }
+    public bool BlocksOnce { get; private set; }
     public float DamageMultiplier { get { return strengthMultipliers[StrengthLevel]; } }
 
     public Shield(Strength strength, int duration, bool blocksStatus, bool blocksOnce, BlockEffect blockEffect = null) {

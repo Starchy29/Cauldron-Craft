@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 6758876197317274112}
   - component: {fileID: 3780115821061894427}
   m_Layer: 0
-  m_Name: Move Selector
+  m_Name: Move Selection Menu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -19,7 +19,7 @@ public class ControlledButton : MonoBehaviour
         set { disabled = value; UpdateColor(); }
     }
 
-    void Start()
+    void Awake()
     {
         sprite = GetComponent<SpriteRenderer>();
     }

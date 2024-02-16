@@ -17,7 +17,7 @@ public class Attack : Move
     }
 
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
-        Monster hitMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
+        Monster hitMonster = LevelGrid.Instance.GetMonster(tile);
         int startHealth = hitMonster.Health;
         hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier), user);
 

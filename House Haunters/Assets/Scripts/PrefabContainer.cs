@@ -11,4 +11,5 @@ public class PrefabContainer : MonoBehaviour
     }
 
     public GameObject TempMonsterPrefab;
+    public GameObject TempMonsterProjectile;
 }

@@ -4,17 +4,39 @@ using UnityEngine;
 
 public class ProjectileAnimator : IMoveAnimator
 {
-    public bool Completed { get { return false; } }
+    private float speed;
+    private Vector3 endPosition;
+    private GameObject projectile;
+    private GameObject destroyParticlePrefab;
+    private bool finished;
 
-    public ProjectileAnimator(GameObject prefab, Vector2 startPosition, Vector2 endPosition, float speed) {
+    public bool Completed { get { return finished; } }
 
+    public ProjectileAnimator(GameObject projectilePrefab, GameObject destroyParticlePrefab, Vector3 startPosition, Vector3 endPosition, float speed) {
+        this.speed = speed;
+        this.endPosition = endPosition;
+        this.destroyParticlePrefab = destroyParticlePrefab;
+
+        projectile = GameObject.Instantiate(projectilePrefab);
+        projectile.transform.position = startPosition;
+        projectile.SetActive(false);
     }
 
     public void Start() {
-        throw new NotImplementedException();
+        projectile.SetActive(true);
     }
 
     public void Update(float deltaTime) {
-        throw new NotImplementedException();
+        Vector3 direction = endPosition - projectile.transform.position;
+        projectile.transform.position += speed * deltaTime * direction.normalized;
+
+        // check if passed the target
+        if(Vector3.Dot(direction, endPosition - projectile.transform.position) <= 0) {
+            finished = true;
+            GameObject.Destroy(projectile);
+            if(destroyParticlePrefab != null) {
+                GameObject.Instantiate(destroyParticlePrefab).transform.position = endPosition;
+            }
+        }
     }
 }

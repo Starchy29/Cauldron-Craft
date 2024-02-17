@@ -28,9 +28,9 @@ public class MonstersData
     private MonstersData() {
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
-        monsterTypes[(int)MonsterName.Temporary] = new MonsterType(PrefabContainer.Instance.TempMonsterPrefab,
-            Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
-            10, 3, new Move[3] {
+        monsterTypes[(int)MonsterName.Temporary] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+            10, 3,
+            new Move[3] {
                 new Attack("Attack", 0, 3, new RangeSelector(4, false, true), AnimateProjectile(PrefabContainer.Instance.TempMonsterProjectile, null, 8.0f)),
                 new Attack("", 0, 4, new RangeSelector(0, false, false), AnimateProjectile(PrefabContainer.Instance.TempMonsterProjectile, null, 5.0f)),
                 new Attack("", 0, 4, new RangeSelector(0, false, false), AnimateProjectile(PrefabContainer.Instance.TempMonsterProjectile, null, 5.0f))
@@ -42,6 +42,7 @@ public class MonstersData
         return monsterTypes[(int)name];
     }
 
+    // creates the function that queues the animation of a projectile
     private static AnimationQueuer AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed) {
         return (Monster user, List<Vector2Int> tiles) => {
             LevelGrid level = LevelGrid.Instance;

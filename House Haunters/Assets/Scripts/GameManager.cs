@@ -44,12 +44,14 @@ public class GameManager : MonoBehaviour
     }
 
     public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
-        GameObject spawned = Instantiate(MonstersData.Instance.GetMonsterData(monsterType).Prefab);
+        Monster spawned = Instantiate(PrefabContainer.Instance.BaseMonsterPrefab).GetComponent<Monster>();
+        spawned.MonsterType = monsterType;
         LevelGrid.Instance.PlaceEntity(spawned.GetComponent<GridEntity>(), startTile);
         spawned.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)startTile);
         controller.Join(spawned.GetComponent<Monster>());
     }
 
+    // removes the monster from the game state. Destroy the game object is handled by the DeathAnimator
     public void DefeatMonster(Monster defeated) {
         LevelGrid.Instance.ClearEntity(defeated.Tile);
 
@@ -59,7 +61,5 @@ public class GameManager : MonoBehaviour
         else if(defeated.Controller == EnemyTeam) {
             EnemyTeam.Remove(defeated);
         }
-
-        Destroy(defeated);
     }
 }

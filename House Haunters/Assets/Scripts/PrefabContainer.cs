@@ -10,6 +10,6 @@ public class PrefabContainer : MonoBehaviour
         Instance = this;
     }
 
-    public GameObject TempMonsterPrefab;
+    public GameObject BaseMonsterPrefab;
     public GameObject TempMonsterProjectile;
 }

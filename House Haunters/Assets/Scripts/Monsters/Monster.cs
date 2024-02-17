@@ -5,7 +5,8 @@ using System;
 
 public class Monster : GridEntity
 {
-    [SerializeField] private MonsterName monsterType;
+    [SerializeField] private HealthBarScript healthBar;
+    public MonsterName MonsterType { get; set; }
 
     public Team Controller { get; set; }
     public MonsterType Stats { get; private set; }
@@ -25,7 +26,7 @@ public class Monster : GridEntity
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
     void Start() {
-        Stats = MonstersData.Instance.GetMonsterData(monsterType);
+        Stats = MonstersData.Instance.GetMonsterData(MonsterType);
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];
 
@@ -50,6 +51,7 @@ public class Monster : GridEntity
         if(Health > Stats.Health) {
             Health = Stats.Health;
         }
+        AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar));
     }
 
     public void TakeDamage(int amount, Monster source) {
@@ -73,10 +75,12 @@ public class Monster : GridEntity
         }
 
         Health -= amount;
+        AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar));
+
         if(Health <= 0) {
-            LevelGrid.Instance.ClearEntity(Tile);
-            Controller.Remove(this);
-            Destroy(gameObject);
+            Health = 0;
+            GameManager.Instance.DefeatMonster(this);
+            AnimationsManager.Instance.QueueAnimation(new DeathAnimator(this));
         }
     }
 

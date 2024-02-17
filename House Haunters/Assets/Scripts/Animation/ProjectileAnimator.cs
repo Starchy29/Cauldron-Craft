@@ -24,7 +24,6 @@ public class ProjectileAnimator : IMoveAnimator
 
     public void Start() {
         projectile.SetActive(true);
-        Debug.Log("started projectile");
     }
 
     public void Update(float deltaTime) {

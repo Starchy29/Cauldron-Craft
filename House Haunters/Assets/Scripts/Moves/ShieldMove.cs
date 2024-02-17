@@ -9,8 +9,8 @@ public class ShieldMove : Move
     public delegate void BonusEffect(Monster user, Monster shielded);
     private BonusEffect OnUse;
     
-    public ShieldMove(string name, int cooldown, ISelector selection, Shield effect, string description = "", BonusEffect bonusEffect = null) 
-        : base(name, cooldown, MoveType.Shield, Targets.Allies, selection, description) 
+    public ShieldMove(string name, int cooldown, ISelector selection, Shield effect, AnimationQueuer effectAnimation, string description = "", BonusEffect bonusEffect = null) 
+        : base(name, cooldown, MoveType.Shield, Targets.Allies, selection, effectAnimation, description) 
     {
         AppliedShield = effect;
     }

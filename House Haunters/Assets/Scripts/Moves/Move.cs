@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public delegate void AnimationQueuer(Monster user, List<Vector2Int> tiles);
+
 public abstract class Move
 {
     public enum Targets {
@@ -29,6 +31,8 @@ public abstract class Move
     public string Name { get; private set; }
     public string Description { get; private set; }
 
+    private AnimationQueuer effectAnimation;
+
     private delegate bool FilterCheck(Monster user, Vector2Int tile);
     private static Dictionary<Targets, FilterCheck> TargetFilters = new Dictionary<Targets, FilterCheck>() {
         { Targets.Allies, IsAllyOn },
@@ -38,13 +42,14 @@ public abstract class Move
         { Targets.Traversable, IsTraversable }
     };
 
-    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, string description = "") {
+    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, AnimationQueuer effectAnimation, string description = "") {
         Cooldown = cooldown;
         this.selection = selection;
         TargetType = targetType;
         Type = type;
         Name = name == null? "" : name;
         Description = description;
+        this.effectAnimation = effectAnimation;
     }
 
     // filters down the selection groups to make sure each option has at least one valid target
@@ -76,14 +81,15 @@ public abstract class Move
             tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
         }
 
-        QueueAnimations(user, tiles);
+        if(effectAnimation != null) {
+            effectAnimation(user, tiles);
+        }
 
         foreach(Vector2Int tile in tiles) {
             ApplyEffect(user, tile);
         }
     }
 
-    protected virtual void QueueAnimations(Monster user, List<Vector2Int> tiles) { }
     protected abstract void ApplyEffect(Monster user, Vector2Int tile);
 
     #region filter functions

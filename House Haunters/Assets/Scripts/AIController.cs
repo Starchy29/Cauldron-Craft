@@ -6,11 +6,20 @@ public class AIController
 {
     public AIController() {}
 
+    // chooses 1 move at a time
     public void ChooseMove(Team team) {
         foreach(Monster monster in team.Teammates) {
-            List<List<Vector2Int>> options = monster.GetMoveOptions(0);
-            monster.UseMove(0, options[Random.Range(0, options.Count)]);
+            List<int> moveOptions = monster.GetUsableMoveSlots();
+            if(moveOptions.Count == 0) {
+                continue;
+            }
+
+            int chosenMove = moveOptions[Random.Range(0, moveOptions.Count)];
+            List<List<Vector2Int>> targets = monster.GetMoveOptions(chosenMove);
+            monster.UseMove(chosenMove, targets[Random.Range(0, targets.Count)]);
+            return;
         }
-        GameManager.Instance.PassTurn(team);
+
+        team.EndTurn();
     }
 }

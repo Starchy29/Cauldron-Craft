@@ -118,6 +118,16 @@ public class Monster : GridEntity
             && GetMoveOptions(moveSlot).Count > 0;
     }
 
+    public List<int> GetUsableMoveSlots() {
+        List<int> result = new List<int>();
+        for(int i = 0; i < Stats.Moves.Length; i++) {
+            if(CanUse(i)) {
+                result.Add(i);
+            }
+        }
+        return result;
+    }
+
     public void ApplyShield(Shield shield) {
         CurrentShield = shield;
     }

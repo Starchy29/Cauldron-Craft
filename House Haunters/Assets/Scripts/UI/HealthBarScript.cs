@@ -31,7 +31,7 @@ public class HealthBarScript : MonoBehaviour
             return;
         }
 
-        float change = deltaTime * (Mathf.Sign(difference) * 0.3f + 3f * difference / maxWidth);
+        float change = deltaTime * (Mathf.Sign(difference) * 0.3f + 5f * difference / maxWidth);
         if(Mathf.Abs(change) > Mathf.Abs(difference)) {
             currentWidth = targetWidth;
         } else {
@@ -43,7 +43,7 @@ public class HealthBarScript : MonoBehaviour
         scale.x = currentWidth;
         VisualBar.transform.localScale = scale;
         Vector3 position = VisualBar.transform.localPosition;
-        position.x = localLeft + currentWidth /2f;
+        position.x = localLeft + currentWidth / 2f;
         VisualBar.transform.localPosition = position;
 
         Color newColor = fullHue;

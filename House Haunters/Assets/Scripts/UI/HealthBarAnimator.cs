@@ -6,7 +6,7 @@ public class HealthBarAnimator : IMoveAnimator
 {
     public bool Completed { get { return endPause <= 0; } }
 
-    private float endPause = 0.6f;
+    private float endPause = 0.4f;
     private HealthBarScript healthBar;
 
     public HealthBarAnimator(HealthBarScript healthBar) {

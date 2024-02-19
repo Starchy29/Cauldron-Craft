@@ -76,6 +76,7 @@ public class Monster : GridEntity
                     CurrentShield.OnBlock(source, this);
                 }
                 if(CurrentShield.BlocksOnce) {
+                    Destroy(CurrentShield.Visual);
                     CurrentShield = null;
                 }
             }
@@ -139,7 +140,8 @@ public class Monster : GridEntity
     }
 
     public void ApplyShield(Shield shield) {
-        CurrentShield = shield;
+        CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksStatus, shield.BlocksOnce, Instantiate(shield.Visual), shield.OnBlock);
+        CurrentShield.Visual.transform.SetParent(transform, false);
     }
 
     public bool CanStandOn(Vector2Int tile) {
@@ -233,6 +235,7 @@ public class Monster : GridEntity
         if(CurrentShield != null) {
             CurrentShield.Duration--;
             if(CurrentShield.Duration <= 0) {
+                Destroy(CurrentShield.Visual);
                 CurrentShield = null;
             }
         }

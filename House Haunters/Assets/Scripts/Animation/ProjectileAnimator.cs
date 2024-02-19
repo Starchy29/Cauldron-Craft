@@ -5,6 +5,7 @@ using UnityEngine;
 public class ProjectileAnimator : IMoveAnimator
 {
     private float speed;
+    private Vector3 direction;
     private Vector3 endPosition;
     private GameObject projectile;
     private GameObject destroyParticlePrefab;
@@ -16,6 +17,7 @@ public class ProjectileAnimator : IMoveAnimator
         this.speed = speed;
         this.endPosition = endPosition;
         this.destroyParticlePrefab = destroyParticlePrefab;
+        direction = (endPosition - startPosition).normalized;
 
         projectile = GameObject.Instantiate(projectilePrefab);
         projectile.transform.position = startPosition;
@@ -27,7 +29,6 @@ public class ProjectileAnimator : IMoveAnimator
     }
 
     public void Update(float deltaTime) {
-        Vector3 direction = endPosition - projectile.transform.position;
         projectile.transform.position += speed * deltaTime * direction.normalized;
 
         // check if passed the target

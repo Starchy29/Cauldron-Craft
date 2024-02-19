@@ -26,14 +26,15 @@ public class MonstersData
 
     // define the stats and abilities of all monster types
     private MonstersData() {
+        PrefabContainer prefabs = PrefabContainer.Instance;
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
         monsterTypes[(int)MonsterName.Temporary] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             10, 3,
             new Move[3] {
-                new Attack("Attack", 0, 3, new RangeSelector(4, false, true), AnimateProjectile(PrefabContainer.Instance.TempMonsterProjectile, null, 8.0f)),
-                new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, PrefabContainer.Instance.ExampleZone, null), null, ""),
-                new ShieldMove("Block", 1, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false), null)
+                new Attack("Attack", 0, 3, new RangeSelector(4, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 8.0f)),
+                new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, prefabs.ExampleZone, null), null, ""),
+                new ShieldMove("Block", 2, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false, prefabs.ExampleShield), null)
             }
         ); ;
     }

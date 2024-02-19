@@ -25,15 +25,17 @@ public class Shield
 
     public Strength StrengthLevel { get; private set; }
     public int Duration { get; set; }
+    public GameObject Visual { get; private set; }
     public bool BlocksStatus { get; private set; }
     public bool BlocksOnce { get; private set; }
     public float DamageMultiplier { get { return strengthMultipliers[StrengthLevel]; } }
 
-    public Shield(Strength strength, int duration, bool blocksStatus, bool blocksOnce, BlockEffect blockEffect = null) {
+    public Shield(Strength strength, int duration, bool blocksStatus, bool blocksOnce, GameObject visual, BlockEffect blockEffect = null) {
         StrengthLevel = strength;
         Duration = duration;
         BlocksStatus = blocksStatus;
         BlocksOnce = blocksOnce;
         OnBlock = blockEffect;
+        Visual = visual;
     }
 }

@@ -27,7 +27,7 @@ public class TileAffector
         visual = GameObject.Instantiate(effect.prefab);
         visual.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
 
-        controller.OnTurnEnd += DecreaseDuration;
+        controller.OnTurnStart += DecreaseDuration;
     }
 
     private void DecreaseDuration() {

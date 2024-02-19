@@ -9,6 +9,7 @@ public class Team
     public List<Monster> Teammates { get; private set; }
     public Dictionary<Ingredient, int> Resources { get; private set; }
     public event Trigger OnTurnEnd;
+    public event Trigger OnTurnStart;
 
     public Team() {
         Teammates = new List<Monster>();
@@ -27,8 +28,10 @@ public class Team
 
     public void StartTurn() {
         foreach(Monster teammate in Teammates) {
-            teammate.OnTurnStart();
+            teammate.StartTurn();
         }
+
+        OnTurnStart?.Invoke();
     }
 
     public void EndTurn() {
@@ -37,7 +40,7 @@ public class Team
         }
 
         foreach(Monster teammate in Teammates) {
-            teammate.OnTurnEnd();
+            teammate.EndTurn();
         }
 
         OnTurnEnd?.Invoke();

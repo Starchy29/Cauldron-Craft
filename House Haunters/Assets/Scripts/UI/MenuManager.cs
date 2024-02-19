@@ -90,7 +90,7 @@ public class MenuManager : MonoBehaviour
                 }
                 else if(input.BackPressed()) {
                     // go back to move selection of the selected monster
-                    state = SelectionTarget.Monster;
+                    state = SelectionTarget.Move;
                     moveMenu.gameObject.SetActive(true);
                     level.ColorTiles(null, TileHighlighter.State.Hovered);
                     level.ColorTiles(null, TileHighlighter.State.Selectable);

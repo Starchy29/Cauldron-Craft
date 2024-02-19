@@ -32,10 +32,10 @@ public class MonstersData
             10, 3,
             new Move[3] {
                 new Attack("Attack", 0, 3, new RangeSelector(4, false, true), AnimateProjectile(PrefabContainer.Instance.TempMonsterProjectile, null, 8.0f)),
-                new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 2), new TileEffect(StatusEffect.Poison, 0, 4, PrefabContainer.Instance.ExampleZone, null), null, ""),
-                new Attack("", 0, 4, new RangeSelector(0, false, false), AnimateProjectile(PrefabContainer.Instance.TempMonsterProjectile, null, 5.0f))
+                new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, PrefabContainer.Instance.ExampleZone, null), null, ""),
+                new ShieldMove("Block", 1, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false), null)
             }
-        );
+        ); ;
     }
 
     public MonsterType GetMonsterData(MonsterName name) {

@@ -14,8 +14,8 @@ public class Monster : GridEntity
 
     private Dictionary<StatusEffect, int> effectDurations;
 
-    public Trigger OnTurnStart;
-    public Trigger OnTurnEnd;
+    public event Trigger OnTurnStart;
+    public event Trigger OnTurnEnd;
 
     public int[] Cooldowns {  get; private set; }
     public Shield CurrentShield { get; private set; }
@@ -31,7 +31,9 @@ public class Monster : GridEntity
         Cooldowns = new int[Stats.Moves.Length];
 
         OnTurnStart += RefreshMoves;
-        OnTurnEnd += EndTurn;
+        OnTurnStart += ReduceShield;
+        OnTurnEnd += DecreaseCooldowns;
+        OnTurnEnd += UpdateStatuses;
 
         StatusEffect[] statuses = (StatusEffect[])Enum.GetValues(typeof(StatusEffect));
         effectDurations = new Dictionary<StatusEffect, int>(statuses.Length);
@@ -40,6 +42,14 @@ public class Monster : GridEntity
         }
 
         RefreshMoves();
+    }
+
+    public void StartTurn() {
+        OnTurnStart();
+    }
+
+    public void EndTurn() {
+        OnTurnEnd();
     }
 
     public void Heal(int amount) {
@@ -219,23 +229,16 @@ public class Monster : GridEntity
         MovesLeft = MaxMoves;
     }
 
-    private void EndTurn() {
-        // decrease cooldowns
-        for(int i = 0; i < Cooldowns.Length; i++) {
-            if(Cooldowns[i] > 0) {
-                Cooldowns[i]--;
-            }
-        }
-
-        // reduce the shield duration
+    private void ReduceShield() {
         if(CurrentShield != null) {
             CurrentShield.Duration--;
             if(CurrentShield.Duration <= 0) {
                 CurrentShield = null;
             }
         }
+    }
 
-        // handle status effects
+    private void UpdateStatuses() {
         if(HasStatus(StatusEffect.Regeneration)) {
             Heal(1);
         }
@@ -246,6 +249,14 @@ public class Monster : GridEntity
         foreach(StatusEffect status in Enum.GetValues(typeof(StatusEffect))) {
             if(effectDurations[status] > 0) {
                 effectDurations[status]--;
+            }
+        }
+    }
+
+    private void DecreaseCooldowns() {
+        for(int i = 0; i < Cooldowns.Length; i++) {
+            if(Cooldowns[i] > 0) {
+                Cooldowns[i]--;
             }
         }
     }

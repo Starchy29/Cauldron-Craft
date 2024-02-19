@@ -84,6 +84,10 @@ public class LevelGrid : MonoBehaviour
         return environmentGrid[tile.y, tile.x];
     }
 
+    public void SetTileAffect(Vector2Int tile, TileAffector effect) {
+        environmentGrid[tile.y, tile.x].CurrentEffect = effect;
+    }
+
     public bool IsInGrid(Vector2Int tile) {
         return tile.x >= 0 && tile.y >= 0 && tile.x < Width && tile.y < Height;
     }

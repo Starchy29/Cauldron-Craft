@@ -40,7 +40,7 @@ public class Team
             teammate.OnTurnEnd();
         }
 
-        OnTurnEnd();
+        OnTurnEnd?.Invoke();
 
         GameManager.Instance.PassTurn(this);
     }

@@ -54,7 +54,9 @@ public abstract class Move
 
     // filters down the selection groups to make sure each option has at least one valid target
     public List<List<Vector2Int>> GetOptions(Monster user) {
-        return selection.GetSelectionGroups(user).Filter((List<Vector2Int> selectionGroup) => { return HasValidTarget(user, selectionGroup); });
+        return selection.GetSelectionGroups(user)
+            .Map((List<Vector2Int> group) => { return group.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); }); })
+            .Filter((List<Vector2Int> selectionGroup) => { return selectionGroup.Count > 0; });
     }
 
     // allows the UI to show the range of moves, duplicates are allowed
@@ -67,20 +69,7 @@ public abstract class Move
         return result;
     }
 
-    private bool HasValidTarget(Monster user, List<Vector2Int> selectionGroup) {
-        foreach(Vector2Int tile in selectionGroup) {
-            if(TargetFilters[TargetType](user, tile)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void Use(Monster user, List<Vector2Int> tiles) {
-        if(TargetType != Targets.Traversable) { // avoid pathfinding for an already validated path
-            tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
-        }
-
         if(effectAnimation != null) {
             effectAnimation(user, tiles);
         }

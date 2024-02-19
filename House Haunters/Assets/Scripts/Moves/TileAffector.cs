@@ -15,7 +15,7 @@ public class TileAffector
     public MonsterTrigger LandEffect { get { return Effect.landEffect; } }
 
     public static void ApplyTileEffect(Team controller, TileEffect effect, Vector2Int tile) {
-        LevelGrid.Instance.GetTile(tile).CurrentEffect = new TileAffector(controller, effect, tile);
+        LevelGrid.Instance.SetTileAffect(tile, new TileAffector(controller, effect, tile));
     }
 
     // create a tile effect in the level
@@ -23,6 +23,7 @@ public class TileAffector
         Controller = controller;
         TurnsLeft = effect.duration;
         this.tile = tile;
+        Effect = effect;
         visual = GameObject.Instantiate(effect.prefab);
         visual.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
 
@@ -34,7 +35,7 @@ public class TileAffector
         if(TurnsLeft <= 0) {
             GameObject.Destroy(visual);
             Controller.OnTurnEnd -= DecreaseDuration;
-            LevelGrid.Instance.GetTile(tile).CurrentEffect = null;
+            LevelGrid.Instance.SetTileAffect(tile, null);
         }
     }
 }

@@ -86,7 +86,7 @@ public class Monster : GridEntity
 
     public bool HasStatus(StatusEffect status) {
         TileAffector tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
-        return effectDurations[status] > 0 || (tileEffect != null && tileEffect.AppliedStatus == status);
+        return effectDurations[status] > 0 || (tileEffect != null && tileEffect.Controller != Controller && tileEffect.AppliedStatus == status);
     }
 
     public void ApplyStatus(StatusEffect status, int duration) {

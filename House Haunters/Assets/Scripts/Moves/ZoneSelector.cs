@@ -10,13 +10,19 @@ public class ZoneSelector : ISelector
 
     private LevelGrid level;
 
+    public ZoneSelector(int reachRadius, int width) {
+        Radius = reachRadius;
+        Width = width;
+    }
+
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
         level = LevelGrid.Instance;
         List<List<Vector2Int>> groups = new List<List<Vector2Int>>();
 
-        for(int x = -Radius; x <= Radius - Width; x++) {
-            for(int y = -Radius; y <= Radius - Width; y++) {
-                List<Vector2Int> group = GenerateSquare(new Vector2Int(x, y));
+        for(int x = -Radius; x <= Radius - Width + 1; x++) {
+            for(int y = -Radius; y <= Radius - Width + 1; y++) {
+                Vector2Int bottomLeft = user.Tile + new Vector2Int(x, y);
+                List<Vector2Int> group = GenerateSquare(bottomLeft);
                 if(group.Count > 0) {
                     groups.Add(group);
                 }
@@ -30,8 +36,9 @@ public class ZoneSelector : ISelector
         List<Vector2Int> result = new List<Vector2Int>();
         for(int x = 0; x < Width; x++) {
             for(int y = 0; y < Width; y++) {
-                if(level.IsInGrid(new Vector2Int(x, y))) {
-                    result.Add(bottomLeft + new Vector2Int(x, y));
+                Vector2Int testTile = bottomLeft + new Vector2Int(x, y);
+                if(level.IsInGrid(testTile)) {
+                    result.Add(testTile);
                 }
             }
         }

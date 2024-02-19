@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorldTile
+public struct WorldTile
 {
     private int baseTravelCost;
 
@@ -15,12 +15,10 @@ public class WorldTile
         Walkable = walkable;
         IsWall = blockVision;
         baseTravelCost = travelCost;
+        CurrentEffect = null;
     }
 
     public int GetTravelCost(Monster monster) {
         return baseTravelCost + (CurrentEffect == null || CurrentEffect.Controller == monster.Controller ? 0 : CurrentEffect.MovementTax);
     }
-
-    // public virtual void OnTileEntered(Monster arrival) { } jk this should be an event
-    // OnTileLanded
 }

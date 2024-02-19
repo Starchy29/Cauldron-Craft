@@ -16,7 +16,7 @@ public class ShieldMove : Move
     }
 
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
-        Monster selectedMonster = (Monster)LevelGrid.Instance.GetEntity(tile);
+        Monster selectedMonster = LevelGrid.Instance.GetMonster(tile);
         selectedMonster.ApplyShield(new Shield(AppliedShield.StrengthLevel, AppliedShield.Duration, AppliedShield.BlocksStatus, AppliedShield.BlocksOnce));
         
         if(OnUse != null) {

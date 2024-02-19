@@ -9,7 +9,7 @@ public class WorldTile
     public bool Walkable { get; private set; }
     public bool IsWall { get; private set; }
 
-    public TileEffect CurrentEffect { get; set; }
+    public TileAffector CurrentEffect { get; set; }
 
     public WorldTile(bool walkable, bool blockVision, int travelCost) {
         Walkable = walkable;
@@ -18,7 +18,7 @@ public class WorldTile
     }
 
     public int GetTravelCost(Monster monster) {
-        return baseTravelCost + (CurrentEffect == null ? 0 : CurrentEffect.MovementTax);
+        return baseTravelCost + (CurrentEffect == null || CurrentEffect.Controller == monster.Controller ? 0 : CurrentEffect.MovementTax);
     }
 
     // public virtual void OnTileEntered(Monster arrival) { } jk this should be an event

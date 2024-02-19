@@ -1,25 +1,19 @@
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TileEffect
-{
-    private List<Vector2Int> affectedTiles;
-    private Team controller;
+public struct TileEffect {
+    public StatusEffect? appliedStatus;
+    public int movementTax;
+    public int duration;
+    public GameObject prefab;
+    public MonsterTrigger landEffect;
 
-    private MonsterTrigger OnStep; // effect that triggers when an enemy passes over this tile
-    private MonsterTrigger OnLand; // effect that triggers when an enemy finishes their movement on this tile
-    
-    public int MovementTax { get; private set; }
-    public StatusEffect? AppliedStatus { get; private set; }
-
-    public TileEffect(List<Vector2Int> affectedTiles, Team controller) {
-        this.affectedTiles = affectedTiles;
-        this.controller = controller;
-
-        LevelGrid level = LevelGrid.Instance;
-        foreach(Vector2Int tile in affectedTiles) {
-            level.GetTile(tile).CurrentEffect = this;
-        }
+    public TileEffect(StatusEffect? appliedStatus, int movementTax, int duration, GameObject prefab, MonsterTrigger landEffect) {
+        this.appliedStatus = appliedStatus;
+        this.movementTax = movementTax;
+        this.duration = duration;
+        this.prefab = prefab;
+        this.landEffect = landEffect;
     }
 }

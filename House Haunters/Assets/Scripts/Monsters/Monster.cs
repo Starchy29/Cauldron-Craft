@@ -85,7 +85,7 @@ public class Monster : GridEntity
     }
 
     public bool HasStatus(StatusEffect status) {
-        TileEffect tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
+        TileAffector tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
         return effectDurations[status] > 0 || (tileEffect != null && tileEffect.AppliedStatus == status);
     }
 
@@ -114,7 +114,7 @@ public class Monster : GridEntity
 
     public bool CanUse(int moveSlot) {
         Move move = Stats.Moves[moveSlot];
-        return move != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && !(HasStatus(StatusEffect.Frozen) && move.Type == Move.MoveType.Movement) 
+        return move != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && !(HasStatus(StatusEffect.Frozen) && move.Type == MoveType.Movement) 
             && GetMoveOptions(moveSlot).Count > 0;
     }
 

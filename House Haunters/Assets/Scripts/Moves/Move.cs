@@ -4,22 +4,22 @@ using UnityEngine;
 
 public delegate void AnimationQueuer(Monster user, List<Vector2Int> tiles);
 
+public enum MoveType {
+    Movement,
+    Attack,
+    Shield,
+    Status,
+    Zone
+}
+
 public abstract class Move
 {
     public enum Targets {
         Allies,
         Enemies,
-        Floor,
+        UnaffectedFloor,
         StandableSpot,
         Traversable
-    }
-
-    public enum MoveType {
-        Movement,
-        Attack,
-        Shield,
-        Status,
-        Zone
     }
 
     private ISelector selection;
@@ -37,7 +37,7 @@ public abstract class Move
     private static Dictionary<Targets, FilterCheck> TargetFilters = new Dictionary<Targets, FilterCheck>() {
         { Targets.Allies, IsAllyOn },
         { Targets.Enemies, IsEnemyOn },
-        { Targets.Floor, IsFloorAt },
+        { Targets.UnaffectedFloor, IsFloorAt },
         { Targets.StandableSpot, IsStandable },
         { Targets.Traversable, IsTraversable }
     };
@@ -104,7 +104,8 @@ public abstract class Move
     }
 
     private static bool IsFloorAt(Monster user, Vector2Int tile) {
-        return LevelGrid.Instance.GetTile(tile).Walkable;
+        WorldTile spot = LevelGrid.Instance.GetTile(tile);
+        return spot.Walkable && spot.CurrentEffect == null;
     }
 
     private static bool IsStandable(Monster user, Vector2Int tile) {

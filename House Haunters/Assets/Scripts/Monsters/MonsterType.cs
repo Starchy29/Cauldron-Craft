@@ -2,13 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Ingredient {
-    Decay,
-    Plant,
-    Mineral,
-    Crawler
-}
-
 public class MonsterType
 {
     private Ingredient[] recipe;

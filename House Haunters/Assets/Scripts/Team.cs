@@ -14,6 +14,14 @@ public class Team
     public Team() {
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
+        foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
+            Resources[type] = 0;
+        }
+    }
+
+    public void AddResource(Ingredient type) {
+        Resources[type]++;
+        Debug.Log(type + " is now " + Resources[type]);
     }
     
     public void Join(Monster monster) {

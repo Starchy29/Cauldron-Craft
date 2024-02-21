@@ -10,6 +10,9 @@ public class GameManager : MonoBehaviour
     public Team EnemyTeam { get; private set; }
     public Team CurrentTurn { get; private set; }
 
+    public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
+    public event TurnEndEvent OnTurnEnd;
+
     private AIController enemyAI;
     private AnimationsManager animator;
 
@@ -40,6 +43,8 @@ public class GameManager : MonoBehaviour
         } else {
             CurrentTurn = PlayerTeam;
         }
+
+        OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
         CurrentTurn.StartTurn();
     }
 

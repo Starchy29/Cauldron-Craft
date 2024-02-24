@@ -52,7 +52,7 @@ public abstract class Move
         this.effectAnimation = effectAnimation;
     }
 
-    // filters down the selection groups to make sure each option has at least one valid target
+    // filters down the selection groups to be only tiles that pass the filter
     public List<List<Vector2Int>> GetOptions(Monster user) {
         return selection.GetSelectionGroups(user)
             .Map((List<Vector2Int> group) => { return group.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); }); })

@@ -21,7 +21,6 @@ public class Team
 
     public void AddResource(Ingredient type) {
         Resources[type]++;
-        Debug.Log(type + " is now " + Resources[type]);
     }
     
     public void Join(Monster monster) {

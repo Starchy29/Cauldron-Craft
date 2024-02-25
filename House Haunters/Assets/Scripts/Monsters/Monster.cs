@@ -26,7 +26,12 @@ public class Monster : GridEntity
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
     void Start() {
+        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+        renderer.sprite = MonstersData.Instance.monsterToSprite[MonsterType];
+        renderer.material.color = Controller.TeamColor;
+
         Stats = MonstersData.Instance.GetMonsterData(MonsterType);
+        
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];
 

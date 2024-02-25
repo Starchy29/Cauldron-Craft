@@ -6,12 +6,14 @@ using UnityEngine;
 // represents one team of monsters
 public class Team
 {
+    public Color TeamColor { get; private set; }
     public List<Monster> Teammates { get; private set; }
     public Dictionary<Ingredient, int> Resources { get; private set; }
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team() {
+    public Team(Color color) {
+        TeamColor = color;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {

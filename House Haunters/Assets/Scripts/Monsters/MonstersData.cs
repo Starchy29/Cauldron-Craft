@@ -23,20 +23,46 @@ public class MonstersData
     } }
 
     private MonsterType[] monsterTypes; // index is name enum cast to an int
+    public Dictionary<MonsterName, Sprite> monsterToSprite;
 
     // define the stats and abilities of all monster types
     private MonstersData() {
         PrefabContainer prefabs = PrefabContainer.Instance;
+
+        monsterToSprite = new Dictionary<MonsterName, Sprite>() {
+            { MonsterName.Temporary, prefabs.tempMonsterSprite },
+            { MonsterName.Demon, prefabs.demonSprite },
+            { MonsterName.LostSoul, prefabs.soulSprite }
+        };
+
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
         monsterTypes[(int)MonsterName.Temporary] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             10, 3,
-            new Move[3] {
-                new Attack("Attack", 0, 3, new RangeSelector(4, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 8.0f)),
+            new List<Move>() {
+                new Attack("Attack", 0, 1, new RangeSelector(4, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 8.0f)),
                 new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, prefabs.ExampleZone, null), null, ""),
                 new ShieldMove("Block", 2, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false, prefabs.ExampleShield), null)
             }
-        ); ;
+        );
+
+        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+            18, 4,
+            new List<Move>() {
+                new UniqueMove("Revitalize", 2, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(3); }, null),
+                new StatusMove("Spook", 3, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), null),
+                new Attack("Spirit Drain", 0, 3, new RangeSelector(1, false, false), null, "Steals the target's health.", StealHealth)
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Demon] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+            10, 4,
+            new List<Move>() {
+                new StatusMove("Sacrifice", 5, StatusEffect.Strength, 3, false, new SelfSelector(), null, "Pay 2 life to gain strength.", (user, tile) => { user.TakeDamage(2, null); }),
+                new StatusMove("Ritual", 2, StatusEffect.Cursed, 2, true, new ZoneSelector(2, 3), null),
+                new Attack("Fireball", 0, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
+            }
+        );
     }
 
     public MonsterType GetMonsterData(MonsterName name) {
@@ -51,5 +77,21 @@ public class MonstersData
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)tiles[0]);
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
         };
+    }
+
+    private void StealHealth(Monster user, Monster target, int healthLost) {
+        user.Heal(healthLost);
+    }
+
+    private void DealSplashDamage(Monster attacker, Vector2Int center, int damage) {
+        List<Monster> targets = LevelGrid.Instance.GetTilesInRange(center, 1, true)
+            .Filter((Vector2Int tile) => { return Move.IsEnemyOn(attacker, tile); })
+            .Map((Vector2Int tile) => { return LevelGrid.Instance.GetMonster(tile); });
+
+        foreach(Monster target in targets) {
+            if(target.Tile != center) {
+                target.TakeDamage(damage, attacker);
+            }
+        }
     }
 }

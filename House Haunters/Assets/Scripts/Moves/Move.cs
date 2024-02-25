@@ -8,7 +8,8 @@ public enum MoveType {
     Movement,
     Attack,
     Shield,
-    Status,
+    Support,
+    Disrupt,
     Zone
 }
 
@@ -82,26 +83,26 @@ public abstract class Move
     protected abstract void ApplyEffect(Monster user, Vector2Int tile);
 
     #region filter functions
-    private static bool IsAllyOn(Monster user, Vector2Int tile) {
+    public static bool IsAllyOn(Monster user, Vector2Int tile) {
         Monster monster = LevelGrid.Instance.GetMonster(tile);
         return monster != null && monster.Controller == user.Controller;
     }
 
-    private static bool IsEnemyOn(Monster user, Vector2Int tile) {
+    public static bool IsEnemyOn(Monster user, Vector2Int tile) {
         Monster monster = LevelGrid.Instance.GetMonster(tile);
         return monster != null && monster.Controller != user.Controller;
     }
 
-    private static bool IsFloorAt(Monster user, Vector2Int tile) {
+    public static bool IsFloorAt(Monster user, Vector2Int tile) {
         WorldTile spot = LevelGrid.Instance.GetTile(tile);
         return spot.Walkable && spot.CurrentEffect == null;
     }
 
-    private static bool IsStandable(Monster user, Vector2Int tile) {
+    public static bool IsStandable(Monster user, Vector2Int tile) {
         return user.CanStandOn(tile);
     }
 
-    private static bool IsTraversable(Monster user, Vector2Int tile) {
+    public static bool IsTraversable(Monster user, Vector2Int tile) {
         return user.FindPath(tile) != null;
     }
     #endregion

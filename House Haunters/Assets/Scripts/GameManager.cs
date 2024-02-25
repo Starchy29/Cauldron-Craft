@@ -18,15 +18,17 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        PlayerTeam = new Team();
-        EnemyTeam = new Team();
+        PlayerTeam = new Team(Color.blue);
+        EnemyTeam = new Team(Color.red);
         enemyAI = new AIController();
     }
 
     void Start() {
         animator = AnimationsManager.Instance;
-        SpawnMonster(MonsterName.Temporary, Vector2Int.zero, PlayerTeam);
-        SpawnMonster(MonsterName.Temporary, new Vector2Int(4, 4), EnemyTeam);
+        SpawnMonster(MonsterName.Demon, Vector2Int.zero, PlayerTeam);
+        SpawnMonster(MonsterName.LostSoul, new Vector2Int(0, 1), PlayerTeam);
+        SpawnMonster(MonsterName.Demon, new Vector2Int(4, 4), EnemyTeam);
+        SpawnMonster(MonsterName.LostSoul, new Vector2Int(4, 5), EnemyTeam);
 
         CurrentTurn = PlayerTeam;
     }

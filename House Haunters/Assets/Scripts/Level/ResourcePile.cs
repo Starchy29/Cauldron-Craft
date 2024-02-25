@@ -14,7 +14,6 @@ public class ResourcePile : GridEntity
 {
     [SerializeField] private Ingredient type;
     public Ingredient Type { get { return type; } }
-    public Team Controller { get; private set; }
 
     void Start() {
         GameManager.Instance.OnTurnEnd += GrantResource;

@@ -8,7 +8,6 @@ public class Monster : GridEntity
     [SerializeField] private HealthBarScript healthBar;
     public MonsterName MonsterType { get; set; }
 
-    public Team Controller { get; set; }
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
 
@@ -86,7 +85,7 @@ public class Monster : GridEntity
                 }
             }
             if(multiplier != 1f) {
-                amount = Mathf.FloorToInt(amount * multiplier);
+                amount = Mathf.CeilToInt(amount * multiplier);
             }
         }
 
@@ -118,8 +117,8 @@ public class Monster : GridEntity
         }
     }
 
-    public List<List<Vector2Int>> GetMoveOptions(int moveSlot) {
-        return Stats.Moves[moveSlot].GetOptions(this);
+    public List<List<Vector2Int>> GetMoveOptions(int moveSlot, bool filtered = true) {
+        return Stats.Moves[moveSlot].GetOptions(this, filtered);
     }
 
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
@@ -149,15 +148,20 @@ public class Monster : GridEntity
         CurrentShield.Visual.transform.SetParent(transform, false);
     }
 
-    public bool CanStandOn(Vector2Int tile) {
+    // returns true if the input tile is one that this monster can legally stand on assuming it is unoccupied
+    public bool CouldStandOn(Vector2Int tile) {
         WorldTile levelTile = LevelGrid.Instance.GetTile(tile);
-        return !levelTile.IsWall && (levelTile.Walkable || Stats.Flying) && LevelGrid.Instance.GetEntity(tile) == null;
+        return !levelTile.IsWall && (levelTile.Walkable || Stats.Flying);
+    }
+
+    public bool CanMoveTo(Vector2Int tile) {
+        return CouldStandOn(tile) && LevelGrid.Instance.GetEntity(tile) == null;
     }
 
     // returns null if this monster cannot get to the tile with one movement
     public List<Vector2Int> FindPath(Vector2Int endTile) {
         LevelGrid level = LevelGrid.Instance;
-        if(!CanStandOn(endTile)) {
+        if(!CanMoveTo(endTile)) {
             return null;
         }
 
@@ -200,8 +204,13 @@ public class Monster : GridEntity
             // update the neighbors
             foreach(Vector2Int direction in Global.Cardinals) {
                 Vector2Int neighbor = nextTile + direction;
-                if(!level.IsInGrid(neighbor) || !CanStandOn(neighbor)) {
-                    continue; // walls and pits are not navigable
+                
+                if(!level.IsInGrid(neighbor) || !CouldStandOn(neighbor)) {
+                    continue;
+                }
+                GridEntity occupant = level.GetEntity(neighbor);
+                if(occupant != null && occupant.Controller != Controller) {
+                    continue;
                 }
 
                 bool inOpen = openList.Contains(neighbor);

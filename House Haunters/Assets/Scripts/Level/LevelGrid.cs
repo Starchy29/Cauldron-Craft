@@ -73,10 +73,6 @@ public class LevelGrid : MonoBehaviour
 
     public Monster GetMonster(Vector2Int tile) {
         GridEntity result = entityGrid[tile.y, tile.x];
-        if(result == null) {
-            return null;
-        }
-
         return result == null || !(result is Monster) ? null : (Monster)result;
     }
 

@@ -54,25 +54,31 @@ public abstract class Move
     }
 
     // filters down the selection groups to be only tiles that pass the filter
-    public List<List<Vector2Int>> GetOptions(Monster user) {
-        return selection.GetSelectionGroups(user)
-            .Map((List<Vector2Int> group) => { return group.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); }); })
-            .Filter((List<Vector2Int> selectionGroup) => { return selectionGroup.Count > 0; });
-    }
+    public List<List<Vector2Int>> GetOptions(Monster user, bool filtered = true, bool ignoreUseless = true) {
+        List<List<Vector2Int>> group = selection.GetSelectionGroups(user);
 
-    // allows the UI to show the range of moves, duplicates are allowed
-    public List<Vector2Int> GetCoveredArea(Monster user) {
-        List<List<Vector2Int>> options = TargetType == Targets.Traversable ? GetOptions(user) : selection.GetSelectionGroups(user);
-        List<Vector2Int> result = new List<Vector2Int>();
-        foreach(List<Vector2Int> option in options) {
-            result.AddRange(option);
+        if(ignoreUseless) {
+            group = group.Filter((List<Vector2Int> group) => { return HasValidOption(user, group); });
         }
-        return result;
+
+        if(filtered) {
+            group = group.Map((List<Vector2Int> group) => { 
+                return group.Filter((Vector2Int tile) => { 
+                    return TargetFilters[TargetType](user, tile); 
+                }); 
+            });
+        }
+
+        return group;
     }
 
     public void Use(Monster user, List<Vector2Int> tiles) {
         if(effectAnimation != null) {
             effectAnimation(user, tiles);
+        }
+
+        if(TargetType != Targets.Traversable) { // avoid pathfinding extra times
+            tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
         }
 
         foreach(Vector2Int tile in tiles) {
@@ -81,6 +87,16 @@ public abstract class Move
     }
 
     protected abstract void ApplyEffect(Monster user, Vector2Int tile);
+
+    private bool HasValidOption(Monster user, List<Vector2Int> tileGroup) {
+        foreach(Vector2Int tile in tileGroup) {
+            if(TargetFilters[TargetType](user, tile)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     #region filter functions
     public static bool IsAllyOn(Monster user, Vector2Int tile) {
@@ -99,7 +115,7 @@ public abstract class Move
     }
 
     public static bool IsStandable(Monster user, Vector2Int tile) {
-        return user.CanStandOn(tile);
+        return user.CanMoveTo(tile);
     }
 
     public static bool IsTraversable(Monster user, Vector2Int tile) {

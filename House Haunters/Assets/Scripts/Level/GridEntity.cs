@@ -5,4 +5,5 @@ using UnityEngine;
 public class GridEntity : MonoBehaviour
 {
     public Vector2Int Tile { get; set; }
+    public Team Controller { get; set; }
 }

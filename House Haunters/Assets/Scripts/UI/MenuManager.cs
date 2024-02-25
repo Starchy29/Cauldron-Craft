@@ -59,7 +59,9 @@ public class MenuManager : MonoBehaviour
                         state = SelectionTarget.Targets;
                         moveMenu.gameObject.SetActive(false);
                         selectedMoveSlot = moveMenu.HoveredMoveSlot.Value;
-                        tileGroups = moveMenu.Selected.GetMoveOptions(selectedMoveSlot);
+                        Move move = moveMenu.Selected.Stats.Moves[selectedMoveSlot];
+                        bool filtered = move.TargetType == Move.Targets.UnaffectedFloor || move.TargetType == Move.Targets.Traversable || move.TargetType == Move.Targets.StandableSpot;
+                        tileGroups = moveMenu.Selected.GetMoveOptions(selectedMoveSlot, filtered);
                         tileGroupCenters = DetermineCenters(tileGroups);
 
                         List<Vector2Int> allTiles = new List<Vector2Int>();

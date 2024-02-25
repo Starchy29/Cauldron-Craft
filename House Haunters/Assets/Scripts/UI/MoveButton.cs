@@ -12,9 +12,16 @@ public class MoveButton : ControlledButton
 
     public void SetMove(Monster user, int moveSlot) {
         Move move = user.Stats.Moves[moveSlot];
-        CoveredArea = move.GetCoveredArea(user);
+        
+        CoveredArea = new List<Vector2Int>();
+        bool showFiltered = move.TargetType == Move.Targets.Traversable || move.TargetType == Move.Targets.StandableSpot;
+        List<List<Vector2Int>> groups = move.GetOptions(user, showFiltered, false);
+        foreach(List<Vector2Int> group in groups) {
+            CoveredArea.AddRange(group);
+        }
+
         nameLabel.text = move.Name;
-        cooldown.text = user.Cooldowns[moveSlot] > 0 ? ""+user.Cooldowns[moveSlot] : "";
+        cooldown.text = user.Cooldowns[moveSlot] > 0 ? "" + user.Cooldowns[moveSlot] : "";
         // move type icon
 
         // open info menu

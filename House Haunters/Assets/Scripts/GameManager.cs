@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
         animator = AnimationsManager.Instance;
         SpawnMonster(MonsterName.Demon, Vector2Int.zero, PlayerTeam);
         SpawnMonster(MonsterName.LostSoul, new Vector2Int(0, 1), PlayerTeam);
+
         SpawnMonster(MonsterName.Demon, new Vector2Int(4, 4), EnemyTeam);
         SpawnMonster(MonsterName.LostSoul, new Vector2Int(4, 5), EnemyTeam);
 

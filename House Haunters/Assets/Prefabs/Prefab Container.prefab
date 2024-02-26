@@ -47,6 +47,10 @@ MonoBehaviour:
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
   demonSprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}
   tempMonsterSprite: {fileID: 21300000, guid: 14ab788be10e8f342804642edf2e325b, type: 3}
+  decayLogo: {fileID: 21300000, guid: 4e7b1ecfbd165134a8cb68c5adc4bb3a, type: 3}
+  plantLogo: {fileID: 21300000, guid: 0553331c0dd5f2740a5c16cb345a5038, type: 3}
+  mineralLogo: {fileID: 21300000, guid: 7e0c33fb6275fa745875011574184f57, type: 3}
+  insectLogo: {fileID: 21300000, guid: 64eb6bc94ca133a47ae1625ae9f42c62, type: 3}
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
   TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}

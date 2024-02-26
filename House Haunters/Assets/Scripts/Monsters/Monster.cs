@@ -26,7 +26,7 @@ public class Monster : GridEntity
 
     void Start() {
         SpriteRenderer renderer = GetComponent<SpriteRenderer>();
-        renderer.sprite = MonstersData.Instance.monsterToSprite[MonsterType];
+        renderer.sprite = PrefabContainer.Instance.monsterToSprite[MonsterType];
         renderer.material.color = Controller.TeamColor;
 
         Stats = MonstersData.Instance.GetMonsterData(MonsterType);

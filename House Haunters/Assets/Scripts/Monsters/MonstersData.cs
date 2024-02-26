@@ -7,9 +7,9 @@ public enum MonsterName {
     Temporary,
     LostSoul,
     Demon,
-    Flytrap,
-    ThornBush,
-    Mushroom,
+    //Flytrap,
+    //ThornBush,
+    //Mushroom,
 }
 
 public class MonstersData
@@ -23,17 +23,10 @@ public class MonstersData
     } }
 
     private MonsterType[] monsterTypes; // index is name enum cast to an int
-    public Dictionary<MonsterName, Sprite> monsterToSprite;
 
     // define the stats and abilities of all monster types
     private MonstersData() {
         PrefabContainer prefabs = PrefabContainer.Instance;
-
-        monsterToSprite = new Dictionary<MonsterName, Sprite>() {
-            { MonsterName.Temporary, prefabs.tempMonsterSprite },
-            { MonsterName.Demon, prefabs.demonSprite },
-            { MonsterName.LostSoul, prefabs.soulSprite }
-        };
 
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 

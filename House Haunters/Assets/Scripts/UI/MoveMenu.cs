@@ -8,12 +8,9 @@ public class MoveMenu : MonoBehaviour
 
     private MoveButton[] buttons;
     private int numButtons;
-    private MoveButton hoveredButton;
     private float buttonHeight;
     private const float BUTTON_GAP = 0.2f;
 
-    public int? HoveredMoveSlot { get; private set; }
-    public Monster Selected { get; private set; }
     public GameObject Background { get; private set; }
 
     void Start() {
@@ -29,31 +26,8 @@ public class MoveMenu : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    void Update() {
-        Vector2 mousePos = InputManager.Instance.GetMousePosition();
-
-        MoveButton lastHovered = hoveredButton;
-        hoveredButton = null;
-        HoveredMoveSlot = null;
-        for(int i = 0; i < numButtons; i++) {
-            buttons[i].Hovered = Global.GetObjectArea(buttons[i].gameObject).Contains(mousePos);
-            if(buttons[i].Hovered) {
-                hoveredButton = buttons[i];
-                if(!buttons[i].Disabled) {
-                    HoveredMoveSlot = i;
-                }
-            }
-        }
-
-        // highlight the range of the move
-        if(hoveredButton != lastHovered) {
-            LevelGrid.Instance.ColorTiles(hoveredButton == null ? null : hoveredButton.CoveredArea, TileHighlighter.State.Highlighted);
-        }
-    }
-
     public void Open(Monster monster, Team player) {
         gameObject.SetActive(true);
-        Selected = monster;
         Move[] moves = monster.Stats.Moves;
 
         numButtons = moves.Length;
@@ -67,7 +41,7 @@ public class MoveMenu : MonoBehaviour
 
             buttons[i].gameObject.SetActive(true);
             buttons[i].transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f + i * (buttonHeight + BUTTON_GAP), 0);
-            buttons[i].SetMove(Selected, i);
+            buttons[i].SetMove(monster, i);
             buttons[i].Disabled = monster.Controller != player || !monster.CanUse(i);
         }
     }

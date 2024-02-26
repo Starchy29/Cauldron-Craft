@@ -3,24 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class BuyMonsterButton : ControlledButton
+public class BuyMonsterButton : AutoButton
 {
     [SerializeField] private SpriteRenderer monsterImage;
     [SerializeField] private SpriteRenderer[] ingredientLogos;
 
     public MonsterType MonsterOption { get; private set; }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     public void SetMonster(MonsterName monster) {
         MonsterOption = MonstersData.Instance.GetMonsterData(monster);

@@ -9,16 +9,16 @@ public class BuyMenu : MonoBehaviour
     private BuyMonsterButton[] buttons;
 
     void Start() {
-        float startY = 8f;
-        float spacing = 1f;
+        float spacing = 1.2f;
 
         MonsterName[] monsters = (MonsterName[])Enum.GetValues(typeof(MonsterName));
+        float startY = (monsters.Length - 1) / 2f * spacing;
         buttons = new BuyMonsterButton[monsters.Length];
         for(int i = 0; i < monsters.Length; i++) {
             buttons[i] = Instantiate(MonsterButtonPrefab).GetComponent<BuyMonsterButton>();
             buttons[i].SetMonster(monsters[i]);
             buttons[i].transform.SetParent(transform);
-            buttons[i].transform.position = new Vector3(0, startY - i * spacing, 0);
+            buttons[i].transform.localPosition = new Vector3(0, startY - i * spacing, 0);
         }
 
         gameObject.SetActive(false);

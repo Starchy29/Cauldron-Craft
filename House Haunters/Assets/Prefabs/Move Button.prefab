@@ -270,6 +270,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fc2c18b06f710b4dbb1ab3c2968309d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  clickFunction: 0
+  sprite: {fileID: 7328903970159804700}
   nameLabel: {fileID: 2574060790451094561}
   cooldown: {fileID: 8309628533714996617}
 --- !u!1 &613383835984585769

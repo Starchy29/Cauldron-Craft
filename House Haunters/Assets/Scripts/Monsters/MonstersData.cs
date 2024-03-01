@@ -8,7 +8,7 @@ public enum MonsterName {
     LostSoul,
     Demon,
     //Flytrap,
-    //ThornBush,
+    ThornBush,
     //Mushroom,
 }
 
@@ -53,7 +53,16 @@ public class MonstersData
             new List<Move>() {
                 new StatusMove("Sacrifice", 5, StatusEffect.Strength, 3, false, new SelfSelector(), null, "Pay 3 life to gain strength.", (user, tile) => { user.TakeDamage(3, null); }),
                 new StatusMove("Ritual", 2, StatusEffect.Cursed, 2, true, new ZoneSelector(2, 2), null),
-                new Attack("Fireball", 1, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
+                new Attack("Fireball", 0, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
+            }
+        );
+
+        monsterTypes[(int)MonsterName.ThornBush] = new MonsterType(Ingredient.Plant, Ingredient.Plant, Ingredient.Plant,
+            22, 3,
+            new List<Move>() {
+                new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 2 damage to enemies that attack this within melee range."),
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, false), new TileEffect(null, 0, 3, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(3, null); }, true), null, "Places a trap that deals 3 damage to an enemy that lands on it."),
+                new Attack("Barb Bullet", 1, 4, new DirectionSelector(5, false), null, "Pierces enemies.")
             }
         );
     }
@@ -72,11 +81,11 @@ public class MonstersData
         };
     }
 
-    private void StealHealth(Monster user, Monster target, int healthLost) {
+    private static void StealHealth(Monster user, Monster target, int healthLost) {
         user.Heal(healthLost);
     }
 
-    private void DealSplashDamage(Monster attacker, Vector2Int center, int damage) {
+    private static void DealSplashDamage(Monster attacker, Vector2Int center, int damage) {
         List<Monster> targets = LevelGrid.Instance.GetTilesInRange(center, 1, true)
             .Filter((Vector2Int tile) => { return Move.IsEnemyOn(attacker, tile); })
             .Map((Vector2Int tile) => { return LevelGrid.Instance.GetMonster(tile); });
@@ -85,6 +94,12 @@ public class MonstersData
             if(target.Tile != center) {
                 target.TakeDamage(damage, attacker);
             }
+        }
+    }
+
+    private static void DamageMeleeAttacker(Monster attacker, Monster defender) {
+        if(Global.IsAdjacent(attacker.Tile, defender.Tile)) {
+            attacker.TakeDamage(2, null);
         }
     }
 }

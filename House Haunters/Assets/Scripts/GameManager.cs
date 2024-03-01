@@ -25,11 +25,12 @@ public class GameManager : MonoBehaviour
 
     void Start() {
         animator = AnimationsManager.Instance;
-        SpawnMonster(MonsterName.Demon, Vector2Int.zero, PlayerTeam);
-        SpawnMonster(MonsterName.LostSoul, new Vector2Int(0, 1), PlayerTeam);
+        SpawnMonster(MonsterName.LostSoul, Vector2Int.zero, PlayerTeam);
+        SpawnMonster(MonsterName.Demon, new Vector2Int(0, 1), PlayerTeam);
+        SpawnMonster(MonsterName.ThornBush, new Vector2Int(1, 0), PlayerTeam);
 
-        SpawnMonster(MonsterName.Demon, new Vector2Int(4, 4), EnemyTeam);
-        SpawnMonster(MonsterName.LostSoul, new Vector2Int(4, 5), EnemyTeam);
+        SpawnMonster(MonsterName.ThornBush, new Vector2Int(4, 4), EnemyTeam);
+        SpawnMonster(MonsterName.ThornBush, new Vector2Int(4, 5), EnemyTeam);
 
         CurrentTurn = PlayerTeam;
     }

@@ -128,4 +128,8 @@ public static class Global
         Vector2 scale = gObj.transform.lossyScale;
         return new Rect(middle - scale / 2, scale);
     }
+
+    public static bool IsAdjacent(Vector2Int tile1, Vector2Int tile2) {
+        return Mathf.Abs(tile1.x - tile2.x) == 1 || Mathf.Abs(tile1.y - tile2.y) == 1;
+    }
 }

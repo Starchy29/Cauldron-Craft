@@ -90,7 +90,18 @@ public class LevelGrid : MonoBehaviour
 
     public void PlaceEntity(GridEntity entity, Vector2Int tile) {
         entityGrid[tile.y, tile.x] = entity;
-        entityGrid[tile.y, tile.x].Tile = tile;
+        entity.Tile = tile;
+
+        TileAffector effect = environmentGrid[tile.y, tile.x].CurrentEffect;
+        if(entity is Monster && effect != null && effect.Controller != entity.Controller) {
+            if(effect.LandEffect != null) {
+                effect.LandEffect((Monster)entity);
+            }
+
+            if(effect.Effect.destroyOnUse) {
+                effect.Finish();
+            }
+        }
     }
 
     public void MoveEntity(GridEntity entity, Vector2Int tile) {

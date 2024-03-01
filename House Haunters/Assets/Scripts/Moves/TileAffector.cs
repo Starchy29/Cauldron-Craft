@@ -33,9 +33,13 @@ public class TileAffector
     private void DecreaseDuration() {
         TurnsLeft--;
         if(TurnsLeft <= 0) {
-            GameObject.Destroy(visual);
-            Controller.OnTurnEnd -= DecreaseDuration;
-            LevelGrid.Instance.SetTileAffect(tile, null);
+            Finish();
         }
+    }
+
+    public void Finish() {
+        GameObject.Destroy(visual);
+        Controller.OnTurnEnd -= DecreaseDuration;
+        LevelGrid.Instance.SetTileAffect(tile, null);
     }
 }

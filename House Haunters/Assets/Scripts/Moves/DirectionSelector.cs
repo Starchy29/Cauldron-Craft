@@ -8,6 +8,11 @@ public class DirectionSelector : ISelector
     public int Range { get; private set; }
     public bool Piercing { get; private set; }
 
+    public DirectionSelector(int range, bool piercing) {
+        Range = range;
+        Piercing = piercing;
+    }
+
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
         LevelGrid level = LevelGrid.Instance;
         List<List<Vector2Int>> groups = new List<List<Vector2Int>>();
@@ -18,7 +23,7 @@ public class DirectionSelector : ISelector
                 Vector2Int testTile = user.Tile + i * direction;
 
                 // stop at walls
-                if(level.GetTile(testTile).IsWall) {
+                if(!level.IsInGrid(testTile) || level.GetTile(testTile).IsWall) {
                     break;
                 }
 

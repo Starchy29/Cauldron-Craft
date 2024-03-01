@@ -24,15 +24,11 @@ public class BuyMenu : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    void Update() {
-        
-    }
-
     public void Open(Team team) {
         gameObject.SetActive(true);
         Dictionary<Ingredient, int> resources = team.Resources;
         foreach(BuyMonsterButton button in buttons) {
-            button.Disabled = CanBuy(resources, button.MonsterOption);
+            button.disabled = CanBuy(resources, button.MonsterOption);
         }
     }
 

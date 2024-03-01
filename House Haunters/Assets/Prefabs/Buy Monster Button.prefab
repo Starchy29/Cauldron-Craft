@@ -437,6 +437,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aee16d914d777d146931698bd990ff89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  clickFunction: 0
+  sprite: {fileID: 7763113542165818797}
+  disabled: 0
   monsterImage: {fileID: 3291931992446141382}
   ingredientLogos:
   - {fileID: 8606553269070076839}

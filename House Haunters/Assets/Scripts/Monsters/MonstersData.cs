@@ -44,7 +44,7 @@ public class MonstersData
             new List<Move>() {
                 new UniqueMove("Revitalize", 2, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(3); }, null),
                 new StatusMove("Spook", 3, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), null),
-                new Attack("Spirit Drain", 0, 2, new RangeSelector(1, false, false), null, "Steals the target's health.", StealHealth)
+                new Attack("Spirit Drain", 1, 2, new RangeSelector(1, false, false), null, "Steals the target's health.", StealHealth)
             }
         );
 
@@ -53,7 +53,7 @@ public class MonstersData
             new List<Move>() {
                 new StatusMove("Sacrifice", 5, StatusEffect.Strength, 3, false, new SelfSelector(), null, "Pay 3 life to gain strength.", (user, tile) => { user.TakeDamage(3, null); }),
                 new StatusMove("Ritual", 2, StatusEffect.Cursed, 2, true, new ZoneSelector(2, 2), null),
-                new Attack("Fireball", 0, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
+                new Attack("Fireball", 1, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
             }
         );
     }

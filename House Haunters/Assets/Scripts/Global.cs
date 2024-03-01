@@ -130,6 +130,6 @@ public static class Global
     }
 
     public static bool IsAdjacent(Vector2Int tile1, Vector2Int tile2) {
-        return Mathf.Abs(tile1.x - tile2.x) == 1 || Mathf.Abs(tile1.y - tile2.y) == 1;
+        return Mathf.Abs(tile1.x - tile2.x) <= 1 && Mathf.Abs(tile1.y - tile2.y) <= 1;
     }
 }

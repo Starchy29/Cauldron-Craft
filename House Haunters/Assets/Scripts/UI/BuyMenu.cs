@@ -28,7 +28,7 @@ public class BuyMenu : MonoBehaviour
         gameObject.SetActive(true);
         Dictionary<Ingredient, int> resources = team.Resources;
         foreach(BuyMonsterButton button in buttons) {
-            button.disabled = CanBuy(resources, button.MonsterOption);
+            button.disabled = CanBuy(resources, MonstersData.Instance.GetMonsterData(button.MonsterOption));
         }
     }
 

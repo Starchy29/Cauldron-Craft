@@ -19,7 +19,7 @@ public class DirectionSelector : ISelector
 
         foreach(Vector2Int direction in Global.Cardinals) {
             List<Vector2Int> group  = new List<Vector2Int>();
-            for(int i = 0; i < Range; i++) {
+            for(int i = 1; i < Range; i++) {
                 Vector2Int testTile = user.Tile + i * direction;
 
                 // stop at walls

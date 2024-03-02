@@ -53,7 +53,7 @@ public class MonstersData
             new List<Move>() {
                 new StatusMove("Sacrifice", 5, StatusEffect.Strength, 3, false, new SelfSelector(), null, "Pay 3 life to gain strength.", (user, tile) => { user.TakeDamage(3, null); }),
                 new StatusMove("Ritual", 2, StatusEffect.Cursed, 2, true, new ZoneSelector(2, 2), null),
-                new Attack("Fireball", 0, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
+                new Attack("Fireball", 1, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
             }
         );
 
@@ -61,8 +61,8 @@ public class MonstersData
             22, 3,
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 2 damage to enemies that attack this within melee range."),
-                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, false), new TileEffect(null, 0, 3, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(3, null); }, true), null, "Places a trap that deals 3 damage to an enemy that lands on it."),
-                new Attack("Barb Bullet", 1, 4, new DirectionSelector(5, false), null, "Pierces enemies.")
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, false), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(3, null); }, true), null, "Places a trap that deals 3 damage to an enemy that lands on it."),
+                new Attack("Barb Bullet", 0, 4, new DirectionSelector(5, true), null, "Pierces enemies.")
             }
         );
     }

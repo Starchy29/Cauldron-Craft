@@ -159,7 +159,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 14ab788be10e8f342804642edf2e325b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -182,7 +182,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a8a7b77baf147848b6d2d217e956cb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  team: 0
   healthBar: {fileID: 3355351814052051709}
+  MonsterType: 0
 --- !u!1 &4838518358999510073
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,7 +6,7 @@ using System;
 public class Monster : GridEntity
 {
     [SerializeField] private HealthBarScript healthBar;
-    public MonsterName MonsterType { get; set; }
+    [SerializeField] public MonsterName MonsterType;
 
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
@@ -24,11 +24,10 @@ public class Monster : GridEntity
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? 2 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
-    void Start() {
-        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
-        renderer.sprite = PrefabContainer.Instance.monsterToSprite[MonsterType];
-        renderer.material.color = Controller.TeamColor;
-
+    protected override void Start() {
+        base.Start();
+        Controller.Join(this);
+        GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[MonsterType];
         Stats = MonstersData.Instance.GetMonsterData(MonsterType);
         
         Health = Stats.Health;

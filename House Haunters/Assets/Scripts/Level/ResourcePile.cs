@@ -15,11 +15,9 @@ public class ResourcePile : GridEntity
     [SerializeField] private Ingredient type;
     public Ingredient Type { get { return type; } }
 
-    void Start() {
+    protected override void Start() {
+        base.Start();
         GameManager.Instance.OnTurnEnd += GrantResource;
-        Tile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(transform.position);
-        transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)Tile);
-        LevelGrid.Instance.PlaceEntity(this, Tile);
     }
 
     private void GrantResource(Team turnEnder, Team nextTurn) {

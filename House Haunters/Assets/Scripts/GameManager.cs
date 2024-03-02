@@ -21,18 +21,12 @@ public class GameManager : MonoBehaviour
         PlayerTeam = new Team(Color.blue);
         EnemyTeam = new Team(Color.red);
         enemyAI = new AIController();
+
+        CurrentTurn = PlayerTeam;
     }
 
     void Start() {
         animator = AnimationsManager.Instance;
-        SpawnMonster(MonsterName.LostSoul, Vector2Int.zero, PlayerTeam);
-        SpawnMonster(MonsterName.Demon, new Vector2Int(0, 1), PlayerTeam);
-        SpawnMonster(MonsterName.ThornBush, new Vector2Int(1, 0), PlayerTeam);
-
-        SpawnMonster(MonsterName.ThornBush, new Vector2Int(4, 4), EnemyTeam);
-        SpawnMonster(MonsterName.ThornBush, new Vector2Int(4, 5), EnemyTeam);
-
-        CurrentTurn = PlayerTeam;
     }
 
     void Update() {
@@ -55,9 +49,8 @@ public class GameManager : MonoBehaviour
     public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
         Monster spawned = Instantiate(PrefabContainer.Instance.BaseMonsterPrefab).GetComponent<Monster>();
         spawned.MonsterType = monsterType;
-        LevelGrid.Instance.PlaceEntity(spawned.GetComponent<GridEntity>(), startTile);
         spawned.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)startTile);
-        controller.Join(spawned.GetComponent<Monster>());
+        // grid placement and team joining handled by GridEntity.Start() and Monster.Start()
     }
 
     // removes the monster from the game state. Destroy the game object is handled by the DeathAnimator

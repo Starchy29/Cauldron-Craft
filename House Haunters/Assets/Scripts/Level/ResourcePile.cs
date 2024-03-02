@@ -18,6 +18,7 @@ public class ResourcePile : GridEntity
     protected override void Start() {
         base.Start();
         GameManager.Instance.OnTurnEnd += GrantResource;
+        GameManager.Instance.AllResources.Add(this);
     }
 
     private void GrantResource(Team turnEnder, Team nextTurn) {

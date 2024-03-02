@@ -10,6 +10,10 @@ public class BuyMonsterButton : AutoButton
 
     public MonsterName MonsterOption { get; private set; }
 
+    void Awake() {
+        OnClick = () => { MenuManager.Instance.BuyMonster(MonsterOption); };
+    }
+
     public void SetMonster(MonsterName monster) {
         MonsterOption = monster;
         MonsterType data = MonstersData.Instance.GetMonsterData(monster);

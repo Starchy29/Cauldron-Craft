@@ -139,6 +139,10 @@ public class MenuManager : MonoBehaviour
         buyMenu.gameObject.SetActive(true);
     }
 
+    public void BuyMonster(MonsterName type) {
+        controller.Spawnpoint.StartCook(type);
+    }
+
     private void UpdateMonsterSelector(Vector2 mousePos) {
         TileSelector.SetActive(false);
         Vector3Int tile = level.Tiles.WorldToCell(mousePos);

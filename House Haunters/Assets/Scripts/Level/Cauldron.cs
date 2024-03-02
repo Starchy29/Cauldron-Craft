@@ -7,11 +7,17 @@ public class Cauldron : GridEntity
     private MonsterName? cookingMonster;
     private bool cookingTurn;
 
-    void Start() {
-        Controller.OnTurnStart += Cook;
+    protected override void Start() {
+        base.Start();
+        Controller.OnTurnStart += FinishCook;
+        Controller.Spawnpoint = this;
     }
 
-    private void Cook() {
+    public void StartCook(MonsterName monsterType) {
+        cookingMonster = monsterType;
+    }
+
+    private void FinishCook() {
         if(cookingMonster.HasValue) {
             // find the spot to spawn on
             LevelGrid level = LevelGrid.Instance;

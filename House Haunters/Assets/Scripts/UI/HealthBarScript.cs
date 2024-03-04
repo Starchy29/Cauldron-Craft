@@ -8,6 +8,7 @@ public class HealthBarScript : MonoBehaviour
     [SerializeField] private GameObject VisualBar;
     private SpriteRenderer barColor;
     public bool IsAccurate { get { return currentWidth == DetermineWidth(tracked.Health); } }
+    public int RepresentedHealth { get; private set; }
 
     private float maxWidth;
     private float localLeft;
@@ -22,18 +23,21 @@ public class HealthBarScript : MonoBehaviour
         currentWidth = maxWidth;
         localLeft = VisualBar.transform.localPosition.x - maxWidth / 2f;
         barColor = VisualBar.GetComponent<SpriteRenderer>();
+        RepresentedHealth = tracked.Stats.Health;
     }
 
-    public void UpdateDisplay(float deltaTime) {
-        float targetWidth = DetermineWidth(tracked.Health);
+    public void UpdateDisplay(float deltaTime, int targetHealth) {
+        float targetWidth = DetermineWidth(targetHealth);
         float difference = targetWidth - currentWidth;
         if(difference == 0) {
+            RepresentedHealth = targetHealth;
             return;
         }
 
         float change = deltaTime * (Mathf.Sign(difference) * 0.3f + 5f * difference / maxWidth);
         if(Mathf.Abs(change) > Mathf.Abs(difference)) {
             currentWidth = targetWidth;
+            RepresentedHealth = targetHealth;
         } else {
             currentWidth += change;
         }

@@ -64,7 +64,7 @@ public class Monster : GridEntity
         if(Health > Stats.Health) {
             Health = Stats.Health;
         }
-        AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar));
+        AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
     public void TakeDamage(int amount, Monster source) {
@@ -78,7 +78,7 @@ public class Monster : GridEntity
                 if(CurrentShield.OnBlock != null) {
                     CurrentShield.OnBlock(source, this);
                 }
-                if(CurrentShield.BlocksOnce) {
+                if(CurrentShield.BlocksOnce && multiplier < 1.0f) { // only remove the shield if this shield is meant to block damage
                     Destroy(CurrentShield.Visual);
                     CurrentShield = null;
                 }
@@ -89,7 +89,7 @@ public class Monster : GridEntity
         }
 
         Health -= amount;
-        AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar));
+        AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
 
         if(Health <= 0) {
             Health = 0;

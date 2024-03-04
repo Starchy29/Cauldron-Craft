@@ -6,11 +6,16 @@ public class HealthBarAnimator : IMoveAnimator
 {
     public bool Completed { get { return endPause <= 0; } }
 
-    private float endPause = 0.4f;
+    private float endPause;
     private HealthBarScript healthBar;
+    private int targetHealth;
+    private bool movingBar;
 
-    public HealthBarAnimator(HealthBarScript healthBar) {
+    public HealthBarAnimator(HealthBarScript healthBar, int targetHealth) {
         this.healthBar = healthBar;
+        this.targetHealth = targetHealth;
+        endPause = 0.4f;
+        movingBar = true;
     }
 
     public void Start() {
@@ -18,13 +23,16 @@ public class HealthBarAnimator : IMoveAnimator
     }
 
     public void Update(float deltaTime) {
-        if(healthBar.IsAccurate) {
+        if(movingBar) {
+            healthBar.UpdateDisplay(deltaTime, targetHealth);
+            if(healthBar.RepresentedHealth == targetHealth) {
+                movingBar = false;
+            }
+        } else {
             endPause -= deltaTime;
             if(endPause <= 0) {
                 healthBar.gameObject.SetActive(false);
             }
-        } else {
-            healthBar.UpdateDisplay(deltaTime);
         }
     }
 }

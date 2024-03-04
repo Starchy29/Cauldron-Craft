@@ -6,6 +6,7 @@ using UnityEngine;
 public class BuyMenu : MonoBehaviour
 {
     [SerializeField] private GameObject MonsterButtonPrefab;
+    [SerializeField] public GameObject Background;
     private BuyMonsterButton[] buttons;
 
     void Start() {
@@ -26,19 +27,8 @@ public class BuyMenu : MonoBehaviour
 
     public void Open(Team team) {
         gameObject.SetActive(true);
-        Dictionary<Ingredient, int> resources = team.Resources;
         foreach(BuyMonsterButton button in buttons) {
-            button.disabled = CanBuy(resources, MonstersData.Instance.GetMonsterData(button.MonsterOption));
+            button.disabled = !team.CanBuy(button.MonsterOption);
         }
-    }
-
-    private bool CanBuy(Dictionary<Ingredient, int> resources, MonsterType monster) {
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            if(resources[ingredient] < monster.Recipe[ingredient]) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

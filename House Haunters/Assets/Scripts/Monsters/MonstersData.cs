@@ -4,12 +4,12 @@ using System;
 using UnityEngine;
 
 public enum MonsterName {
-    Temporary,
     LostSoul,
     Demon,
-    //Flytrap,
     ThornBush,
+    //Flytrap,
     //Mushroom,
+    //Temporary,
 }
 
 public class MonstersData
@@ -30,14 +30,14 @@ public class MonstersData
 
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
-        monsterTypes[(int)MonsterName.Temporary] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
-            10, 3,
-            new List<Move>() {
-                new Attack("Attack", 0, 1, new RangeSelector(4, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 8.0f)),
-                new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, prefabs.ExampleZone, null), null, ""),
-                new ShieldMove("Block", 2, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false, prefabs.ExampleShield), null)
-            }
-        );
+        //monsterTypes[(int)MonsterName.Temporary] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+        //    10, 3,
+        //    new List<Move>() {
+        //        new Attack("Attack", 0, 1, new RangeSelector(4, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 8.0f)),
+        //        new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, prefabs.ExampleZone, null), null, ""),
+        //        new ShieldMove("Block", 2, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false, prefabs.ExampleShield), null)
+        //    }
+        //);
 
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             18, 4,
@@ -61,8 +61,8 @@ public class MonstersData
             22, 3,
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 2 damage to enemies that attack this within melee range."),
-                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, false), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(3, null); }, true), null, "Places a trap that deals 3 damage to an enemy that lands on it."),
-                new Attack("Barb Bullet", 0, 4, new DirectionSelector(5, true), null, "Pierces enemies.")
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, false), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
+                new Attack("Barb Bullet", 0, 4, new DirectionSelector(6, true), null, "Pierces enemies.")
             }
         );
     }

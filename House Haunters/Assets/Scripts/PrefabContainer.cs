@@ -13,7 +13,7 @@ public class PrefabContainer : MonoBehaviour
         Instance = this;
 
         monsterToSprite = new Dictionary<MonsterName, Sprite>() {
-            { MonsterName.Temporary, tempMonsterSprite },
+            //{ MonsterName.Temporary, tempMonsterSprite },
             { MonsterName.Demon, demonSprite },
             { MonsterName.LostSoul, soulSprite },
             { MonsterName.ThornBush, thornbushSprite }

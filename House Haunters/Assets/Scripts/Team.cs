@@ -26,6 +26,30 @@ public class Team
     public void AddResource(Ingredient type) {
         Resources[type]++;
     }
+
+    public bool CanBuy(MonsterName monsterType) {
+        MonsterType monster = MonstersData.Instance.GetMonsterData(monsterType);
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            if(Resources[ingredient] < monster.Recipe[ingredient]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void BuyMonster(MonsterName type) {
+        if(!CanBuy(type)) {
+            return;
+        }
+
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            MonsterType data = MonstersData.Instance.GetMonsterData(type);
+            Resources[ingredient] -= data.Recipe[ingredient];
+        }
+
+        Spawnpoint.StartCook(type);
+    }
     
     public void Join(Monster monster) {
         Teammates.Add(monster);

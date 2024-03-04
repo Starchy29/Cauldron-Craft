@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 722349458212740485, guid: 6dbc3412580790b49b9632305f9c7802, type: 3}
       propertyPath: MonsterType
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4873075465038155319, guid: 6dbc3412580790b49b9632305f9c7802, type: 3}
       propertyPath: m_RootOrder

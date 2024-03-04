@@ -10,6 +10,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private GameObject TileSelector;
     [SerializeField] private MoveMenu moveMenu;
     [SerializeField] private AutoButton endTurnButton;
+    [SerializeField] private AutoButton craftButton;
     [SerializeField] private BuyMenu buyMenu;
 
     public bool UseKBMouse { get; set; }
@@ -79,7 +80,7 @@ public class MenuManager : MonoBehaviour
                 }
 
                 TileSelector.SetActive(false); // hide cursor when over menu
-                if(!Global.GetObjectArea(moveMenu.Background).Contains(mousePos)) {
+                if(!Global.GetObjectArea(buyMenu.Background).Contains(mousePos)) {
                     // if not hovering the craft menu, check if selecting a different monster
                     UpdateMonsterSelector(mousePos);
                 }
@@ -136,15 +137,20 @@ public class MenuManager : MonoBehaviour
     public void OpenCraftMenu() {
         state = SelectionTarget.CraftChoice;
         moveMenu.gameObject.SetActive(false);
-        buyMenu.gameObject.SetActive(true);
+        buyMenu.Open(controller);
     }
 
     public void BuyMonster(MonsterName type) {
-        controller.Spawnpoint.StartCook(type);
+        controller.BuyMonster(type);
+        buyMenu.gameObject.SetActive(false);
     }
 
     private void UpdateMonsterSelector(Vector2 mousePos) {
         TileSelector.SetActive(false);
+        if(Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos) || Global.GetObjectArea(craftButton.gameObject).Contains(mousePos)) {
+            return;
+        }
+
         Vector3Int tile = level.Tiles.WorldToCell(mousePos);
         if(!level.IsInGrid((Vector2Int)tile)) {
             return;
@@ -159,6 +165,7 @@ public class MenuManager : MonoBehaviour
             if(InputManager.Instance.SelectPressed()) {
                 state = SelectionTarget.Monster;
                 moveMenu.gameObject.SetActive(false);
+                buyMenu.gameObject.SetActive(false);
             }
             return;
         }

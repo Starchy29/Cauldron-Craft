@@ -18,12 +18,12 @@ public class HealthBarScript : MonoBehaviour
     private static Color midHue = Color.yellow;
     private static Color lowHue = Color.red;
 
-    void Start() {
+    void Awake() {
         maxWidth = VisualBar.transform.localScale.x;
         currentWidth = maxWidth;
         localLeft = VisualBar.transform.localPosition.x - maxWidth / 2f;
         barColor = VisualBar.GetComponent<SpriteRenderer>();
-        RepresentedHealth = tracked.Stats.Health;
+        RepresentedHealth = -1;
     }
 
     public void UpdateDisplay(float deltaTime, int targetHealth) {

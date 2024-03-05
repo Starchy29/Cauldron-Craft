@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
         }
 
         OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
+        MenuManager.Instance.UpdateResources();
 
         Team winner = null;//DetermineWinner();
         if(winner == null) {

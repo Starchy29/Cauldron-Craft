@@ -12,6 +12,8 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private AutoButton endTurnButton;
     [SerializeField] private AutoButton craftButton;
     [SerializeField] private BuyMenu buyMenu;
+    [SerializeField] private TMPro.TextMeshPro decayQuantity;
+    [SerializeField] private TMPro.TextMeshPro plantQuantity;
 
     public bool UseKBMouse { get; set; }
 
@@ -40,6 +42,7 @@ public class MenuManager : MonoBehaviour
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
         controller = gameManager.PlayerTeam;
+        UpdateResources();
     }
 
     void Update() {
@@ -143,6 +146,7 @@ public class MenuManager : MonoBehaviour
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
         buyMenu.gameObject.SetActive(false);
+        UpdateResources();
     }
 
     private void UpdateMonsterSelector(Vector2 mousePos) {
@@ -176,6 +180,11 @@ public class MenuManager : MonoBehaviour
             state = SelectionTarget.Move;
             selected = hovered;
         }
+    }
+
+    public void UpdateResources() {
+        decayQuantity.text = "" + controller.Resources[Ingredient.Decay];
+        plantQuantity.text = "" + controller.Resources[Ingredient.Plant];
     }
 
     private Vector2[] DetermineCenters(List<List<Vector2Int>> tileGroups) {

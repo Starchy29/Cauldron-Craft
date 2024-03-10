@@ -16,7 +16,8 @@ public class PrefabContainer : MonoBehaviour
             //{ MonsterName.Temporary, tempMonsterSprite },
             { MonsterName.Demon, demonSprite },
             { MonsterName.LostSoul, soulSprite },
-            { MonsterName.ThornBush, thornbushSprite }
+            { MonsterName.ThornBush, thornbushSprite },
+            { MonsterName.Flytrap, flytrapSprite }
         };
 
         ingredientToSprite = new Dictionary<Ingredient, Sprite>() {
@@ -45,5 +46,9 @@ public class PrefabContainer : MonoBehaviour
     public Sprite thornbushSprite;
     public GameObject thornTrapPrefab;
     public GameObject thornShieldPrefab;
+    #endregion
+
+    #region fly trap
+    public Sprite flytrapSprite;
     #endregion
 }

@@ -7,7 +7,7 @@ public enum MonsterName {
     LostSoul,
     Demon,
     ThornBush,
-    //Flytrap,
+    Flytrap,
     //Mushroom,
     //Temporary,
 }
@@ -61,8 +61,17 @@ public class MonstersData
             22, 3,
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 2 damage to enemies that attack this within melee range."),
-                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, false), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
                 new Attack("Barb Bullet", 0, 4, new DirectionSelector(6, true), null, "Pierces enemies.")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Plant, Ingredient.Plant, Ingredient.Plant,
+            24, 4,
+            new List<Move>() {
+                new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, 3, false, new RangeSelector(2, false, true), null),
+                new StatusMove("Entangle", 1, StatusEffect.Slowness, 2, true, new RangeSelector(2, false, true), null),
+                new Attack("Chomp", 0, 6, new RangeSelector(1, false, false), null)
             }
         );
     }

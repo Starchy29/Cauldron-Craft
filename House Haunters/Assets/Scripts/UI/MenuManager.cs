@@ -10,7 +10,6 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private GameObject TileSelector;
     [SerializeField] private MoveMenu moveMenu;
     [SerializeField] private AutoButton endTurnButton;
-    [SerializeField] private AutoButton craftButton;
     [SerializeField] private BuyMenu buyMenu;
     [SerializeField] private TMPro.TextMeshPro decayQuantity;
     [SerializeField] private TMPro.TextMeshPro plantQuantity;
@@ -146,12 +145,13 @@ public class MenuManager : MonoBehaviour
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
         buyMenu.gameObject.SetActive(false);
+        state = SelectionTarget.Monster;
         UpdateResources();
     }
 
     private void UpdateMonsterSelector(Vector2 mousePos) {
         TileSelector.SetActive(false);
-        if(Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos) || Global.GetObjectArea(craftButton.gameObject).Contains(mousePos)) {
+        if(Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos)) {
             return;
         }
 
@@ -170,6 +170,11 @@ public class MenuManager : MonoBehaviour
                 state = SelectionTarget.Monster;
                 moveMenu.gameObject.SetActive(false);
                 buyMenu.gameObject.SetActive(false);
+
+                // open craft menu when clicking the cauldron
+                if(level.GetEntity((Vector2Int)tile) == controller.Spawnpoint && !controller.Spawnpoint.Cooking) {
+                    OpenCraftMenu();
+                }
             }
             return;
         }

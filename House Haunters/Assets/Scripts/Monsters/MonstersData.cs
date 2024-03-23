@@ -44,7 +44,7 @@ public class MonstersData
             new List<Move>() {
                 new UniqueMove("Revitalize", 2, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(3); }, null),
                 new StatusMove("Spook", 3, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), null),
-                new Attack("Spirit Drain", 1, 2, new RangeSelector(1, false, false), null, "Steals the target's health.", StealHealth)
+                new Attack("Spirit Drain", 1, 2, new RangeSelector(2, false, false), null, "Steals the target's health.", StealHealth)
             }
         );
 
@@ -60,7 +60,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.ThornBush] = new MonsterType(Ingredient.Plant, Ingredient.Plant, Ingredient.Plant,
             22, 3,
             new List<Move>() {
-                new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 2 damage to enemies that attack this within melee range."),
+                new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 4 damage to enemies that attack this within melee range."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
                 new Attack("Barb Bullet", 0, 4, new DirectionSelector(6, true), null, "Pierces enemies.")
             }
@@ -108,7 +108,7 @@ public class MonstersData
 
     private static void DamageMeleeAttacker(Monster attacker, Monster defender) {
         if(Global.IsAdjacent(attacker.Tile, defender.Tile)) {
-            attacker.TakeDamage(2, null);
+            attacker.TakeDamage(4, null);
         }
     }
 }

@@ -89,10 +89,12 @@ public class Monster : GridEntity
         }
 
         Health -= amount;
+        if(Health < 0) {
+            Health = 0;
+        }
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
 
-        if(Health <= 0) {
-            Health = 0;
+        if(Health == 0) {
             GameManager.Instance.DefeatMonster(this);
             AnimationsManager.Instance.QueueAnimation(new DeathAnimator(this));
         }

@@ -7,6 +7,8 @@ public class Cauldron : GridEntity
     private MonsterName? cookingMonster;
     private bool cookingTurn;
 
+    public bool Cooking { get { return cookingMonster.HasValue; } }
+
     protected override void Start() {
         base.Start();
         Controller.OnTurnStart += FinishCook;

@@ -7,8 +7,7 @@ public class AutoButton : MonoBehaviour
 {
     public enum ClickFunction {
         None,
-        EndTurn,
-        Craft
+        EndTurn
     }
 
     [SerializeField] private ClickFunction clickFunction;
@@ -25,9 +24,6 @@ public class AutoButton : MonoBehaviour
         switch(clickFunction) {
             case ClickFunction.EndTurn:
                 OnClick = MenuManager.Instance.EndTurn;
-                break;
-            case ClickFunction.Craft:
-                OnClick = MenuManager.Instance.OpenCraftMenu;
                 break;
         }
     }

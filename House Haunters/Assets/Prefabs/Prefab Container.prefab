@@ -44,8 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4284e229e0fba9f45bb537cf4e6fdae8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
-  demonSprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}
   tempMonsterSprite: {fileID: 21300000, guid: 14ab788be10e8f342804642edf2e325b, type: 3}
   decayLogo: {fileID: 21300000, guid: 4e7b1ecfbd165134a8cb68c5adc4bb3a, type: 3}
   plantLogo: {fileID: 21300000, guid: 0553331c0dd5f2740a5c16cb345a5038, type: 3}
@@ -55,7 +53,14 @@ MonoBehaviour:
   TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}
   ExampleShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
+  soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
+  spookHaunt: {fileID: 3049984156711576710, guid: 0e8ef0ba35ce5f149a58c207ba6c6bdf, type: 3}
+  demonSprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}
+  demonStrength: {fileID: 2558898771775421549, guid: 2ad4ec7a1a5045643bd28a59485c4939, type: 3}
+  demonCurse: {fileID: 8509943955392034232, guid: f640d6297da60c04d9ef5562d3b792eb, type: 3}
   thornbushSprite: {fileID: 21300000, guid: 60f48d44fcb70f241a0b4c83a1202d7f, type: 3}
   thornTrapPrefab: {fileID: 8310442494393957005, guid: a74f52805bbb3fd4dbe3a5c408cf3d34, type: 3}
   thornShieldPrefab: {fileID: 4864488922578185088, guid: c812e527930d41348bd422d4d0a219ea, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
+  tangleVines: {fileID: 942366795742568175, guid: 98d98deb730289a429580ef2230b374c, type: 3}
+  nectarRegen: {fileID: 3321069787708238223, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}

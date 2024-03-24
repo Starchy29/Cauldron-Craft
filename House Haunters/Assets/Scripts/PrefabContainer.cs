@@ -27,9 +27,7 @@ public class PrefabContainer : MonoBehaviour
             { Ingredient.Insect, insectLogo }
         };
     }
-
-    public Sprite soulSprite;
-    public Sprite demonSprite;
+    
     public Sprite tempMonsterSprite;
 
     public Sprite decayLogo;
@@ -42,6 +40,17 @@ public class PrefabContainer : MonoBehaviour
     public GameObject ExampleZone;
     public GameObject ExampleShield;
 
+    #region soul
+    public Sprite soulSprite;
+    public GameObject spookHaunt;
+    #endregion
+
+    #region demon
+    public Sprite demonSprite;
+    public GameObject demonStrength;
+    public GameObject demonCurse;
+    #endregion
+
     #region thorn bush
     public Sprite thornbushSprite;
     public GameObject thornTrapPrefab;
@@ -50,5 +59,7 @@ public class PrefabContainer : MonoBehaviour
 
     #region fly trap
     public Sprite flytrapSprite;
+    public GameObject tangleVines;
+    public GameObject nectarRegen;
     #endregion
 }

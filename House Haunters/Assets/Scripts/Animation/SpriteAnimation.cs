@@ -11,7 +11,7 @@ public enum AnimationMode {
 
 public class SpriteAnimation
 {
-    private Texture2D[] sprites;
+    private Sprite[] sprites;
     private int framesPerSprite;
     private AnimationMode mode;
 
@@ -19,10 +19,10 @@ public class SpriteAnimation
     private float timer;
     private bool reversed;
 
-    public Texture2D CurrentSprite { get { return sprites[spriteIndex]; } }
+    public Sprite CurrentSprite { get { return sprites[spriteIndex]; } }
     public bool Finished { get; private set; }
     
-    public SpriteAnimation(Texture2D[] sprites, AnimationMode mode, int framesPerSprite) {
+    public SpriteAnimation(Sprite[] sprites, AnimationMode mode, int framesPerSprite) {
         this.sprites = sprites;
         this.mode = mode;
         this.framesPerSprite = framesPerSprite;

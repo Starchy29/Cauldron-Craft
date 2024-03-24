@@ -108,6 +108,7 @@ public class Monster : GridEntity
     public void ApplyStatus(StatusEffect status, int duration) {
         if(CurrentShield != null && CurrentShield.BlocksStatus) {
             if(CurrentShield.BlocksOnce) {
+                Destroy(CurrentShield.Visual);
                 CurrentShield = null;
             }
             return;
@@ -147,6 +148,10 @@ public class Monster : GridEntity
     public void ApplyShield(Shield shield) {
         CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksStatus, shield.BlocksOnce, Instantiate(shield.Visual), shield.OnBlock);
         CurrentShield.Visual.transform.SetParent(transform, false);
+    }
+
+    public void AddEffect(GameObject effect, int duration) {
+
     }
 
     // returns true if the input tile is one that this monster can legally stand on assuming it is unoccupied

@@ -4,18 +4,27 @@ using UnityEngine;
 
 public class Particle : MonoBehaviour
 {
-    [SerializeField] private Texture2D[] sprites;
+    [SerializeField] private Sprite[] sprites;
     [SerializeField] private AnimationMode mode;
     [SerializeField] private int framesPerSprite;
+    private SpriteRenderer renderer;
 
     private SpriteAnimation spriteAnimation;
 
     void Start() {
-        spriteAnimation = new SpriteAnimation(sprites, mode, framesPerSprite);
+        if(sprites.Length > 0) {
+            spriteAnimation = new SpriteAnimation(sprites, mode, framesPerSprite);
+        }
+        renderer = GetComponent<SpriteRenderer>();
     }
 
     void Update() {
+        if(spriteAnimation == null) {
+            return;
+        }
+
         spriteAnimation.Update(Time.deltaTime);
+        renderer.sprite = spriteAnimation.CurrentSprite;
         if(spriteAnimation.Finished) {
             Destroy(gameObject);
         }

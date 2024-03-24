@@ -9,6 +9,7 @@ public enum MonsterName {
     ThornBush,
     Flytrap,
     //Mushroom,
+    // Jackolantern
     //Temporary,
 }
 
@@ -43,7 +44,7 @@ public class MonstersData
             18, 4,
             new List<Move>() {
                 new UniqueMove("Revitalize", 2, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(3); }, null),
-                new StatusMove("Spook", 3, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), null),
+                new StatusMove("Spook", 3, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.spookHaunt, 3)),
                 new Attack("Spirit Drain", 1, 2, new RangeSelector(2, false, false), null, "Steals the target's health.", StealHealth)
             }
         );
@@ -51,9 +52,9 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Demon] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             20, 4,
             new List<Move>() {
-                new StatusMove("Sacrifice", 5, StatusEffect.Strength, 3, false, new SelfSelector(), null, "Pay 3 life to gain strength.", (user, tile) => { user.TakeDamage(3, null); }),
-                new StatusMove("Ritual", 2, StatusEffect.Cursed, 2, true, new ZoneSelector(2, 2), null),
-                new Attack("Fireball", 1, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 splash damage to nearby enemies.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
+                new StatusMove("Sacrifice", 5, StatusEffect.Strength, 3, false, new SelfSelector(), AnimateStatus(prefabs.demonStrength, 3), "Pay 3 life to gain strength.", (user, tile) => { user.TakeDamage(3, null); }),
+                new StatusMove("Ritual", 2, StatusEffect.Cursed, 2, true, new ZoneSelector(2, 2), AnimateStatus(prefabs.demonCurse, 2)),
+                new Attack("Fireball", 1, 4, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 2 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 2); })
             }
         );
 
@@ -69,8 +70,8 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Plant, Ingredient.Plant, Ingredient.Plant,
             24, 4,
             new List<Move>() {
-                new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, 3, false, new RangeSelector(2, false, true), null),
-                new StatusMove("Entangle", 1, StatusEffect.Slowness, 2, true, new RangeSelector(2, false, true), null),
+                new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, 3, false, new RangeSelector(2, false, true), AnimateStatus(prefabs.nectarRegen, 3)),
+                new StatusMove("Entangle", 1, StatusEffect.Slowness, 2, true, new RangeSelector(2, false, true), AnimateStatus(prefabs.tangleVines, 2)),
                 new Attack("Chomp", 0, 6, new RangeSelector(1, false, false), null)
             }
         );
@@ -80,6 +81,7 @@ public class MonstersData
         return monsterTypes[(int)name];
     }
 
+    #region Animation Helpers
     // creates the function that queues the animation of a projectile
     private static AnimationQueuer AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed) {
         return (Monster user, List<Vector2Int> tiles) => {
@@ -89,6 +91,19 @@ public class MonstersData
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
         };
     }
+
+    private static AnimationQueuer AnimateStatus(GameObject effectParticlePrefab, int duration) {
+        LevelGrid level = LevelGrid.Instance;
+        return (Monster user, List<Vector2Int> tiles) => {
+            foreach(Vector2Int tile in tiles) {
+                Monster target = level.GetMonster(tile);
+                if(target != null) {
+                    AnimationsManager.Instance.QueueAnimation(new StatusApplicationAnimator(target, effectParticlePrefab, duration));
+                }
+            }
+        };
+    }
+    #endregion
 
     private static void StealHealth(Monster user, Monster target, int healthLost) {
         user.Heal(healthLost);

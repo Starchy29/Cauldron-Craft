@@ -22,6 +22,7 @@ public class MenuManager : MonoBehaviour
     private LevelGrid level;
     private GameManager gameManager;
     private Team controller;
+    private bool showMovesLeft;
 
     // target selection data
     private List<List<Vector2Int>> tileGroups;
@@ -47,6 +48,19 @@ public class MenuManager : MonoBehaviour
     void Update() {
         InputManager input = InputManager.Instance;
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
+
+        bool shouldShowMovesLeft = GameManager.Instance.CurrentTurn == controller && !AnimationsManager.Instance.Animating && state == SelectionTarget.Monster;
+        if(showMovesLeft != shouldShowMovesLeft) {
+            showMovesLeft = shouldShowMovesLeft;
+
+            foreach(Monster teammate in controller.Teammates) {
+                if(showMovesLeft) {
+                    teammate.MoveCounter.Open();
+                } else {
+                    teammate.MoveCounter.Close();
+                }
+            }
+        }
 
         endTurnButton.disabled = GameManager.Instance.CurrentTurn != controller || AnimationsManager.Instance.Animating || state == SelectionTarget.Targets;
 

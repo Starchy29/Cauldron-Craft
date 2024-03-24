@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Cauldron : GridEntity
 {
+    [SerializeField] private GameObject cookIndicator;
+
     private MonsterName? cookingMonster;
     private bool cookingTurn;
 
@@ -17,6 +19,8 @@ public class Cauldron : GridEntity
 
     public void StartCook(MonsterName monsterType) {
         cookingMonster = monsterType;
+        cookIndicator.SetActive(true);
+        cookIndicator.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
     }
 
     private void FinishCook() {
@@ -35,6 +39,7 @@ public class Cauldron : GridEntity
             // spawn the monster
             GameManager.Instance.SpawnMonster(cookingMonster.Value, spawnSpot, Controller);
             cookingMonster = null;
+            cookIndicator.SetActive(false);
         }
     }
 }

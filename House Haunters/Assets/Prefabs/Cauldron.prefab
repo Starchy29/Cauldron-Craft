@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6306890659073810452}
   - component: {fileID: 8834984995230352074}
+  - component: {fileID: 2146506665911194930}
   m_Layer: 0
   m_Name: Monster Indicator
   m_TagString: Untagged
@@ -85,6 +86,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &2146506665911194930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976895540559380421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c85232a804fb684ab26c7c8dfd6b6a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 0.05
+  speed: 4
 --- !u!1 &2102336178557980548
 GameObject:
   m_ObjectHideFlags: 0

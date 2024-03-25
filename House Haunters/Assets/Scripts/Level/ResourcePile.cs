@@ -5,9 +5,9 @@ using UnityEngine;
 public enum Ingredient
 {
     Decay,
-    Plant,
+    Flora,
     Mineral,
-    Insect
+    Swarm
 }
 
 public class ResourcePile : GridEntity

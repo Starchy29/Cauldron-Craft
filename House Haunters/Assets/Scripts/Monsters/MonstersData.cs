@@ -58,7 +58,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.ThornBush] = new MonsterType(Ingredient.Plant, Ingredient.Plant, Ingredient.Plant,
+        monsterTypes[(int)MonsterName.ThornBush] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
             22, 3,
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 4 damage to enemies that attack this within melee range."),
@@ -67,7 +67,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Plant, Ingredient.Plant, Ingredient.Plant,
+        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
             24, 4,
             new List<Move>() {
                 new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, 3, false, new RangeSelector(2, false, true), AnimateStatus(prefabs.nectarRegen, 3)),

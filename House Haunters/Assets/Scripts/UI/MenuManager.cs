@@ -52,7 +52,6 @@ public class MenuManager : MonoBehaviour
         bool shouldShowMovesLeft = GameManager.Instance.CurrentTurn == controller && !AnimationsManager.Instance.Animating && state == SelectionTarget.Monster;
         if(showMovesLeft != shouldShowMovesLeft) {
             showMovesLeft = shouldShowMovesLeft;
-
             foreach(Monster teammate in controller.Teammates) {
                 if(showMovesLeft) {
                     teammate.MoveCounter.Open();
@@ -203,7 +202,7 @@ public class MenuManager : MonoBehaviour
 
     public void UpdateResources() {
         decayQuantity.text = "" + controller.Resources[Ingredient.Decay];
-        plantQuantity.text = "" + controller.Resources[Ingredient.Plant];
+        plantQuantity.text = "" + controller.Resources[Ingredient.Flora];
     }
 
     private Vector2[] DetermineCenters(List<List<Vector2Int>> tileGroups) {

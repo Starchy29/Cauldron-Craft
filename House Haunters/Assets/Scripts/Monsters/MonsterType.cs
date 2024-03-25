@@ -13,8 +13,8 @@ public class MonsterType
     public MonsterType(Ingredient ingredient1, Ingredient ingredient2, Ingredient ingredient3, int health, int speed, List<Move> specialMoves) {
         Recipe = new Dictionary<Ingredient, int>() {
             { Ingredient.Decay, 0 },
-            { Ingredient.Plant, 0 },
-            { Ingredient.Insect, 0 },
+            { Ingredient.Flora, 0 },
+            { Ingredient.Swarm, 0 },
             { Ingredient.Mineral, 0 }
         };
 

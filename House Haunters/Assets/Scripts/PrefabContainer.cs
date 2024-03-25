@@ -22,18 +22,18 @@ public class PrefabContainer : MonoBehaviour
 
         ingredientToSprite = new Dictionary<Ingredient, Sprite>() {
             { Ingredient.Decay, decayLogo },
-            { Ingredient.Plant, plantLogo },
+            { Ingredient.Flora, floraLogo },
             { Ingredient.Mineral, mineralLogo },
-            { Ingredient.Insect, insectLogo }
+            { Ingredient.Swarm, swarmLogo }
         };
     }
     
     public Sprite tempMonsterSprite;
 
     public Sprite decayLogo;
-    public Sprite plantLogo;
+    public Sprite floraLogo;
     public Sprite mineralLogo;
-    public Sprite insectLogo;
+    public Sprite swarmLogo;
 
     public GameObject BaseMonsterPrefab;
     public GameObject TempMonsterProjectile;

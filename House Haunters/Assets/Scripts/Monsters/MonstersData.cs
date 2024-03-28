@@ -43,7 +43,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             18, 4,
             new List<Move>() {
-                new UniqueMove("Revitalize", 2, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(3); }, null),
+                new UniqueMove("Revitalize", 1, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(3); }, null),
                 new StatusMove("Spook", 3, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.spookHaunt, 3)),
                 new Attack("Spirit Drain", 1, 2, new RangeSelector(2, false, false), null, "Steals the target's health.", StealHealth)
             }

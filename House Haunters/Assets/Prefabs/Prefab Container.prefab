@@ -49,6 +49,12 @@ MonoBehaviour:
   floraLogo: {fileID: 21300000, guid: ca32c64207d021f47bb321810237b682, type: 3}
   mineralLogo: {fileID: 21300000, guid: b656ca6764190a347b5f0711e6662236, type: 3}
   swarmLogo: {fileID: 21300000, guid: 712cb07a2ca848d4c9f23b97bcd3d7de, type: 3}
+  attackIcon: {fileID: 21300000, guid: 1db5c7313ba87944681a5ce12f9e37c7, type: 3}
+  defendIcon: {fileID: 21300000, guid: 6bd14838597dff746b16ba3ee84d32bf, type: 3}
+  movementIcon: {fileID: 21300000, guid: 25f8577acfbe53743a419f373b678231, type: 3}
+  zoneIcon: {fileID: 21300000, guid: 63771ba6c93e4ec4087eab4384934183, type: 3}
+  disruptIcon: {fileID: 21300000, guid: e2d4c133a9cabf446b4e4d3748df57bc, type: 3}
+  supportIcon: {fileID: 21300000, guid: 52ba9c8999e5dfc40b90ea2e082ac58e, type: 3}
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
   TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}

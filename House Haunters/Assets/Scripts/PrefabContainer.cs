@@ -8,6 +8,7 @@ public class PrefabContainer : MonoBehaviour
 
     public Dictionary<MonsterName, Sprite> monsterToSprite;
     public Dictionary<Ingredient, Sprite> ingredientToSprite;
+    public Dictionary<MoveType, Sprite> moveTypeToSprite;
 
     void Awake() {
         Instance = this;
@@ -26,6 +27,15 @@ public class PrefabContainer : MonoBehaviour
             { Ingredient.Mineral, mineralLogo },
             { Ingredient.Swarm, swarmLogo }
         };
+
+        moveTypeToSprite = new Dictionary<MoveType, Sprite>() {
+            { MoveType.Attack, attackIcon },
+            { MoveType.Shield, defendIcon },
+            { MoveType.Movement, movementIcon },
+            { MoveType.Zone, zoneIcon },
+            { MoveType.Support, supportIcon },
+            { MoveType.Disrupt, disruptIcon }
+        };
     }
     
     public Sprite tempMonsterSprite;
@@ -34,6 +44,13 @@ public class PrefabContainer : MonoBehaviour
     public Sprite floraLogo;
     public Sprite mineralLogo;
     public Sprite swarmLogo;
+
+    public Sprite attackIcon;
+    public Sprite defendIcon;
+    public Sprite movementIcon;
+    public Sprite zoneIcon;
+    public Sprite disruptIcon;
+    public Sprite supportIcon;
 
     public GameObject BaseMonsterPrefab;
     public GameObject TempMonsterProjectile;

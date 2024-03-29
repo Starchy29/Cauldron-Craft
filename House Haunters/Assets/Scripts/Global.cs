@@ -132,4 +132,22 @@ public static class Global
     public static bool IsAdjacent(Vector2Int tile1, Vector2Int tile2) {
         return Mathf.Abs(tile1.x - tile2.x) <= 1 && Mathf.Abs(tile1.y - tile2.y) <= 1;
     }
+
+    public static Color ChangeSaturation(Color color, float amount) {
+        float h, s, v;
+        Color.RGBToHSV(color, out h, out s, out v);
+        if(s == 0f) {
+            v += amount; // keep grayscale colors grayscale
+        } else {
+            s += amount;
+        }
+        return Color.HSVToRGB(h, s, v);
+    }
+
+    public static Color ChangeValue(Color color, float amount) {
+        float h, s, v;
+        Color.RGBToHSV(color, out h, out s, out v);
+        v += amount;
+        return Color.HSVToRGB(h, s, v);
+    }
 }

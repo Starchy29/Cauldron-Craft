@@ -20,7 +20,12 @@ public class AutoButton : MonoBehaviour
     public Trigger OnHover;
     public Trigger OnMouseLeave;
 
+    protected Color baseColor = new Color(0.7f, 0.7f, 0.7f);
+    private Color disabledColor;
+    private Color hoveredColor;
+
     void Start() {
+        SetBackColor(baseColor);
         switch(clickFunction) {
             case ClickFunction.EndTurn:
                 OnClick = MenuManager.Instance.EndTurn;
@@ -45,9 +50,15 @@ public class AutoButton : MonoBehaviour
         }
 
         if(disabled) {
-            sprite.color = Color.gray;
+            sprite.color = disabledColor;
         } else {
-            sprite.color = hovered ? Color.blue : Color.white;
+            sprite.color = hovered ? hoveredColor : baseColor;
         }
+    }
+
+    public void SetBackColor(Color color) {
+        baseColor = color;
+        disabledColor = Global.ChangeSaturation(Global.ChangeValue(color, -0.3f), +0.3f);
+        hoveredColor = Global.ChangeSaturation(color, +0.3f);
     }
 }

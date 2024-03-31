@@ -68,7 +68,7 @@ public class MonstersData
         );
 
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
-            24, 4,
+            24, 3,
             new List<Move>() {
                 new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, 3, false, new RangeSelector(2, false, true), AnimateStatus(prefabs.nectarRegen, 3)),
                 new StatusMove("Entangle", 1, StatusEffect.Slowness, 2, true, new RangeSelector(2, false, true), AnimateStatus(prefabs.tangleVines, 2)),

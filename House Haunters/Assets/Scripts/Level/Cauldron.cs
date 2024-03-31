@@ -33,7 +33,7 @@ public class Cauldron : GridEntity
                 return;
             }
 
-            options.Sort((Vector2Int current, Vector2Int next) => { return Global.CalcTileDistance(current, levelMid) - Global.CalcTileDistance(next, levelMid); });
+            options.Sort((Vector2Int current, Vector2Int next) => { return DetermineSpawnSpotPriority(current, levelMid) - DetermineSpawnSpotPriority(next, levelMid); });
             Vector2Int spawnSpot = options[0];
 
             // spawn the monster
@@ -41,5 +41,13 @@ public class Cauldron : GridEntity
             cookingMonster = null;
             cookIndicator.SetActive(false);
         }
+    }
+
+    private int DetermineSpawnSpotPriority(Vector2Int tile, Vector2Int levelMid) {
+        Vector2Int toCenter = levelMid - Tile;
+        bool horizontal = toCenter.x > toCenter.y;
+        return -100 * (Global.CalcTileDistance(tile, Tile) <= 1 ? 1 : 0) // prioritize orthogonally adjacent over diagonal
+            + 10 * (horizontal ? Mathf.Abs(tile.x - levelMid.x) : Mathf.Abs(tile.y - levelMid.y))
+            + 1 * (horizontal ? Mathf.Abs(tile.y - levelMid.y) : Mathf.Abs(tile.x - levelMid.x));
     }
 }

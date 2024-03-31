@@ -58,7 +58,7 @@ public class AutoButton : MonoBehaviour
 
     public void SetBackColor(Color color) {
         baseColor = color;
-        disabledColor = Global.ChangeSaturation(Global.ChangeValue(color, -0.3f), +0.3f);
-        hoveredColor = Global.ChangeSaturation(color, +0.3f);
+        disabledColor = Global.ChangeSaturation(Global.ChangeValue(color, -0.3f), -0.1f);
+        hoveredColor = Global.ChangeSaturation(Global.ChangeValue(color, +0.1f), +0.3f);
     }
 }

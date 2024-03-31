@@ -42,7 +42,7 @@ public class MoveButton : AutoButton
         cooldown.text = user.Cooldowns[moveSlot] > 0 ? "" + user.Cooldowns[moveSlot] : "";
 
         typeIcon.sprite = PrefabContainer.Instance.moveTypeToSprite[move.Type];
-        SetBackColor(moveTypeToColor[move.Type]);
+        //SetBackColor(moveTypeToColor[move.Type]);
 
         // open info menu
 

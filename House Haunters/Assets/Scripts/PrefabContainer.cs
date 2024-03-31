@@ -18,7 +18,8 @@ public class PrefabContainer : MonoBehaviour
             { MonsterName.Demon, demonSprite },
             { MonsterName.LostSoul, soulSprite },
             { MonsterName.ThornBush, thornbushSprite },
-            { MonsterName.Flytrap, flytrapSprite }
+            { MonsterName.Flytrap, flytrapSprite },
+            { MonsterName.Fungus, fungusSprite }
         };
 
         ingredientToSprite = new Dictionary<Ingredient, Sprite>() {
@@ -57,26 +58,38 @@ public class PrefabContainer : MonoBehaviour
     public GameObject ExampleZone;
     public GameObject ExampleShield;
 
+    [Header("Lost Soul")]
     #region soul
     public Sprite soulSprite;
     public GameObject spookHaunt;
     #endregion
 
+    [Header("Demon")]
     #region demon
     public Sprite demonSprite;
     public GameObject demonStrength;
     public GameObject demonCurse;
     #endregion
 
+    [Header("Thoen Bush")]
     #region thorn bush
     public Sprite thornbushSprite;
     public GameObject thornTrapPrefab;
     public GameObject thornShieldPrefab;
     #endregion
 
+    [Header("Fly Trap")]
     #region fly trap
     public Sprite flytrapSprite;
     public GameObject tangleVines;
     public GameObject nectarRegen;
+    #endregion
+
+    [Header("Fungus")]
+    #region fungus
+    public Sprite fungusSprite;
+    public GameObject leechSeed;
+    public GameObject drowsySpores;
+    public GameObject fearSpores;
     #endregion
 }

@@ -8,7 +8,7 @@ public enum MonsterName {
     Demon,
     ThornBush,
     Flytrap,
-    //Mushroom,
+    Fungus,
     // Jackolantern
     //Temporary,
 }
@@ -73,6 +73,15 @@ public class MonstersData
                 new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, 3, false, new RangeSelector(2, false, true), AnimateStatus(prefabs.nectarRegen, 3)),
                 new StatusMove("Entangle", 1, StatusEffect.Slowness, 2, true, new RangeSelector(2, false, true), AnimateStatus(prefabs.tangleVines, 2)),
                 new Attack("Chomp", 0, 6, new RangeSelector(1, false, false), null)
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Decay,
+            22, 3,
+            new List<Move>() {
+                new StatusMove("Psychedelic Spores", 1, StatusEffect.Fear, 1, true, new ZoneSelector(2, 2), AnimateStatus(prefabs.fearSpores, 1)),
+                new StatusMove("Sleepy Spores", 1, StatusEffect.Drowsiness, 2, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.drowsySpores, 2)),
+                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.Infect, AnimateStatus(prefabs.leechSeed, LeechStatus.DURATION))
             }
         );
     }

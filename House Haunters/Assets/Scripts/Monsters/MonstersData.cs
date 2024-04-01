@@ -59,7 +59,7 @@ public class MonstersData
         );
 
         monsterTypes[(int)MonsterName.ThornBush] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
-            22, 3,
+            22, 4,
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 4 damage to enemies that attack this within melee range."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),

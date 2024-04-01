@@ -5,7 +5,7 @@ using UnityEngine;
 // special move of the fungus monster
 public class LeechStatus
 {
-    public const int DURATION = 3;
+    public const int DURATION = 4;
 
     private Monster user;
     private Monster target;

@@ -80,7 +80,7 @@ public class MonstersData
             22, 3,
             new List<Move>() {
                 new StatusMove("Psychedelic Spores", 1, StatusEffect.Fear, 1, true, new ZoneSelector(2, 2), AnimateStatus(prefabs.fearSpores, 1)),
-                new StatusMove("Sleepy Spores", 1, StatusEffect.Drowsiness, 2, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.drowsySpores, 2)),
+                new StatusMove("Sleepy Spores", 2, StatusEffect.Drowsiness, 2, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.drowsySpores, 2)),
                 new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.Infect, AnimateStatus(prefabs.leechSeed, LeechStatus.DURATION))
             }
         );

@@ -73,12 +73,12 @@ public abstract class Move
     }
 
     public void Use(Monster user, List<Vector2Int> tiles) {
-        if(effectAnimation != null) {
-            effectAnimation(user, tiles);
-        }
-
         if(TargetType != Targets.Traversable) { // avoid pathfinding extra times
             tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
+        }
+
+        if(effectAnimation != null) {
+            effectAnimation(user, tiles);
         }
 
         foreach(Vector2Int tile in tiles) {

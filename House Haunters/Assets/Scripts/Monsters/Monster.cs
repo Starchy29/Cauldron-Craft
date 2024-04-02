@@ -5,7 +5,7 @@ using System;
 
 public class Monster : GridEntity
 {
-    [SerializeField] private HealthBarScript healthBar;
+    [SerializeField] public HealthBarScript healthBar;
     [SerializeField] public MonsterName MonsterType;
     public MoveCounter MoveCounter { get; set; }
 

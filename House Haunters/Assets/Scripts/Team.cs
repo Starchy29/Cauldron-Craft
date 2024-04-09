@@ -74,8 +74,8 @@ public class Team
             return;
         }
 
-        foreach(Monster teammate in Teammates) {
-            teammate.EndTurn();
+        for(int i = Teammates.Count - 1; i >= 0; i--) { // loop backwards because ending turn could kill the monster and modify the collection
+            Teammates[i].EndTurn();
         }
 
         OnTurnEnd?.Invoke();

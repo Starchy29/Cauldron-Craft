@@ -5,7 +5,7 @@ using UnityEngine;
 // special move of the fungus monster
 public class LeechStatus
 {
-    public const int DURATION = 4;
+    public const int DURATION = 3;
 
     private Monster user;
     private Monster target;
@@ -33,8 +33,8 @@ public class LeechStatus
     }
 
     private void StealLife() {
-        target.TakeDamage(1, null);
-        user.Heal(1);
+        target.TakeDamage(2, null);
+        user.Heal(2);
 
         turnsLeft--;
         if(turnsLeft <= 0) {

@@ -41,6 +41,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Tile Highlight
+    uniqueID: 2994390491
+    locked: 0
+  - name: Level Entity
+    uniqueID: 3350260833
+    locked: 0
   - name: VFX
     uniqueID: 3462500283
     locked: 0

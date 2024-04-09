@@ -268,10 +268,10 @@ public class Monster : GridEntity
 
     private void UpdateStatuses() {
         if(HasStatus(StatusEffect.Regeneration)) {
-            Heal(1);
+            Heal(2);
         }
         if(HasStatus(StatusEffect.Poison)) {
-            TakeDamage(1, null);
+            TakeDamage(2, null);
         }
 
         foreach(StatusEffect status in Enum.GetValues(typeof(StatusEffect))) {

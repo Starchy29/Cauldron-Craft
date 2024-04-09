@@ -8,6 +8,8 @@ public class AIController
 
     // chooses 1 move at a time
     public void ChooseMove(Team team) {
+        //team.EndTurn(); return;
+
         foreach(Monster monster in team.Teammates) {
             List<int> moveOptions = monster.GetUsableMoveSlots();
             if(moveOptions.Count == 0) {

@@ -7,15 +7,16 @@ public class Monster : GridEntity
 {
     [SerializeField] public HealthBarScript healthBar;
     [SerializeField] public MonsterName MonsterType;
-    public MoveCounter MoveCounter { get; set; }
+    public MoveCounter MoveCounter;
 
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
 
-    private List<StatusAilment> statuses = new List<StatusAilment>();
+    public List<StatusAilment> Statuses { get; private set; } = new List<StatusAilment>();
 
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
+    public event Trigger OnDeath;
 
     public int[] Cooldowns {  get; private set; }
     public Shield CurrentShield { get; private set; }
@@ -37,7 +38,7 @@ public class Monster : GridEntity
         OnTurnStart += RefreshMoves;
         OnTurnStart += ReduceShield;
         OnTurnEnd += DecreaseCooldowns;
-        OnTurnEnd += UpdateStatuses;
+        OnTurnEnd += CheckStatuses;
 
         RefreshMoves();
     }
@@ -97,16 +98,20 @@ public class Monster : GridEntity
         if(Health == 0) {
             GameManager.Instance.DefeatMonster(this);
             AnimationsManager.Instance.QueueAnimation(new DeathAnimator(this));
+            OnDeath();
+            foreach(StatusAilment status in Statuses) {
+                status.Terminate();
+            }
         }
     }
 
     public bool HasStatus(StatusEffect status) {
         TileAffector tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
-        return statuses.Find((StatusAilment condition) => { return condition.effects.Contains(status); }) != null
+        return Statuses.Find((StatusAilment condition) => { return condition.effects.Contains(status); }) != null
             || (tileEffect != null && tileEffect.Controller != Controller && tileEffect.AppliedStatus == status);
     }
 
-    public void ApplyStatus(StatusAilment condition, Monster user) {
+    public void ApplyStatus(StatusAilment blueprint, Monster user) {
         if(CurrentShield != null && user.Controller != this.Controller && CurrentShield.BlocksStatus) {
             if(CurrentShield.BlocksOnce) {
                 Destroy(CurrentShield.Visual);
@@ -115,13 +120,18 @@ public class Monster : GridEntity
             return;
         }
 
-        StatusAilment duplicate = statuses.Find((StatusAilment existing) => { return existing == condition; });
+        StatusAilment duplicate = Statuses.Find((StatusAilment existing) => { return existing == blueprint; });
         if(duplicate != null) {
-            duplicate.duration = condition.duration; // reset duration;
+            duplicate.duration = blueprint.duration; // reset duration;
             return;
         }
 
-        statuses.Add(new StatusAilment(condition, this));
+        GameObject visual = Instantiate(blueprint.visual);
+        visual.transform.SetParent(transform);
+        visual.transform.localPosition = Vector3.zero;
+
+        StatusAilment affliction = new StatusAilment(blueprint.effects, blueprint.duration, visual);
+        Statuses.Add(affliction);
     }
 
     public List<List<Vector2Int>> GetMoveOptions(int moveSlot, bool filtered = true) {
@@ -153,6 +163,7 @@ public class Monster : GridEntity
     public void ApplyShield(Shield shield) {
         CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksStatus, shield.BlocksOnce, Instantiate(shield.Visual), shield.OnBlock);
         CurrentShield.Visual.transform.SetParent(transform, false);
+        CurrentShield.Visual.transform.localPosition = Vector3.zero;
     }
 
     // returns true if the input tile is one that this monster can legally stand on assuming it is unoccupied
@@ -262,7 +273,7 @@ public class Monster : GridEntity
         }
     }
 
-    private void UpdateStatuses() {
+    private void CheckStatuses() {
         if(HasStatus(StatusEffect.Regeneration)) {
             Heal(2);
         }
@@ -270,11 +281,11 @@ public class Monster : GridEntity
             TakeDamage(2, null);
         }
 
-        for(int i = statuses.Count - 1; i >= 0; i--) {
-            statuses[i].duration--;
-            if(statuses[i].duration <= 0) {
-                statuses[i].TerminateVisual();
-                statuses.RemoveAt(i);
+        for(int i = Statuses.Count - 1; i >= 0; i--) {
+            Statuses[i].duration--;
+            if(Statuses[i].duration <= 0) {
+                Statuses[i].Terminate();
+                Statuses.RemoveAt(i);
             }
         }
     }

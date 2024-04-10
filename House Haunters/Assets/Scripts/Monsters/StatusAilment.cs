@@ -32,8 +32,8 @@ public class StatusAilment : IEquatable<StatusAilment>
         StatusEffect.Haunted
     };
 
-    private GameObject visual;
-    public List<StatusEffect> effects { get; private set; }
+    public GameObject visual;
+    public List<StatusEffect> effects;
     public int duration;
 
     public StatusAilment(StatusEffect effect, int duration, GameObject visualPrefab) : this(new List<StatusEffect>(){ effect }, duration, visualPrefab) {}
@@ -43,20 +43,11 @@ public class StatusAilment : IEquatable<StatusAilment>
         visual = visualPrefab;
     }
 
-    public StatusAilment(StatusAilment blueprint, Monster target) {
-        visual = GameObject.Instantiate(blueprint.visual);
-        duration = blueprint.duration;
-        effects = blueprint.effects;
-
-        visual.transform.SetParent(target.transform);
-        visual.transform.localPosition = Vector3.zero;
-    }
-
     public bool Equals(StatusAilment other) {
         return this.visual == other.visual;
     }
 
-    public void TerminateVisual() {
+    public void Terminate() {
         GameObject.Destroy(visual);
     }
 }

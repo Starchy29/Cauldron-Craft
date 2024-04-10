@@ -53,6 +53,7 @@ public class MonstersData
             20, 4,
             new List<Move>() {
                 new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "do later."),
+                new Attack("Void Grasp", 2, 8, new RangeSelector(1, false, false), null, "Curses the target for 2 turns.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 2, prefabs.demonCurse))),
                 new Attack("Fireball", 1, 6, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
             }
         );
@@ -71,7 +72,7 @@ public class MonstersData
             new List<Move>() {
                 new StatusMove("Sweet Nectar", 4, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null),
                 new StatusMove("Entangle", 1, false, new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines), new RangeSelector(2, false, true), null),
-                new Attack("Chomp", 0, 8, new RangeSelector(1, false, false), null)
+                new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), null)
             }
         );
 
@@ -80,16 +81,16 @@ public class MonstersData
             new List<Move>() {
                 new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), new RangeSelector(1, false, false), null),
                 new StatusMove("Psychedelic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), null),
-                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.Infect, null)
+                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.ApplyLeech, null)
             }
         );
 
         monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(Ingredient.Decay, Ingredient.Flora, Ingredient.Flora,
             20, 4,
             new List<Move>() {
-                new ZoneMove("Will 'o 'Wisps", 4, new ZoneSelector(2, 2), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
-                new Attack("Scrape", 1, 7, new RangeSelector(1, false, false), null),
-                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), null, "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
+                new ShieldMove("Illuminate", 3, new ZoneSelector(1, 3), new Shield(Shield.Strength.None, 2, true, true, prefabs.illuminateShield), null),
+                new ZoneMove("Will 'o 'Wisps", 4, new ZoneSelector(3, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
+                new Attack("Hex", 1, 6, new RangeSelector(4, false, true), null, "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
         );
     }

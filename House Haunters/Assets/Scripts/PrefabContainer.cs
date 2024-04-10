@@ -97,5 +97,6 @@ public class PrefabContainer : MonoBehaviour
     [Header("Jackolantern")]
     #region Jackolantern
     public Sprite jackolanternSprite;
+    public GameObject illuminateShield;
     #endregion
 }

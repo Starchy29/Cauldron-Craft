@@ -4,22 +4,20 @@ using UnityEngine;
 
 public class StatusMove : Move
 {
-    private StatusEffect status;
-    private int duration;
+    private StatusAilment condition;
 
     public delegate void ExtraEffect(Monster user, Vector2Int tile);
     private ExtraEffect extraEffect;
 
-    public StatusMove(string name, int cooldown, StatusEffect status, int duration, bool isNegative, ISelector selection, AnimationQueuer animation, string description = "", ExtraEffect extraEffect = null)
-        : base(name, cooldown, isNegative ? MoveType.Disrupt : MoveType.Support, isNegative ? Targets.Enemies : Targets.Allies, selection, animation, description)
+    public StatusMove(string name, int cooldown, bool forAllies, StatusAilment condition, ISelector selection, AnimationQueuer animation, string description = "", ExtraEffect extraEffect = null)
+        : base(name, cooldown, forAllies ? MoveType.Support : MoveType.Disrupt, forAllies ? Targets.Allies : Targets.Enemies, selection, animation, description)
     {
-        this.status = status;
-        this.duration = duration;
+        this.condition = condition;
         this.extraEffect = extraEffect;
     }
 
     protected override void ApplyEffect(Monster user, Vector2Int tile) {
-        LevelGrid.Instance.GetMonster(tile).ApplyStatus(status, duration);
+        LevelGrid.Instance.GetMonster(tile).ApplyStatus(condition, user);
         if(extraEffect != null) {
             extraEffect(user, tile);
         }

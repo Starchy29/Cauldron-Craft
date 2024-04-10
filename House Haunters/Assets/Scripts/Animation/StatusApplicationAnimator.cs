@@ -17,9 +17,9 @@ class StatusApplicationAnimator : IMoveAnimator
     }
 
     public void Start() {
-        StatusParticle visual = GameObject.Instantiate(visualPrefab).GetComponent<StatusParticle>();
-        visual.AttachTo(target, duration);
-        Completed = true;
+        //StatusParticle visual = GameObject.Instantiate(visualPrefab).GetComponent<StatusParticle>();
+        //visual.AttachTo(target, duration);
+        //Completed = true;
     }
 
     public void Update(float deltaTime) { }

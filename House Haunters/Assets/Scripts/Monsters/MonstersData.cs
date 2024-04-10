@@ -40,23 +40,19 @@ public class MonstersData
         //    }
         //);
 
-        int spookDuration = 3;
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             18, 4,
             new List<Move>() {
                 new UniqueMove("Revitalize", 1, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(4); }, null),
-                new StatusMove("Haunt", spookDuration, StatusEffect.Haunted, 3, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.spookHaunt, spookDuration)),
+                new StatusMove("Haunt", 3, false, new StatusAilment(StatusEffect.Haunted, 3, prefabs.spookHaunt), new RangeSelector(1, false, false), null),
                 new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, false), null, "Steals the target's health.", StealHealth)
             }
         );
 
-        int sacDuration = 3;
-        int ritualDuration = 2;
         monsterTypes[(int)MonsterName.Demon] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             20, 4,
             new List<Move>() {
-                new StatusMove("Sacrifice", 5, StatusEffect.Strength, sacDuration, false, new SelfSelector(), AnimateStatus(prefabs.demonStrength, sacDuration), "Pay 5 life to gain strength.", (user, tile) => { user.TakeDamage(5, null); }),
-                new StatusMove("Ritual", 2, StatusEffect.Cursed, ritualDuration, true, new ZoneSelector(2, 2), AnimateStatus(prefabs.demonCurse, ritualDuration)),
+                new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "do later."),
                 new Attack("Fireball", 1, 6, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
             }
         );
@@ -70,25 +66,21 @@ public class MonstersData
             }
         );
 
-        int nectarDuraion = 3;
-        int tangleDuration = 2;
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
             24, 3,
             new List<Move>() {
-                new StatusMove("Sweet Nectar", 4, StatusEffect.Regeneration, nectarDuraion, false, new RangeSelector(2, false, true), AnimateStatus(prefabs.nectarRegen, nectarDuraion)),
-                new StatusMove("Entangle", 1, StatusEffect.Slowness, tangleDuration, true, new RangeSelector(2, false, true), AnimateStatus(prefabs.tangleVines, tangleDuration)),
+                new StatusMove("Sweet Nectar", 4, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null),
+                new StatusMove("Entangle", 1, false, new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines), new RangeSelector(2, false, true), null),
                 new Attack("Chomp", 0, 8, new RangeSelector(1, false, false), null)
             }
         );
 
-        int sleepyDuration = 2;
-        int psychicDuration = 1;
         monsterTypes[(int)MonsterName.Fungus] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Flora,
             20, 3,
             new List<Move>() {
-                new StatusMove("Psychedelic Spores", 1, StatusEffect.Fear, psychicDuration, true, new ZoneSelector(2, 2), AnimateStatus(prefabs.fearSpores, psychicDuration)),
-                new StatusMove("Sleepy Spores", 2, StatusEffect.Drowsiness, sleepyDuration, true, new RangeSelector(1, false, false), AnimateStatus(prefabs.drowsySpores, sleepyDuration)),
-                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.Infect, AnimateStatus(prefabs.leechSeed, LeechStatus.DURATION))
+                new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), new RangeSelector(1, false, false), null),
+                new StatusMove("Psychedelic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), null),
+                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.Infect, null)
             }
         );
 
@@ -97,7 +89,7 @@ public class MonstersData
             new List<Move>() {
                 new ZoneMove("Will 'o 'Wisps", 4, new ZoneSelector(2, 2), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
                 new Attack("Scrape", 1, 7, new RangeSelector(1, false, false), null),
-                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateStatus(prefabs.demonCurse, psychicDuration), "Curses the target for one turn.", ApplyStatusOnHit(StatusEffect.Cursed, 1))
+                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), null, "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
         );
     }
@@ -117,17 +109,17 @@ public class MonstersData
         };
     }
 
-    private static AnimationQueuer AnimateStatus(GameObject effectParticlePrefab, int duration) {
-        LevelGrid level = LevelGrid.Instance;
-        return (Monster user, List<Vector2Int> tiles) => {
-            foreach(Vector2Int tile in tiles) {
-                Monster target = level.GetMonster(tile);
-                if(target != null) {
-                    AnimationsManager.Instance.QueueAnimation(new StatusApplicationAnimator(target, effectParticlePrefab, duration));
-                }
-            }
-        };
-    }
+    //private static AnimationQueuer AnimateStatus(GameObject effectParticlePrefab, int duration) {
+    //    LevelGrid level = LevelGrid.Instance;
+    //    return (Monster user, List<Vector2Int> tiles) => {
+    //        foreach(Vector2Int tile in tiles) {
+    //            Monster target = level.GetMonster(tile);
+    //            if(target != null) {
+    //                AnimationsManager.Instance.QueueAnimation(new StatusApplicationAnimator(target, effectParticlePrefab, duration));
+    //            }
+    //        }
+    //    };
+    //}
     #endregion
 
     #region bonus effects
@@ -142,7 +134,7 @@ public class MonstersData
 
         foreach(Monster target in targets) {
             if(target.Tile != center) {
-                target.TakeDamage(damage, attacker);
+                target.TakeDamage(Mathf.FloorToInt(damage * attacker.DamageMultiplier), attacker);
             }
         }
     }
@@ -153,9 +145,9 @@ public class MonstersData
         }
     }
 
-    private static Attack.HitTrigger ApplyStatusOnHit(StatusEffect status, int duration) {
+    private static Attack.HitTrigger ApplyStatusOnHit(StatusAilment status) {
         return (Monster user, Monster target, int healthLost) => {
-            target.ApplyStatus(status, duration);
+            target.ApplyStatus(status, user);
         };
     }
     #endregion

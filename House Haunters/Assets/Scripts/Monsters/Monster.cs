@@ -12,7 +12,7 @@ public class Monster : GridEntity
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
 
-    private Dictionary<StatusEffect, int> effectDurations;
+    private List<StatusAilment> statuses = new List<StatusAilment>();
 
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
@@ -20,6 +20,7 @@ public class Monster : GridEntity
     public int[] Cooldowns {  get; private set; }
     public Shield CurrentShield { get; private set; }
     public int MovesLeft { get; private set; }
+
     public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Energy) ? -1 : 0); } }
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? 2 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
@@ -37,12 +38,6 @@ public class Monster : GridEntity
         OnTurnStart += ReduceShield;
         OnTurnEnd += DecreaseCooldowns;
         OnTurnEnd += UpdateStatuses;
-
-        StatusEffect[] statuses = (StatusEffect[])Enum.GetValues(typeof(StatusEffect));
-        effectDurations = new Dictionary<StatusEffect, int>(statuses.Length);
-        foreach(StatusEffect status in statuses) {
-            effectDurations[status] = 0;
-        }
 
         RefreshMoves();
     }
@@ -107,11 +102,12 @@ public class Monster : GridEntity
 
     public bool HasStatus(StatusEffect status) {
         TileAffector tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
-        return effectDurations[status] > 0 || (tileEffect != null && tileEffect.Controller != Controller && tileEffect.AppliedStatus == status);
+        return statuses.Find((StatusAilment condition) => { return condition.effects.Contains(status); }) != null
+            || (tileEffect != null && tileEffect.Controller != Controller && tileEffect.AppliedStatus == status);
     }
 
-    public void ApplyStatus(StatusEffect status, int duration) {
-        if(CurrentShield != null && CurrentShield.BlocksStatus) {
+    public void ApplyStatus(StatusAilment condition, Monster user) {
+        if(CurrentShield != null && user.Controller != this.Controller && CurrentShield.BlocksStatus) {
             if(CurrentShield.BlocksOnce) {
                 Destroy(CurrentShield.Visual);
                 CurrentShield = null;
@@ -119,9 +115,13 @@ public class Monster : GridEntity
             return;
         }
 
-        if(duration > effectDurations[status]) {
-            effectDurations[status] = duration;
+        StatusAilment duplicate = statuses.Find((StatusAilment existing) => { return existing == condition; });
+        if(duplicate != null) {
+            duplicate.duration = condition.duration; // reset duration;
+            return;
         }
+
+        statuses.Add(new StatusAilment(condition, this));
     }
 
     public List<List<Vector2Int>> GetMoveOptions(int moveSlot, bool filtered = true) {
@@ -155,10 +155,6 @@ public class Monster : GridEntity
         CurrentShield.Visual.transform.SetParent(transform, false);
     }
 
-    public void AddEffect(GameObject effect, int duration) {
-
-    }
-
     // returns true if the input tile is one that this monster can legally stand on assuming it is unoccupied
     public bool CouldStandOn(Vector2Int tile) {
         WorldTile levelTile = LevelGrid.Instance.GetTile(tile);
@@ -167,6 +163,13 @@ public class Monster : GridEntity
 
     public bool CanMoveTo(Vector2Int tile) {
         return CouldStandOn(tile) && LevelGrid.Instance.GetEntity(tile) == null;
+    }
+
+    private struct PathData {
+        public Vector2Int? previous;
+        public int travelDistance;
+        public int distanceToEnd;
+        public int Estimate { get { return travelDistance + distanceToEnd; } }
     }
 
     // returns null if this monster cannot get to the tile with one movement
@@ -245,13 +248,6 @@ public class Monster : GridEntity
         return null; // no valid path
     }
 
-    private struct PathData {
-        public Vector2Int? previous;
-        public int travelDistance;
-        public int distanceToEnd;
-        public int Estimate { get { return travelDistance + distanceToEnd; } }
-    }
-
     private void RefreshMoves() {
         MovesLeft = MaxMoves;
     }
@@ -274,9 +270,11 @@ public class Monster : GridEntity
             TakeDamage(2, null);
         }
 
-        foreach(StatusEffect status in Enum.GetValues(typeof(StatusEffect))) {
-            if(effectDurations[status] > 0) {
-                effectDurations[status]--;
+        for(int i = statuses.Count - 1; i >= 0; i--) {
+            statuses[i].duration--;
+            if(statuses[i].duration <= 0) {
+                statuses[i].TerminateVisual();
+                statuses.RemoveAt(i);
             }
         }
     }

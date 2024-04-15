@@ -79,6 +79,9 @@ public abstract class Move
 
         if(effectAnimation != null) {
             effectAnimation(user, tiles);
+        } else {
+            // for moves that temporarily have no animation
+            AnimationsManager.Instance.QueueAnimation(new DummyAnimation());
         }
 
         foreach(Vector2Int tile in tiles) {

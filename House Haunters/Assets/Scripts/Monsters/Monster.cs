@@ -98,7 +98,7 @@ public class Monster : GridEntity
         if(Health == 0) {
             GameManager.Instance.DefeatMonster(this);
             AnimationsManager.Instance.QueueAnimation(new DeathAnimator(this));
-            OnDeath();
+            OnDeath?.Invoke();
             foreach(StatusAilment status in Statuses) {
                 status.Terminate();
             }

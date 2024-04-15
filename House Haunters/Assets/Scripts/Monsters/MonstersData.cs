@@ -10,7 +10,6 @@ public enum MonsterName {
     Flytrap,
     Fungus,
     Jackolantern
-    //Temporary,
 }
 
 public class MonstersData
@@ -30,15 +29,6 @@ public class MonstersData
         PrefabContainer prefabs = PrefabContainer.Instance;
 
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
-
-        //monsterTypes[(int)MonsterName.Temporary] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
-        //    10, 3,
-        //    new List<Move>() {
-        //        new Attack("Attack", 0, 1, new RangeSelector(4, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 8.0f)),
-        //        new ZoneMove("Poison Zone", 5, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Poison, 0, 3, prefabs.ExampleZone, null), null, ""),
-        //        new ShieldMove("Block", 2, new SelfSelector(), new Shield(Shield.Strength.Medium, 1, false, false, prefabs.ExampleShield), null)
-        //    }
-        //);
 
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             18, 4,
@@ -77,7 +67,7 @@ public class MonstersData
         );
 
         monsterTypes[(int)MonsterName.Fungus] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Flora,
-            20, 3,
+            18, 3,
             new List<Move>() {
                 new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), new RangeSelector(1, false, false), null),
                 new StatusMove("Psychedelic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), null),
@@ -89,7 +79,7 @@ public class MonstersData
             20, 4,
             new List<Move>() {
                 new ShieldMove("Illuminate", 3, new ZoneSelector(1, 3), new Shield(Shield.Strength.None, 2, true, true, prefabs.illuminateShield), null),
-                new ZoneMove("Will 'o 'Wisps", 4, new ZoneSelector(3, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
+                new ZoneMove("Will o' Wisps", 4, new ZoneSelector(3, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
                 new Attack("Hex", 1, 6, new RangeSelector(4, false, true), null, "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
         );

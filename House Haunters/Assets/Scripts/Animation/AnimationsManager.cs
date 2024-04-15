@@ -9,6 +9,7 @@ public class AnimationsManager : MonoBehaviour
     private Queue<IMoveAnimator> animationQueue;
 
     public bool Animating { get { return animationQueue.Count > 0; } }
+    public event Trigger OnAnimationsEnd;
 
     void Awake() {
         Instance = this;
@@ -25,6 +26,8 @@ public class AnimationsManager : MonoBehaviour
             animationQueue.Dequeue();
             if(Animating) {
                 animationQueue.Peek().Start();
+            } else {
+                OnAnimationsEnd?.Invoke();
             }
         }
     }

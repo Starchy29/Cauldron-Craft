@@ -13,7 +13,7 @@ public class MoveMenu : MonoBehaviour
 
     public GameObject Background { get; private set; }
 
-    void Start() {
+    void Awake() {
         buttons = new MoveButton[8];
         for(int i = 0; i < buttons.Length; i++) {
             buttons[i] = Instantiate(MoveButtonPrefab).GetComponent<MoveButton>();

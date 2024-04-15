@@ -14,6 +14,7 @@ public class MenuManager : MonoBehaviour
 
     [SerializeField] private TMPro.TextMeshPro decayQuantity;
     [SerializeField] private TMPro.TextMeshPro plantQuantity;
+    private HealthBarScript hoveredHealthbar;
 
     public bool UseKBMouse { get; set; }
 
@@ -49,7 +50,6 @@ public class MenuManager : MonoBehaviour
     }
 
     void Update() {
-        Debug.Log(state);
         // this object is active only when the player can select a monster or target
         InputManager input = InputManager.Instance;
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
@@ -76,6 +76,10 @@ public class MenuManager : MonoBehaviour
         }
 
         TileSelector.SetActive(false);
+        if(hoveredHealthbar != null) {
+            hoveredHealthbar.gameObject.SetActive(false);
+            hoveredHealthbar = null;
+        }
 
         // check if the mouse is over an open menu or button
         if(moveMenu.isActiveAndEnabled && Global.GetObjectArea(moveMenu.Background).Contains(mousePos) ||
@@ -98,6 +102,11 @@ public class MenuManager : MonoBehaviour
         TileSelector.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)tile);
 
         GridEntity hoveredEntity = level.GetEntity(tile);
+
+        if(hoveredEntity is Monster) {
+            hoveredHealthbar = ((Monster)hoveredEntity).healthBar;
+            hoveredHealthbar.gameObject.SetActive(true);
+        }
 
         if(input.SelectPressed()) {
             if(hoveredEntity == controller.Spawnpoint && !controller.Spawnpoint.Cooking) {
@@ -122,6 +131,11 @@ public class MenuManager : MonoBehaviour
         moveMenu.gameObject.SetActive(false);
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);
+
+        if(hoveredHealthbar != null) {
+            hoveredHealthbar.gameObject.SetActive(false);
+            hoveredHealthbar = null;
+        }
 
         level.ColorTiles(null, TileHighlighter.State.Hovered);
         level.ColorTiles(null, TileHighlighter.State.Selectable);

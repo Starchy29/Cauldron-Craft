@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -50,7 +51,7 @@ public class MoveMenu : MonoBehaviour
             buttons[i].disabled = monster.Controller != player || !monster.CanUse(i);
         }
 
-        // set up monster info
+        // set up monster health
         MonsterInfoAnchor.transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f, 0);
         HealthMarker.text = monster.Health + "/" + monster.Stats.Health;
         float healthPercent = (float)monster.Health / monster.Stats.Health;
@@ -67,5 +68,29 @@ public class MoveMenu : MonoBehaviour
         else if(healthPercent < 1.0f) {
             Heart.color = new Color(0.3f, 0.8f, 0.2f);
         }
+
+        // set up shield
+
+        // set up statuses
+        Dictionary<StatusEffect, int> statusDurations = new Dictionary<StatusEffect, int>();
+        foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
+            if(monster.HasStatus(effect)) {
+                statusDurations[effect] = 0; // 0 indicates the status is a result of the terrain the monster is standing on
+            }
+        }
+
+        foreach(StatusAilment ailment in monster.Statuses) {
+            foreach(StatusEffect effect in ailment.effects) {
+                if(ailment.duration > statusDurations[effect]) {
+                    statusDurations[effect] = ailment.duration;
+                }
+            }
+        }
+
+        int statusDims = 1;
+        while(statusDurations.Count > statusDims * statusDims) {
+            statusDims++; // keep the statuses in a square grid
+        }
+        
     }
 }

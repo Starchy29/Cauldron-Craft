@@ -77,6 +77,7 @@ public class PrefabContainer : MonoBehaviour
     public Sprite thornbushSprite;
     public GameObject thornTrapPrefab;
     public GameObject thornShieldPrefab;
+    public GameObject thornShot;
     #endregion
 
     [Header("Fly Trap")]

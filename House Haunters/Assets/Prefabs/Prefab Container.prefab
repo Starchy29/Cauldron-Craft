@@ -67,6 +67,7 @@ MonoBehaviour:
   thornbushSprite: {fileID: 21300000, guid: 60f48d44fcb70f241a0b4c83a1202d7f, type: 3}
   thornTrapPrefab: {fileID: 8310442494393957005, guid: a74f52805bbb3fd4dbe3a5c408cf3d34, type: 3}
   thornShieldPrefab: {fileID: 4864488922578185088, guid: c812e527930d41348bd422d4d0a219ea, type: 3}
+  thornShot: {fileID: 8245164862100309878, guid: 5c47a9a8ffc195e428db06c764f9a623, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
   tangleVines: {fileID: 942366795742568175, guid: 98d98deb730289a429580ef2230b374c, type: 3}
   nectarRegen: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}

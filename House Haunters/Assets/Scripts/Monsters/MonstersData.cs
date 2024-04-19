@@ -53,7 +53,7 @@ public class MonstersData
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 6 damage to enemies that attack this within melee range."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
-                new Attack("Barb Bullet", 0, 6, new DirectionSelector(6, true), null, "Pierces through enemies.")
+                new Attack("Barb Bullet", 0, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 12f, 6), "Pierces through enemies.")
             }
         );
 
@@ -96,6 +96,16 @@ public class MonstersData
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)tiles[0]);
+            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
+        };
+    }
+
+    private static AnimationQueuer AnimateLinearShot(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, int tileRange) {
+        return (Monster user, List<Vector2Int> tiles) => {
+            LevelGrid level = LevelGrid.Instance;
+            Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
+            Vector3 direction = ((Vector2)(tiles[0] - user.Tile)).normalized;
+            Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile) + tileRange * direction;
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
         };
     }

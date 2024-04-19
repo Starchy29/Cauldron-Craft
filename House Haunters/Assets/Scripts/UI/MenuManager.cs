@@ -152,6 +152,10 @@ public class MenuManager : MonoBehaviour
                 }
                 break;
             case SelectionTarget.Move:
+                endTurnButton.gameObject.SetActive(true);
+                foreach(Monster teammate in controller.Teammates) {
+                    teammate.MoveCounter.Open();
+                }
                 moveMenu.Open(selected, controller);
                 break;
             case SelectionTarget.Targets:

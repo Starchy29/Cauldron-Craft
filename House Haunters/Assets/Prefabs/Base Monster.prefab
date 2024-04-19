@@ -186,6 +186,7 @@ MonoBehaviour:
   startTeam: 0
   healthBar: {fileID: 3355351814052051709}
   MonsterType: 0
+  MoveCounter: {fileID: 0}
 --- !u!1 &4838518358999510073
 GameObject:
   m_ObjectHideFlags: 0

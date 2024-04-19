@@ -9,12 +9,12 @@ public class PrefabContainer : MonoBehaviour
     public Dictionary<MonsterName, Sprite> monsterToSprite;
     public Dictionary<Ingredient, Sprite> ingredientToSprite;
     public Dictionary<MoveType, Sprite> moveTypeToSprite;
+    public Dictionary<StatusEffect, Sprite> statusToSprite;
 
     void Awake() {
         Instance = this;
 
         monsterToSprite = new Dictionary<MonsterName, Sprite>() {
-            //{ MonsterName.Temporary, tempMonsterSprite },
             { MonsterName.Demon, demonSprite },
             { MonsterName.LostSoul, soulSprite },
             { MonsterName.ThornBush, thornbushSprite },
@@ -38,6 +38,20 @@ public class PrefabContainer : MonoBehaviour
             { MoveType.Support, supportIcon },
             { MoveType.Disrupt, disruptIcon }
         };
+
+        statusToSprite = new Dictionary<StatusEffect, Sprite>() {
+            { StatusEffect.Regeneration, regenIcon },
+            { StatusEffect.Strength, strengthIcon },
+            { StatusEffect.Haste, hasteIcon },
+            { StatusEffect.Energy, energyIcon },
+            { StatusEffect.Poison, poisonIcon },
+            { StatusEffect.Fear, fearIcon },
+            { StatusEffect.Slowness, slowIcon },
+            { StatusEffect.Drowsiness, drowsinessIcon },
+            { StatusEffect.Frozen, freezeIcon },
+            { StatusEffect.Cursed, cursedIcon },
+            { StatusEffect.Haunted, hauntedIcon },
+        };
     }
     
     public Sprite tempMonsterSprite;
@@ -58,6 +72,22 @@ public class PrefabContainer : MonoBehaviour
     public GameObject TempMonsterProjectile;
     public GameObject ExampleZone;
     public GameObject ExampleShield;
+
+    [Header("Status Effect")]
+    #region statuses
+    public Sprite regenIcon;
+    public Sprite strengthIcon;
+    public Sprite hasteIcon;
+    public Sprite energyIcon;
+
+    public Sprite poisonIcon;
+    public Sprite fearIcon;
+    public Sprite slowIcon;
+    public Sprite drowsinessIcon;
+    public Sprite freezeIcon;
+    public Sprite cursedIcon;
+    public Sprite hauntedIcon;
+    #endregion
 
     [Header("Lost Soul")]
     #region soul

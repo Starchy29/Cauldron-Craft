@@ -59,6 +59,17 @@ MonoBehaviour:
   TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}
   ExampleShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
+  regenIcon: {fileID: 21300000, guid: 2c1978ebdfa13294f8ecbe82a936eb11, type: 3}
+  strengthIcon: {fileID: 21300000, guid: 49934fbc93640754899a2013fdc5533e, type: 3}
+  hasteIcon: {fileID: 21300000, guid: 233cfbf06c1a86c4a978d7d3d95236a1, type: 3}
+  energyIcon: {fileID: 21300000, guid: a652023734be6e443a91a187647c9128, type: 3}
+  poisonIcon: {fileID: 21300000, guid: 8e7d477d663a010408a6133875adf439, type: 3}
+  fearIcon: {fileID: 21300000, guid: 8e0e6f27d9bc3c24f82f13de06470596, type: 3}
+  slowIcon: {fileID: 21300000, guid: 17a4376cbb3cead488687c7fd77b227b, type: 3}
+  drowsinessIcon: {fileID: 21300000, guid: 2cf27547aa141f04580292b5087abef5, type: 3}
+  freezeIcon: {fileID: 21300000, guid: c3a562e7fdae29d478419c6c354aeaf0, type: 3}
+  cursedIcon: {fileID: 21300000, guid: 9d0223b3c7f6bcc4b9afe6b0b1b1d41d, type: 3}
+  hauntedIcon: {fileID: 21300000, guid: 8e0e6f27d9bc3c24f82f13de06470596, type: 3}
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
   spookHaunt: {fileID: 3049984156711576710, guid: 0e8ef0ba35ce5f149a58c207ba6c6bdf, type: 3}
   demonSprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}

@@ -34,8 +34,8 @@ public abstract class Move
 
     private AnimationQueuer effectAnimation;
 
-    private delegate bool FilterCheck(Monster user, Vector2Int tile);
-    private static Dictionary<Targets, FilterCheck> TargetFilters = new Dictionary<Targets, FilterCheck>() {
+    public delegate bool FilterCheck(Monster user, Vector2Int tile);
+    public static Dictionary<Targets, FilterCheck> TargetFilters { get; private set; } = new Dictionary<Targets, FilterCheck>() {
         { Targets.Allies, IsAllyOn },
         { Targets.Enemies, IsEnemyOn },
         { Targets.UnaffectedFloor, IsFloorAt },

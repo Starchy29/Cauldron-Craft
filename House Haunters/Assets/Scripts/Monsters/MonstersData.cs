@@ -53,7 +53,7 @@ public class MonstersData
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 6 damage to enemies that attack this within melee range."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
-                new Attack("Barb Bullet", 0, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 12f, 6), "Pierces through enemies.")
+                new Attack("Barb Bullet", 0, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Pierces through enemies.")
             }
         );
 
@@ -61,7 +61,7 @@ public class MonstersData
             24, 3,
             new List<Move>() {
                 new StatusMove("Sweet Nectar", 4, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null),
-                new StatusMove("Entangle", 1, false, new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines), new RangeSelector(2, false, true), null),
+                new UniqueMove("Vine Grab", 2, MoveType.Movement, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user."),
                 new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), null)
             }
         );
@@ -123,7 +123,7 @@ public class MonstersData
     //}
     #endregion
 
-    #region bonus effects
+    #region bonus effects and special moves
     private static void StealHealth(Monster user, Monster target, int healthLost) {
         user.Heal(healthLost);
     }
@@ -150,6 +150,26 @@ public class MonstersData
         return (Monster user, Monster target, int healthLost) => {
             target.ApplyStatus(status, user);
         };
+    }
+
+    private static void PullTarget(Monster user, Vector2Int tile) {
+        LevelGrid level = LevelGrid.Instance;
+        Monster target = level.GetMonster(tile);
+        Vector2Int pullDirection = user.Tile - target.Tile;
+        pullDirection /= (int)pullDirection.magnitude;
+        Vector2Int furthestPull = target.Tile;
+        for(Vector2Int testTile = target.Tile + pullDirection; testTile != user.Tile; testTile += pullDirection) {
+            if(level.GetTile(testTile).IsWall) {
+                break; // cannot pull through walls
+            }
+
+            if(target.CanMoveTo(testTile)) {
+                furthestPull = testTile;
+            }
+        }
+
+        level.MoveEntity(target, furthestPull);
+        AnimationsManager.Instance.QueueAnimation(new PathAnimator(target.gameObject, new List<Vector3>() { level.Tiles.GetCellCenterWorld((Vector3Int)furthestPull) }, 15f));
     }
     #endregion
 }

@@ -53,7 +53,7 @@ public class MonstersData
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 6 damage to enemies that attack this within melee range."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 4, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true), null, "Places a trap that deals 5 damage to an enemy that lands on it."),
-                new Attack("Barb Bullet", 0, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Pierces through enemies.")
+                new Attack("Barb Bullet", 1, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Pierces through enemies.")
             }
         );
 
@@ -61,7 +61,7 @@ public class MonstersData
             24, 3,
             new List<Move>() {
                 new StatusMove("Sweet Nectar", 4, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null),
-                new UniqueMove("Vine Grab", 2, MoveType.Movement, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user."),
+                new UniqueMove("Vine Grab", 0, MoveType.Movement, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user."),
                 new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), null)
             }
         );
@@ -78,7 +78,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(Ingredient.Decay, Ingredient.Flora, Ingredient.Flora,
             20, 4,
             new List<Move>() {
-                new ShieldMove("Illuminate", 3, new ZoneSelector(1, 3), new Shield(Shield.Strength.None, 2, true, true, prefabs.illuminateShield), null),
+                new UniqueMove("Portal", 2, MoveType.Movement, Move.Targets.Allies, new RangeSelector(3, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
                 new ZoneMove("Will o' Wisps", 4, new ZoneSelector(3, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
                 new Attack("Hex", 1, 6, new RangeSelector(4, false, true), null, "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
@@ -170,6 +170,19 @@ public class MonstersData
 
         level.MoveEntity(target, furthestPull);
         AnimationsManager.Instance.QueueAnimation(new PathAnimator(target.gameObject, new List<Vector3>() { level.Tiles.GetCellCenterWorld((Vector3Int)furthestPull) }, 15f));
+    }
+
+    private static void SwapPosition(Monster user, Vector2Int targetTile) {
+        LevelGrid level = LevelGrid.Instance;
+        Monster target = level.GetMonster(targetTile);
+
+        Vector2Int userTile = user.Tile;
+        level.ClearEntity(userTile);
+        level.MoveEntity(target, userTile);
+        level.PlaceEntity(user, targetTile);
+
+        user.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
+        target.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)target.Tile);
     }
     #endregion
 }

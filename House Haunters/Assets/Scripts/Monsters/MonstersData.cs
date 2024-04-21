@@ -43,7 +43,7 @@ public class MonstersData
             20, 4,
             new List<Move>() {
                 new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "do later."),
-                new Attack("Void Grasp", 2, 8, new RangeSelector(1, false, false), null, "Curses the target for 2 turns.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 2, prefabs.demonCurse))),
+                new StatusMove("Void", 3, false, new StatusAilment(StatusEffect.Cursed, 3, prefabs.demonCurse), new ZoneSelector(2, 2), null, "Removes the target's shield", EliminateShield),
                 new Attack("Fireball", 1, 6, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, null, 10f), "Deals 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
             }
         );
@@ -183,6 +183,10 @@ public class MonstersData
 
         user.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
         target.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)target.Tile);
+    }
+
+    private static void EliminateShield(Monster user, Vector2Int tile) {
+        LevelGrid.Instance.GetMonster(tile).RemoveShield();
     }
     #endregion
 }

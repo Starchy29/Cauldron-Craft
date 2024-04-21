@@ -64,7 +64,7 @@ MonoBehaviour:
   hasteIcon: {fileID: 21300000, guid: 233cfbf06c1a86c4a978d7d3d95236a1, type: 3}
   energyIcon: {fileID: 21300000, guid: a652023734be6e443a91a187647c9128, type: 3}
   poisonIcon: {fileID: 21300000, guid: 8e7d477d663a010408a6133875adf439, type: 3}
-  fearIcon: {fileID: 21300000, guid: 8e0e6f27d9bc3c24f82f13de06470596, type: 3}
+  fearIcon: {fileID: 21300000, guid: d82e4b8393b897446a7d5a17382411c2, type: 3}
   slowIcon: {fileID: 21300000, guid: 17a4376cbb3cead488687c7fd77b227b, type: 3}
   drowsinessIcon: {fileID: 21300000, guid: 2cf27547aa141f04580292b5087abef5, type: 3}
   freezeIcon: {fileID: 21300000, guid: c3a562e7fdae29d478419c6c354aeaf0, type: 3}

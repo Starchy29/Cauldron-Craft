@@ -76,8 +76,7 @@ public class Monster : GridEntity
                     queuedBlockEffect = CurrentShield.OnBlock;
                 }
                 if(CurrentShield.BlocksOnce && multiplier < 1.0f) { // only remove the shield if this shield is meant to block damage
-                    Destroy(CurrentShield.Visual);
-                    CurrentShield = null;
+                    RemoveShield();
                 }
             }
             if(multiplier != 1f) {
@@ -114,8 +113,7 @@ public class Monster : GridEntity
     public void ApplyStatus(StatusAilment blueprint, Monster user) {
         if(CurrentShield != null && user.Controller != this.Controller && CurrentShield.BlocksStatus) {
             if(CurrentShield.BlocksOnce) {
-                Destroy(CurrentShield.Visual);
-                CurrentShield = null;
+                RemoveShield();
             }
             return;
         }
@@ -174,6 +172,15 @@ public class Monster : GridEntity
 
     public bool CanMoveTo(Vector2Int tile) {
         return CouldStandOn(tile) && LevelGrid.Instance.GetEntity(tile) == null;
+    }
+
+    public void RemoveShield() {
+        if(CurrentShield == null) {
+            return;
+        }
+
+        Destroy(CurrentShield.Visual);
+        CurrentShield = null;
     }
 
     private struct PathData {
@@ -267,8 +274,7 @@ public class Monster : GridEntity
         if(CurrentShield != null) {
             CurrentShield.Duration--;
             if(CurrentShield.Duration <= 0) {
-                Destroy(CurrentShield.Visual);
-                CurrentShield = null;
+                RemoveShield();
             }
         }
     }

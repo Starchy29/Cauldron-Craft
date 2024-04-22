@@ -27,7 +27,7 @@ public class MenuManager : MonoBehaviour
 
     // target selection data
     private List<List<Vector2Int>> tileGroups;
-    private Vector2[] tileGroupCenters;
+    private List<Vector2> tileGroupCenters;
     private int selectedMoveSlot;
     private Monster selected;
 
@@ -64,7 +64,7 @@ public class MenuManager : MonoBehaviour
         if(state == SelectionTarget.Targets) {
             // find the target group that the mouse is closest to
             Vector2 closestMidpoint = tileGroupCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
-            int hoveredTargetIndex = tileGroupCenters.IndexOf(closestMidpoint).Value;
+            int hoveredTargetIndex = tileGroupCenters.IndexOf(closestMidpoint);
             level.ColorTiles(tileGroups[hoveredTargetIndex], TileHighlighter.State.Hovered);
 
             if(input.SelectPressed()) {
@@ -192,7 +192,7 @@ public class MenuManager : MonoBehaviour
         Move move = selected.Stats.Moves[selectedMoveSlot];
         bool filtered = move.TargetType == Move.Targets.UnaffectedFloor || move.TargetType == Move.Targets.Traversable || move.TargetType == Move.Targets.StandableSpot;
         tileGroups = selected.GetMoveOptions(selectedMoveSlot, filtered);
-        tileGroupCenters = DetermineCenters(tileGroups);
+        tileGroupCenters = tileGroups.Map((List<Vector2Int> tileGroup) => { return Global.DetermineCenter(tileGroup); });
         SetState(SelectionTarget.Targets);
 
         List<Vector2Int> allTiles = new List<Vector2Int>();
@@ -213,17 +213,5 @@ public class MenuManager : MonoBehaviour
     public void UpdateResources() {
         decayQuantity.text = "" + controller.Resources[Ingredient.Decay];
         plantQuantity.text = "" + controller.Resources[Ingredient.Flora];
-    }
-
-    private Vector2[] DetermineCenters(List<List<Vector2Int>> tileGroups) {
-        Vector2[] centers = new Vector2[tileGroups.Count];
-        for(int i = 0; i < tileGroups.Count; i++) {
-            Vector3 center = new Vector2();
-            foreach(Vector2Int tile in tileGroups[i]) {
-                center += level.Tiles.GetCellCenterWorld((Vector3Int)tile);
-            }
-            centers[i] = center / tileGroups[i].Count;
-        }
-        return centers;
     }
 }

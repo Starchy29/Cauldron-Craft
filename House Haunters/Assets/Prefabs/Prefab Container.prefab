@@ -72,6 +72,7 @@ MonoBehaviour:
   hauntedIcon: {fileID: 21300000, guid: 8e0e6f27d9bc3c24f82f13de06470596, type: 3}
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
   spookHaunt: {fileID: 3049984156711576710, guid: 0e8ef0ba35ce5f149a58c207ba6c6bdf, type: 3}
+  soulDrop: {fileID: 6846268628254101615, guid: 19060420541f99c4da3700f5dd32b933, type: 3}
   demonSprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}
   demonStrength: {fileID: 2558898771775421549, guid: 2ad4ec7a1a5045643bd28a59485c4939, type: 3}
   demonCurse: {fileID: 8509943955392034232, guid: f640d6297da60c04d9ef5562d3b792eb, type: 3}
@@ -82,9 +83,10 @@ MonoBehaviour:
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
   tangleVines: {fileID: 942366795742568175, guid: 98d98deb730289a429580ef2230b374c, type: 3}
   nectarRegen: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
+  chompTeeth: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
   fungusSprite: {fileID: 21300000, guid: d02c3fcd707437845a668391b59d59b8, type: 3}
   leechSeed: {fileID: 8030383983686718888, guid: e8fa14b5afd934b4bb6a04f6af0bb038, type: 3}
   drowsySpores: {fileID: 8233400920672778888, guid: 4e6b889b7ea8dd145ab0d44b116a8769, type: 3}
   fearSpores: {fileID: 867175141187624726, guid: 559f44e367abef14aa941f00c845bc7a, type: 3}
   jackolanternSprite: {fileID: 21300000, guid: 69016b95560370e48b769880b801ce4f, type: 3}
-  illuminateShield: {fileID: 4265488659706721328, guid: ea64b4314f79b0a488ba4cb247c7cc74, type: 3}
+  hexBlast: {fileID: 1957257125145424289, guid: e5212601687663c48bf7f9e289dffd0a, type: 3}

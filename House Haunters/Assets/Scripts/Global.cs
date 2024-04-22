@@ -135,4 +135,28 @@ public static class Global
         v += amount;
         return Color.HSVToRGB(h, s, v);
     }
+
+    public static Vector2 DetermineCenter(List<Vector2Int> tileGroup) {
+        LevelGrid level = LevelGrid.Instance;
+        Vector2 firstCenter = level.Tiles.GetCellCenterWorld((Vector3Int)tileGroup[0]);
+        Rect coveredArea = new Rect(firstCenter.x, firstCenter.y, 0, 0);
+        for(int i = 1; i < tileGroup.Count; i++) {
+            Vector2 tileCenter = level.Tiles.GetCellCenterWorld((Vector3Int)tileGroup[i]);
+            if(tileCenter.x > coveredArea.xMax) {
+                coveredArea.xMax = tileCenter.x;
+            }
+            else if(tileCenter.x < coveredArea.xMin) {
+                coveredArea.xMin = tileCenter.x;
+            }
+
+            if(tileCenter.y > coveredArea.yMax) {
+                coveredArea.yMax = tileCenter.y;
+            }
+            else if(tileCenter.y < coveredArea.yMin) {
+                coveredArea.yMin = tileCenter.y;
+            }
+        }
+        
+        return coveredArea.center;
+    }
 }

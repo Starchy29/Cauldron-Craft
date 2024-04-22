@@ -93,6 +93,7 @@ public class PrefabContainer : MonoBehaviour
     #region soul
     public Sprite soulSprite;
     public GameObject spookHaunt;
+    public GameObject soulDrop;
     #endregion
 
     [Header("Demon")]
@@ -115,6 +116,7 @@ public class PrefabContainer : MonoBehaviour
     public Sprite flytrapSprite;
     public GameObject tangleVines;
     public GameObject nectarRegen;
+    public GameObject chompTeeth;
     #endregion
 
     [Header("Fungus")]
@@ -128,6 +130,6 @@ public class PrefabContainer : MonoBehaviour
     [Header("Jackolantern")]
     #region Jackolantern
     public Sprite jackolanternSprite;
-    public GameObject illuminateShield;
+    public GameObject hexBlast;
     #endregion
 }

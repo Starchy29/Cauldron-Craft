@@ -35,7 +35,7 @@ public class MonstersData
             new List<Move>() {
                 new UniqueMove("Revitalize", 1, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(4); }, null),
                 new StatusMove("Haunt", 3, false, new StatusAilment(StatusEffect.Haunted, 3, prefabs.spookHaunt), new RangeSelector(1, false, false), null),
-                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, false), null, "Steals the target's health.", StealHealth)
+                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, false), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals the target's health.", StealHealth)
             }
         );
 
@@ -62,7 +62,7 @@ public class MonstersData
             new List<Move>() {
                 new StatusMove("Sweet Nectar", 4, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null),
                 new UniqueMove("Vine Grab", 0, MoveType.Movement, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user."),
-                new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), null)
+                new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), AnimateParticle(prefabs.chompTeeth))
             }
         );
 
@@ -80,7 +80,7 @@ public class MonstersData
             new List<Move>() {
                 new UniqueMove("Portal", 2, MoveType.Movement, Move.Targets.Allies, new RangeSelector(3, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
                 new ZoneMove("Will o' Wisps", 4, new ZoneSelector(3, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
-                new Attack("Hex", 1, 6, new RangeSelector(4, false, true), null, "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
+                new Attack("Hex", 1, 6, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
         );
     }
@@ -90,13 +90,20 @@ public class MonstersData
     }
 
     #region Animation Helpers
-    // creates the function that queues the animation of a projectile
-    private static AnimationQueuer AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed) {
+    // these create functions that queue animations
+    private static AnimationQueuer AnimateParticle(GameObject particlePrefab) {
+        return (Monster user, List<Vector2Int> tiles) => {
+            GameObject particle = GameObject.Instantiate(particlePrefab);
+            particle.transform.position = Global.DetermineCenter(tiles);
+        };
+    }
+
+    private static AnimationQueuer AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, bool reversed = false) {
         return (Monster user, List<Vector2Int> tiles) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)tiles[0]);
-            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
+            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, reversed ? end : start, reversed ? start : end, speed));
         };
     }
 

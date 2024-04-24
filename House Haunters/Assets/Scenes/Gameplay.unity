@@ -429,7 +429,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 684760714532603029, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.65784
+      value: 9.56
       objectReference: {fileID: 0}
     - target: {fileID: 684760714532603029, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1086,7 +1086,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4622429817863264039, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
       propertyPath: MonsterType
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1749,7 +1749,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4622429817863264039, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
       propertyPath: MonsterType
-      value: 5
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1915,7 +1915,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4622429817863264039, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
       propertyPath: MonsterType
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

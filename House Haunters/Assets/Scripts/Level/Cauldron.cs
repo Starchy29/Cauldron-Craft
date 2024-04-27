@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Cauldron : GridEntity
 {
@@ -14,6 +15,7 @@ public class Cauldron : GridEntity
     protected override void Start() {
         base.Start();
         Controller.OnTurnStart += FinishCook;
+        Controller.OnTurnStart += NotifyCookable;
         Controller.Spawnpoint = this;
     }
 
@@ -24,22 +26,36 @@ public class Cauldron : GridEntity
     }
 
     private void FinishCook() {
-        if(cookingMonster.HasValue) {
-            // find the spot to spawn on
-            LevelGrid level = LevelGrid.Instance;
-            Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
-            List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return level.GetEntity(tile) == null; });
-            if(options.Count == 0) {
-                return;
-            }
+        if(!cookingMonster.HasValue) {
+            return;
+        }
 
-            options.Sort((Vector2Int current, Vector2Int next) => { return DetermineSpawnSpotPriority(current, levelMid) - DetermineSpawnSpotPriority(next, levelMid); });
-            Vector2Int spawnSpot = options[0];
+        // find the spot to spawn on
+        LevelGrid level = LevelGrid.Instance;
+        Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
+        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return level.GetEntity(tile) == null; });
+        if(options.Count == 0) {
+            return;
+        }
 
-            // spawn the monster
-            GameManager.Instance.SpawnMonster(cookingMonster.Value, spawnSpot, Controller);
-            cookingMonster = null;
-            cookIndicator.SetActive(false);
+        options.Sort((Vector2Int current, Vector2Int next) => { return DetermineSpawnSpotPriority(current, levelMid) - DetermineSpawnSpotPriority(next, levelMid); });
+        Vector2Int spawnSpot = options[0];
+
+        // spawn the monster
+        GameManager.Instance.SpawnMonster(cookingMonster.Value, spawnSpot, Controller);
+        cookingMonster = null;
+        cookIndicator.SetActive(false);
+    }
+
+    private void NotifyCookable() {
+        int totalIngredients = 0;
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            totalIngredients += Controller.Resources[ingredient];
+        }
+
+        if(totalIngredients >= 3) {
+            cookIndicator.SetActive(true);
+            cookIndicator.GetComponent<SpriteRenderer>().sprite = null;
         }
     }
 

@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public Team PlayerTeam { get; private set; }
     public Team EnemyTeam { get; private set; }
     public Team CurrentTurn { get; private set; }
+    public Team[] AllTeams { get; private set; }
 
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
     public event TurnEndEvent OnTurnEnd;
@@ -20,8 +21,11 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        PlayerTeam = new Team(Color.blue);
-        EnemyTeam = new Team(Color.red);
+        PlayerTeam = new Team(Color.blue, 0);
+        EnemyTeam = new Team(Color.red, 1);
+        AllTeams = new Team[2];
+        AllTeams[0] = PlayerTeam;
+        AllTeams[1] = EnemyTeam;
         enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 
@@ -48,7 +52,7 @@ public class GameManager : MonoBehaviour
         OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
         MenuManager.Instance.UpdateResources();
 
-        Team winner = null;//DetermineWinner();
+        Team winner = null;
         if(winner == null) {
             CurrentTurn.StartTurn();
         } else {
@@ -74,20 +78,5 @@ public class GameManager : MonoBehaviour
         else if(defeated.Controller == EnemyTeam) {
             EnemyTeam.Remove(defeated);
         }
-    }
-
-    // declare a winner if one team controls all of the resources
-    private Team DetermineWinner() {
-        Team winner = null;
-        foreach(ResourcePile resource in AllResources) {
-            if(resource.Controller != null && winner == null) {
-                winner = resource.Controller;
-            }
-            else if(resource.Controller != winner) {
-                return null;
-            }
-        }
-
-        return winner;
     }
 }

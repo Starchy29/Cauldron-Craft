@@ -7,6 +7,7 @@ using UnityEngine;
 public class Team
 {
     public Color TeamColor { get; private set; }
+    public int Index { get; private set; }
     public List<Monster> Teammates { get; private set; }
     public Dictionary<Ingredient, int> Resources { get; private set; }
     public Cauldron Spawnpoint { get; set; }
@@ -14,8 +15,9 @@ public class Team
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(Color color) {
+    public Team(Color color, int index) {
         TeamColor = color;
+        Index = index;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {

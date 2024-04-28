@@ -10,7 +10,7 @@ public enum Ingredient
     Swarm
 }
 
-public class ResourcePile : GridEntity
+public class ResourcePile : Capturable
 {
     [SerializeField] private Ingredient type;
     public Ingredient Type { get { return type; } }
@@ -22,25 +22,6 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team nextTurn) {
-        // check for a change in ownership
-        LevelGrid level = LevelGrid.Instance;
-        List<Monster> adjacentMonsters = level.GetTilesInRange(Tile, 1, true).Map((Vector2Int tile) => { return level.GetMonster(tile); }).Filter((Monster monster) => { return monster != null; });
-
-        Team adjacentTeam = null;
-        foreach(Monster monster in adjacentMonsters) {
-            if(adjacentTeam == null) {
-                adjacentTeam = monster.Controller;
-            }
-            else if(monster.Controller != adjacentTeam) {
-                Controller = null;
-                return;
-            }
-        }
-
-        if(adjacentTeam != null) {
-            Controller = adjacentTeam;
-        }
-
         // give a resource to the controller
         if(turnEnder == Controller) {
             Controller.AddResource(type);

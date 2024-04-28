@@ -29,7 +29,7 @@ public class Monster : GridEntity
     protected override void Start() {
         base.Start();
         Controller.Join(this);
-        GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[MonsterType];
+        renderer.sprite = PrefabContainer.Instance.monsterToSprite[MonsterType];
         Stats = MonstersData.Instance.GetMonsterData(MonsterType);
         
         Health = Stats.Health;

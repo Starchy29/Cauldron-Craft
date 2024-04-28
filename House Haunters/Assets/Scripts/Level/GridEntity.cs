@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GridEntity : MonoBehaviour
 {
+    [SerializeField] protected SpriteRenderer renderer;
     [SerializeField] private int startTeam;
     public Vector2Int Tile { get; set; }
 
@@ -12,7 +13,7 @@ public class GridEntity : MonoBehaviour
         get { return controller; }
         set {
             controller = value;
-            GetComponent<SpriteRenderer>().material.color = Controller == null ? Color.clear : Controller.TeamColor;
+            renderer.material.color = Controller == null ? Color.clear : Controller.TeamColor;
         }
     }
 

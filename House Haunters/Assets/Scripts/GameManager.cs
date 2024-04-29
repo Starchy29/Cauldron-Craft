@@ -6,14 +6,13 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public Team PlayerTeam { get; private set; }
-    public Team EnemyTeam { get; private set; }
     public Team CurrentTurn { get; private set; }
     public Team[] AllTeams { get; private set; }
 
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
     public event TurnEndEvent OnTurnEnd;
 
+    private int currentTurnIndex;
     private AIController enemyAI;
     private AnimationsManager animator;
     
@@ -21,42 +20,40 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        PlayerTeam = new Team(Color.blue, 0);
-        EnemyTeam = new Team(Color.red, 1);
         AllTeams = new Team[2];
-        AllTeams[0] = PlayerTeam;
-        AllTeams[1] = EnemyTeam;
+        AllTeams[0] = new Team(Color.blue, 0, false);
+        AllTeams[1] = new Team(Color.red, 1, false);
         enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 
-        CurrentTurn = PlayerTeam;
+        CurrentTurn = AllTeams[currentTurnIndex];
     }
 
     void Start() {
         animator = AnimationsManager.Instance;
+        if(!CurrentTurn.IsAI) {
+            MenuManager.Instance.StartPlayerTurn(CurrentTurn);
+        }
     }
 
     void Update() {
-        if(CurrentTurn == EnemyTeam && !animator.Animating) {
-            enemyAI.ChooseMove(EnemyTeam);
+        if(CurrentTurn.IsAI && !animator.Animating) {
+            enemyAI.ChooseMove(CurrentTurn);
         }
     }
 
     public void PassTurn(Team turnEnder) {
-        if(turnEnder == PlayerTeam) {
-            CurrentTurn = EnemyTeam;
-        } else {
-            CurrentTurn = PlayerTeam;
+        currentTurnIndex++;
+        if(currentTurnIndex >= AllTeams.Length) {
+            currentTurnIndex = 0;
         }
+        CurrentTurn = AllTeams[currentTurnIndex];
 
         OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
         MenuManager.Instance.UpdateResources();
-
-        Team winner = null;
-        if(winner == null) {
-            CurrentTurn.StartTurn();
-        } else {
-            Debug.Log(winner.TeamColor + " team wins.");
+        CurrentTurn.StartTurn();
+        if(!CurrentTurn.IsAI) {
+            MenuManager.Instance.StartPlayerTurn(CurrentTurn);
         }
     }
 
@@ -68,15 +65,9 @@ public class GameManager : MonoBehaviour
         // grid placement and team joining handled by GridEntity.Start() and Monster.Start()
     }
 
-    // removes the monster from the game state. Destroy the game object is handled by the DeathAnimator
+    // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator
     public void DefeatMonster(Monster defeated) {
         LevelGrid.Instance.ClearEntity(defeated.Tile);
-
-        if(defeated.Controller == PlayerTeam) {
-            PlayerTeam.Remove(defeated);
-        }
-        else if(defeated.Controller == EnemyTeam) {
-            EnemyTeam.Remove(defeated);
-        }
+        defeated.Controller.Remove(defeated);
     }
 }

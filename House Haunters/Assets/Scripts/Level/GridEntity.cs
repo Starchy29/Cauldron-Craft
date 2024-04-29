@@ -21,15 +21,8 @@ public class GridEntity : MonoBehaviour
         Tile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(transform.position);
         transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)Tile);
         LevelGrid.Instance.PlaceEntity(this, Tile);
-
-        switch(startTeam) {
-            case 1:
-                Controller = GameManager.Instance.PlayerTeam;
-                break;
-
-            case 2:
-                Controller = GameManager.Instance.EnemyTeam;
-                break;
+        if(startTeam >= 0) {
+            Controller = GameManager.Instance.AllTeams[startTeam];
         }
     }
 }

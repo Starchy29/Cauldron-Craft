@@ -7,17 +7,17 @@ using UnityEngine;
 public class Team
 {
     public Color TeamColor { get; private set; }
-    public int Index { get; private set; }
     public List<Monster> Teammates { get; private set; }
     public Dictionary<Ingredient, int> Resources { get; private set; }
+    public bool IsAI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
 
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(Color color, int index) {
+    public Team(Color color, int index, bool isAI) {
         TeamColor = color;
-        Index = index;
+        IsAI = isAI;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {

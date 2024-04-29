@@ -42,8 +42,6 @@ public class MenuManager : MonoBehaviour
         UseKBMouse = true;
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
-        controller = gameManager.PlayerTeam;
-        controller.OnTurnStart += () => { SetState(SelectionTarget.Monster); };
         AnimationsManager.Instance.OnAnimationsEnd += () => { if(gameManager.CurrentTurn == controller) SetState(SelectionTarget.Monster); };
         UpdateResources();
         SetState(SelectionTarget.Monster);
@@ -124,7 +122,13 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    public void StartPlayerTurn(Team player) {
+        controller = player;
+        SetState(SelectionTarget.Monster);
+    }
+
     private void SetState(SelectionTarget state) {
+        LevelGrid level = LevelGrid.Instance; // this function runs in Start()
         this.state = state;
         gameObject.SetActive(true);
         TileSelector.SetActive(false);
@@ -183,8 +187,8 @@ public class MenuManager : MonoBehaviour
 
     // function of the end turn button
     public void EndTurn() {
-        controller.EndTurn();
         SetState(SelectionTarget.Animations);
+        controller.EndTurn();
     }
 
     public void SelectMove(int moveSlot) {

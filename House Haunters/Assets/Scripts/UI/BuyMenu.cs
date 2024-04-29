@@ -9,7 +9,7 @@ public class BuyMenu : MonoBehaviour
     [SerializeField] public GameObject Background;
     private BuyMonsterButton[] buttons;
 
-    void Start() {
+    void Awake() {
         float spacing = 1.2f;
 
         MonsterName[] monsters = (MonsterName[])Enum.GetValues(typeof(MonsterName));

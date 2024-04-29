@@ -21,8 +21,8 @@ public class GameManager : MonoBehaviour
     void Awake() {
         Instance = this;
         AllTeams = new Team[2];
-        AllTeams[0] = new Team(Color.blue, 0, false);
-        AllTeams[1] = new Team(Color.red, 1, false);
+        AllTeams[0] = new Team(Color.blue, 0, true);
+        AllTeams[1] = new Team(Color.red, 1, true);
         enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 

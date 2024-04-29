@@ -144,21 +144,27 @@ public class MenuManager : MonoBehaviour
         level.ColorTiles(null, TileHighlighter.State.Hovered);
         level.ColorTiles(null, TileHighlighter.State.Selectable);
 
-        foreach(Monster teammate in controller.Teammates) {
-            teammate.MoveCounter.Close();
+        if(controller != null) {
+            foreach(Monster teammate in controller.Teammates) {
+                teammate.MoveCounter.Close();
+            }
         }
 
         switch(state) {
             case SelectionTarget.Monster:
                 endTurnButton.gameObject.SetActive(true);
-                foreach(Monster teammate in controller.Teammates) {
-                    teammate.MoveCounter.Open();
+                if(controller != null) {
+                    foreach(Monster teammate in controller.Teammates) {
+                        teammate.MoveCounter.Open();
+                    }
                 }
                 break;
             case SelectionTarget.Move:
                 endTurnButton.gameObject.SetActive(true);
-                foreach(Monster teammate in controller.Teammates) {
-                    teammate.MoveCounter.Open();
+                if(controller != null) {
+                    foreach(Monster teammate in controller.Teammates) {
+                        teammate.MoveCounter.Open();
+                    }
                 }
                 moveMenu.Open(selected, controller);
                 break;
@@ -215,7 +221,9 @@ public class MenuManager : MonoBehaviour
     }
 
     public void UpdateResources() {
-        decayQuantity.text = "" + controller.Resources[Ingredient.Decay];
-        plantQuantity.text = "" + controller.Resources[Ingredient.Flora];
+        if(controller != null) {
+            decayQuantity.text = "" + controller.Resources[Ingredient.Decay];
+            plantQuantity.text = "" + controller.Resources[Ingredient.Flora];
+        }
     }
 }

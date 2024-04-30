@@ -6,6 +6,9 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    public CapturePoint Objective;
+
+    public List<ResourcePile> AllResources { get; private set; }
     public Team CurrentTurn { get; private set; }
     public Team[] AllTeams { get; private set; }
 
@@ -15,14 +18,12 @@ public class GameManager : MonoBehaviour
     private int currentTurnIndex;
     private AIController enemyAI;
     private AnimationsManager animator;
-    
-    public List<ResourcePile> AllResources { get; private set; }
 
     void Awake() {
         Instance = this;
         AllTeams = new Team[2];
-        AllTeams[0] = new Team(Color.blue, 0, true);
-        AllTeams[1] = new Team(Color.red, 1, true);
+        AllTeams[0] = new Team(Color.blue, true);
+        AllTeams[1] = new Team(Color.red, true);
         enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 

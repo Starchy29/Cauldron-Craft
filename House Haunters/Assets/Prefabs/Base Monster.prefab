@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderer: {fileID: 6751685820663710280}
-  startTeam: 0
+  startTeam: -1
   healthBar: {fileID: 3355351814052051709}
   MonsterType: 0
   MoveCounter: {fileID: 0}

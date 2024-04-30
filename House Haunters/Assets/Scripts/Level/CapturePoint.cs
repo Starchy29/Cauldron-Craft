@@ -10,6 +10,7 @@ public class CapturePoint : Capturable
 
     protected override void Start() {
         base.Start();
+        GameManager.Instance.Objective = this;
         GameManager.Instance.OnTurnEnd += GrantPoint;
         scoreboard.Setup(winAmount);
 

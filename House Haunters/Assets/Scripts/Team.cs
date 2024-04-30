@@ -15,7 +15,7 @@ public class Team
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(Color color, int index, bool isAI) {
+    public Team(Color color, bool isAI) {
         TeamColor = color;
         IsAI = isAI;
         Teammates = new List<Monster>();

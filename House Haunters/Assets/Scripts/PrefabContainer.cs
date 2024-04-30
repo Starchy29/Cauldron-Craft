@@ -100,6 +100,7 @@ public class PrefabContainer : MonoBehaviour
     #region demon
     public Sprite demonSprite;
     public GameObject demonStrength;
+    public GameObject fireballBlast;
     public GameObject demonCurse;
     #endregion
 

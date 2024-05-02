@@ -25,6 +25,7 @@ public class ResourcePile : Capturable
         // give a resource to the controller
         if(turnEnder == Controller) {
             Controller.AddResource(type);
+            Controller.ResourceDisplay.UpdateDisplay();
         }
     }
 }

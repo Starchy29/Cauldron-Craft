@@ -11,6 +11,7 @@ public class Team
     public Dictionary<Ingredient, int> Resources { get; private set; }
     public bool IsAI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
+    public ResourceTracker ResourceDisplay { get; set; }
 
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
@@ -49,6 +50,7 @@ public class Team
             MonsterType data = MonstersData.Instance.GetMonsterData(type);
             Resources[ingredient] -= data.Recipe[ingredient];
         }
+        ResourceDisplay.UpdateDisplay();
 
         Spawnpoint.StartCook(type);
     }

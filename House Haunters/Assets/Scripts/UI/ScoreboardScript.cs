@@ -6,7 +6,7 @@ public class ScoreboardScript : MonoBehaviour
 {
     [SerializeField] private GameObject pointMarkerPrefab;
     private GameObject[,] pointMarkers; // row is team index
-    private const float MARKER_GAP = 1.0f;
+    private const float MARKER_GAP = 0.7f;
 
     public void Setup(int winAmount) {
         pointMarkers = new GameObject[2, winAmount];

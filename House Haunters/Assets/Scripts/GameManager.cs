@@ -52,7 +52,6 @@ public class GameManager : MonoBehaviour
         CurrentTurn = AllTeams[currentTurnIndex];
 
         OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
-        MenuManager.Instance.UpdateResources();
         CurrentTurn.StartTurn();
         if(!CurrentTurn.IsAI) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);

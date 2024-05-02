@@ -12,8 +12,6 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private AutoButton endTurnButton;
     [SerializeField] private BuyMenu buyMenu;
 
-    [SerializeField] private TMPro.TextMeshPro decayQuantity;
-    [SerializeField] private TMPro.TextMeshPro plantQuantity;
     private HealthBarScript hoveredHealthbar;
 
     public bool UseKBMouse { get; set; }
@@ -43,7 +41,6 @@ public class MenuManager : MonoBehaviour
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
         AnimationsManager.Instance.OnAnimationsEnd += () => { if(gameManager.CurrentTurn == controller) SetState(SelectionTarget.Monster); };
-        UpdateResources();
         SetState(SelectionTarget.Monster);
     }
 
@@ -216,14 +213,6 @@ public class MenuManager : MonoBehaviour
 
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
-        UpdateResources();
         SetState(SelectionTarget.Monster);
-    }
-
-    public void UpdateResources() {
-        if(controller != null) {
-            decayQuantity.text = "" + controller.Resources[Ingredient.Decay];
-            plantQuantity.text = "" + controller.Resources[Ingredient.Flora];
-        }
     }
 }

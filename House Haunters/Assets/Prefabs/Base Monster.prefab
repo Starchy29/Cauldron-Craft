@@ -218,8 +218,7 @@ MonoBehaviour:
   renderer: {fileID: 6751685820663710280}
   startTeam: -1
   healthBar: {fileID: 3355351814052051709}
-  MonsterType: 0
-  MoveCounter: {fileID: 0}
+  MoveCounter: {fileID: 9073012257925097679}
 --- !u!1 &4838518358999510073
 GameObject:
   m_ObjectHideFlags: 0
@@ -481,5 +480,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6a36b813486cc740b987a4b2d27466d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachTarget: {fileID: 4622429817863264039}
   tickMarkPrefab: {fileID: 2113124062257570016, guid: 01089a44ccb29b84f8f3cebc7133a3d8, type: 3}

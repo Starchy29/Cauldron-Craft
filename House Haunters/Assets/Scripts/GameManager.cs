@@ -23,13 +23,14 @@ public class GameManager : MonoBehaviour
         Instance = this;
         AllTeams = new Team[2];
         AllTeams[0] = new Team(Color.blue, true);
-        AllTeams[1] = new Team(Color.red, true);
+        AllTeams[1] = new Team(Color.red, false);
         enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 
         CurrentTurn = AllTeams[currentTurnIndex];
     }
 
+    // runs after everything else because of script execution order
     void Start() {
         animator = AnimationsManager.Instance;
         if(!CurrentTurn.IsAI) {
@@ -60,10 +61,9 @@ public class GameManager : MonoBehaviour
 
     public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
         Monster spawned = Instantiate(PrefabContainer.Instance.BaseMonsterPrefab).GetComponent<Monster>();
-        spawned.Controller = controller;
-        spawned.MonsterType = monsterType;
+        spawned.Setup(monsterType, controller);
+        LevelGrid.Instance.PlaceEntity(spawned, startTile);
         spawned.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)startTile);
-        // grid placement and team joining handled by GridEntity.Start() and Monster.Start()
     }
 
     // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator

@@ -6,8 +6,7 @@ using System;
 public class Monster : GridEntity
 {
     [SerializeField] public HealthBarScript healthBar;
-    [SerializeField] public MonsterName MonsterType;
-    public MoveCounter MoveCounter;
+    [SerializeField] public MoveCounter MoveCounter;
 
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
@@ -26,12 +25,14 @@ public class Monster : GridEntity
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? 2 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
-    protected override void Start() {
-        base.Start();
-        Controller.Join(this);
-        renderer.sprite = PrefabContainer.Instance.monsterToSprite[MonsterType];
-        Stats = MonstersData.Instance.GetMonsterData(MonsterType);
-        
+    protected override void Start() {} // unlike other grid entities, only spawn from code
+
+    public void Setup(MonsterName monsterType, Team controller) {
+        controller.Join(this);
+        renderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
+        Stats = MonstersData.Instance.GetMonsterData(monsterType);
+        MoveCounter.Setup(this);
+
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];
 

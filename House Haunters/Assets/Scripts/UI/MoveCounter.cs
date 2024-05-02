@@ -5,14 +5,14 @@ using UnityEngine;
 // displays the remaining moves above a monster's head
 public class MoveCounter : MonoBehaviour
 {
-    [SerializeField] private Monster attachTarget;
+    private Monster attachTarget;
     [SerializeField] private GameObject tickMarkPrefab;
     private GameObject[] tickMarks;
 
     private const float GAP = 0.1f;
 
-    void Awake()
-    {
+    public void Setup(Monster attachTarget) {
+        this.attachTarget = attachTarget;
         attachTarget.MoveCounter = this;
         tickMarks = new GameObject[4];
         for(int i = 0; i < tickMarks.Length; i++) {

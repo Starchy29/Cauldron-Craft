@@ -126,6 +126,7 @@ public class PrefabContainer : MonoBehaviour
     public GameObject leechSeed;
     public GameObject drowsySpores;
     public GameObject fearSpores;
+    public GameObject psychicBurst;
     #endregion
 
     [Header("Jackolantern")]

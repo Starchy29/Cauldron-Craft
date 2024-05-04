@@ -56,6 +56,7 @@ public class GameManager : MonoBehaviour
         if(!CurrentTurn.IsAI) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);
         }
+        GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
     }
 
     public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {

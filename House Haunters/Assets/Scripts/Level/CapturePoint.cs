@@ -25,7 +25,7 @@ public class CapturePoint : Capturable
             scoreboard.UpdateDisplay(Points);
 
             if(Points[Controller] >= winAmount) {
-                // win game
+                GameOverviewDisplayer.Instance.ShowWinner(Controller);
             }
         }
     }

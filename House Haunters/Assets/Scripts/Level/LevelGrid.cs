@@ -22,7 +22,6 @@ public class LevelGrid : MonoBehaviour
     void Awake() {
         Instance = this;
         Tiles = GetComponent<Tilemap>();
-
         Width = 12;
         Height = 8;
 

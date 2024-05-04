@@ -13,6 +13,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private BuyMenu buyMenu;
 
     private HealthBarScript hoveredHealthbar;
+    private List<HealthBarScript> targetedHealthBars;
 
     public bool UseKBMouse { get; set; }
 
@@ -64,8 +65,8 @@ public class MenuManager : MonoBehaviour
 
             if(input.SelectPressed()) {
                 // use the move on the hovered target
-                selected.UseMove(selectedMoveSlot, tileGroups[hoveredTargetIndex]);
                 SetState(SelectionTarget.Animations);
+                selected.UseMove(selectedMoveSlot, tileGroups[hoveredTargetIndex]);   
             }
             return;
         }
@@ -138,6 +139,13 @@ public class MenuManager : MonoBehaviour
             hoveredHealthbar = null;
         }
 
+        if(targetedHealthBars != null) {
+            foreach(HealthBarScript healthBar in targetedHealthBars) {
+                healthBar.gameObject.SetActive(false);
+            }
+            targetedHealthBars = null;
+        }
+
         level.ColorTiles(null, TileHighlighter.State.Hovered);
         level.ColorTiles(null, TileHighlighter.State.Selectable);
 
@@ -203,10 +211,21 @@ public class MenuManager : MonoBehaviour
         SetState(SelectionTarget.Targets);
 
         List<Vector2Int> allTiles = new List<Vector2Int>();
-        foreach (List<Vector2Int> group in tileGroups)
-        {
+        foreach(List<Vector2Int> group in tileGroups) {
             allTiles.AddRange(group);
         }
+
+        // show health bars on possible targets
+        if(move.Type != MoveType.Zone) {
+            targetedHealthBars = new List<HealthBarScript>();
+            List<Vector2Int> tilesWithMonsters = allTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });
+            foreach(Vector2Int tile in tilesWithMonsters) {
+                Monster healthBarHaver = level.GetMonster(tile);
+                healthBarHaver.healthBar.gameObject.SetActive(true);
+                targetedHealthBars.Add(healthBarHaver.healthBar);
+            }
+        }
+
         level.ColorTiles(allTiles, TileHighlighter.State.Selectable);
         level.ColorTiles(null, TileHighlighter.State.Highlighted);
     }

@@ -33,45 +33,45 @@ public class MonstersData
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             18, 4,
             new List<Move>() {
-                new UniqueMove("Revitalize", 1, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(4); }, null),
-                new StatusMove("Haunt", 3, false, new StatusAilment(StatusEffect.Haunted, 3, prefabs.spookHaunt), new RangeSelector(1, false, false), null),
-                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, false), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals the target's health.", StealHealth)
+                new UniqueMove("Revitalize", 1, MoveType.Support, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(4); }, null, "Heals an ally for 4 health."),
+                new StatusMove("Haunt", 3, false, new StatusAilment(StatusEffect.Haunted, 3, prefabs.spookHaunt), new RangeSelector(1, false, false), null, "The target takes 1.5x damage for 3 turns."),
+                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, false), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals 3 health from the target.", StealHealth)
             }
         );
 
         monsterTypes[(int)MonsterName.Demon] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
             20, 4,
             new List<Move>() {
-                new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "do later."),
-                new StatusMove("Void", 3, false, new StatusAilment(StatusEffect.Cursed, 3, prefabs.demonCurse), new ZoneSelector(2, 2), null, "Removes the target's shield", EliminateShield),
-                new Attack("Fireball", 1, 6, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
+                new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "Increases damage dealt and taken by 1.5x for 3 turns"),
+                new StatusMove("Void", 3, false, new StatusAilment(StatusEffect.Cursed, 3, prefabs.demonCurse), new ZoneSelector(2, 2), null, "Blocks healing for 3 turns and removes the target's shield", EliminateShield),
+                new Attack("Fireball", 1, 6, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 6 damage to the target and 4 damage to enemies adjacent to the target", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
             }
         );
 
         monsterTypes[(int)MonsterName.ThornBush] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
             22, 3,
             new List<Move>() {
-                new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Deals 6 damage to enemies that attack this within melee range."),
-                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 5, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(8, null); }, true), null, "Places a trap that deals 8 damage to an enemy that lands on it."),
-                new Attack("Barb Bullet", 1, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Pierces through enemies.")
+                new ShieldMove("Thorn Guard", 1, new SelfSelector(), new Shield(Shield.Strength.Weak, 1, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Blocks 25% damage and deals 6 damage to enemies that attack this within melee range"),
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 5, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(8, null); }, true), null, "Places a trap that deals 8 damage to an enemy that lands on it"),
+                new Attack("Barb Bullet", 1, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Deals 6 damage and pierces through enemies")
             }
         );
 
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
-            24, 3,
+            23, 3,
             new List<Move>() {
-                new StatusMove("Sweet Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null),
-                new UniqueMove("Vine Grab", 1, MoveType.Movement, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user."),
-                new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), AnimateParticle(prefabs.chompTeeth))
+                new StatusMove("Sweet Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null, "Applies regeneration for 3 turns"),
+                new UniqueMove("Vine Grab", 1, MoveType.Movement, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user"),
+                new Attack("Chomp", 1, 8, new RangeSelector(1, false, false), AnimateParticle(prefabs.chompTeeth), "Deals 8 damage to the target")
             }
         );
 
         monsterTypes[(int)MonsterName.Fungus] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Flora,
             18, 3,
             new List<Move>() {
-                new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), new RangeSelector(1, false, false), null),
-                new StatusMove("Psychedelic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), null),
-                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.ApplyLeech, null)
+                new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), new RangeSelector(1, false, false), null, "The target is reduced to one action for 2 turns"),
+                new StatusMove("Psychic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), AnimateParticle(prefabs.psychicBurst), "Halves the targets' damage for 1 turn"),
+                new UniqueMove("Infect", 0, MoveType.Disrupt, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.ApplyLeech, null, "Drains 2 health per turn for 3 turns")
             }
         );
 
@@ -79,8 +79,8 @@ public class MonstersData
             20, 4,
             new List<Move>() {
                 new UniqueMove("Portal", 2, MoveType.Movement, Move.Targets.Allies, new RangeSelector(3, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
-                new ZoneMove("Will o' Wisps", 4, new ZoneSelector(3, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null),
-                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Curses the target for one turn.", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
+                new ZoneMove("Will o' Wisps", 4, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null, "Creates a zone for three turns in which enemies take 1.5x damage"),
+                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Deals 5 damage and curses the target for one turn", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
         );
     }

@@ -16,6 +16,7 @@ public class Cauldron : GridEntity
         base.Start();
         Controller.OnTurnStart += FinishCook;
         Controller.OnTurnStart += NotifyCookable;
+        Controller.OnTurnEnd += HideCookable;
         Controller.Spawnpoint = this;
     }
 
@@ -33,7 +34,7 @@ public class Cauldron : GridEntity
         // find the spot to spawn on
         LevelGrid level = LevelGrid.Instance;
         Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
-        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return level.GetEntity(tile) == null; });
+        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return !LevelGrid.Instance.GetTile(tile).IsWall && level.GetEntity(tile) == null; });
         if(options.Count == 0) {
             return;
         }
@@ -56,6 +57,12 @@ public class Cauldron : GridEntity
         if(totalIngredients >= 3) {
             cookIndicator.SetActive(true);
             cookIndicator.GetComponent<SpriteRenderer>().sprite = null;
+        }
+    }
+
+    private void HideCookable() {
+        if(!cookingMonster.HasValue) {
+            cookIndicator.SetActive(false);
         }
     }
 

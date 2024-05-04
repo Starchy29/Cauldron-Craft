@@ -52,7 +52,7 @@ public class MoveMenu : MonoBehaviour
             buttons[i].gameObject.SetActive(true);
             buttons[i].transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f + (i + 1) * (buttonHeight + BUTTON_GAP), 0);
             buttons[i].SetMove(monster, i);
-            buttons[i].disabled = monster.Controller != player || !monster.CanUse(i);
+            buttons[i].Disabled = monster.Controller != player || !monster.CanUse(i);
         }
 
         MonsterInfoAnchor.transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f, 0);

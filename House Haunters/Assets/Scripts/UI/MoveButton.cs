@@ -8,6 +8,7 @@ public class MoveButton : AutoButton
     [SerializeField] private TextMeshPro nameLabel;
     [SerializeField] private TextMeshPro cooldown;
     [SerializeField] private SpriteRenderer typeIcon;
+    [SerializeField] private TextMeshPro description;
 
     private int moveSlot;
     public List<Vector2Int> CoveredArea { get; private set; }
@@ -47,6 +48,8 @@ public class MoveButton : AutoButton
         // open info menu
 
         // description
+        description.text = move.Description;
+
         // current cooldown / max cooldown
 
         if(move is Attack) {

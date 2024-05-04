@@ -40,6 +40,6 @@ public class GameOverviewDisplayer : MonoBehaviour
 
     private IEnumerator ReturnToMenuSoon() {
         yield return new WaitForSeconds(5f);
-        //SceneManager.LoadScene();
+        SceneManager.LoadScene(0);
     }
 }

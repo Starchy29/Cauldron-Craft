@@ -21,7 +21,7 @@ public class InputManager
     }
 
     public bool SelectPressed() {
-        return !AnimationsManager.Instance.Animating && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
     }
 
     public bool BackPressed() {

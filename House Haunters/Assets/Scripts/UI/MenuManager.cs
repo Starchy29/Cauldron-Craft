@@ -146,6 +146,7 @@ public class MenuManager : MonoBehaviour
             targetedHealthBars = null;
         }
 
+        level.ColorTiles(null, TileHighlighter.State.Highlighted);
         level.ColorTiles(null, TileHighlighter.State.Hovered);
         level.ColorTiles(null, TileHighlighter.State.Selectable);
 

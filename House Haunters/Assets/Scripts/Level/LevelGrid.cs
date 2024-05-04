@@ -22,8 +22,8 @@ public class LevelGrid : MonoBehaviour
     void Awake() {
         Instance = this;
         Tiles = GetComponent<Tilemap>();
-        Width = 12;
-        Height = 8;
+        Width = 21;
+        Height = 11;
 
         entityGrid = new GridEntity[Height, Width];
         environmentGrid = new WorldTile[Height, Width];
@@ -45,9 +45,6 @@ public class LevelGrid : MonoBehaviour
                 tileHighlights[y, x].transform.position = Tiles.GetCellCenterWorld(new Vector3Int(x, y, 0));
             }
         }
-
-        Camera.main.transform.position = new Vector3(Width / 2, Height / 2, Camera.main.transform.position.z);
-        Debug.Log("moved camera from LevelGrid.cs");
     }
 
     public List<Vector2Int> GetTilesInRange(Vector2Int spot, int range, bool squareArea) {

@@ -16,13 +16,16 @@ public class Team
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(Color color, bool isAI) {
+    public Team(Color color, bool isAI, Ingredient? startBatch = null) {
         TeamColor = color;
         IsAI = isAI;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
             Resources[type] = 0;
+        }
+        if(startBatch.HasValue) {
+            Resources[startBatch.Value] = 5;
         }
     }
 

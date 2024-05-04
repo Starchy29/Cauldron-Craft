@@ -2,8 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum GameMode {
+    VSAI,
+    PVP
+}
+
 public class GameManager : MonoBehaviour
 {
+    public static GameMode GameMode;
     public static GameManager Instance { get; private set; }
 
     public CapturePoint Objective;
@@ -22,8 +28,8 @@ public class GameManager : MonoBehaviour
     void Awake() {
         Instance = this;
         AllTeams = new Team[2];
-        AllTeams[0] = new Team(Color.blue, true);
-        AllTeams[1] = new Team(Color.red, false);
+        AllTeams[0] = new Team(Color.blue, false, Ingredient.Flora);
+        AllTeams[1] = new Team(Color.red, GameMode == GameMode.VSAI, Ingredient.Decay);
         enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 
@@ -33,6 +39,7 @@ public class GameManager : MonoBehaviour
     // runs after everything else because of script execution order
     void Start() {
         animator = AnimationsManager.Instance;
+        CurrentTurn.StartTurn();
         if(!CurrentTurn.IsAI) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);
         }

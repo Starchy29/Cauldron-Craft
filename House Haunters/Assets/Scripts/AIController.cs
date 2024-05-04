@@ -45,7 +45,7 @@ public class AIController
             if(chosenMove is MovementAbility) {
                 Vector2Int targetPosition = FindTargetPosition(team);
                 targetOptions.Sort((List<Vector2Int> tile1, List<Vector2Int> tile2) => { return Global.CalcTileDistance(tile1[0], targetPosition) - Global.CalcTileDistance(tile2[0], targetPosition); });
-                chosenTargets /= 2; // only choose from the better half of options
+                chosenTargets /= 3; // only choose from the better portion of options
             }
 
             monster.UseMove(chosenMoveSlot, targetOptions[chosenTargets]);

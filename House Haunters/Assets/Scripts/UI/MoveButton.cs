@@ -9,6 +9,7 @@ public class MoveButton : AutoButton
     [SerializeField] private TextMeshPro cooldown;
     [SerializeField] private SpriteRenderer typeIcon;
     [SerializeField] private TextMeshPro description;
+    [SerializeField] private GameObject hourglass;
 
     private int moveSlot;
     public List<Vector2Int> CoveredArea { get; private set; }
@@ -41,6 +42,7 @@ public class MoveButton : AutoButton
 
         nameLabel.text = move.Name;
         cooldown.text = user.Cooldowns[moveSlot] > 0 ? "" + user.Cooldowns[moveSlot] : "";
+        hourglass.SetActive(user.Cooldowns[moveSlot] > 0);
 
         typeIcon.sprite = PrefabContainer.Instance.moveTypeToSprite[move.Type];
         //SetBackColor(moveTypeToColor[move.Type]);

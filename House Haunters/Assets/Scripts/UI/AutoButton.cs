@@ -7,7 +7,9 @@ public class AutoButton : MonoBehaviour
 {
     public enum ClickFunction {
         None,
-        EndTurn
+        EndTurn,
+        StartGamePVP,
+        StartGameVAI
     }
 
     [SerializeField] private ClickFunction clickFunction;
@@ -38,6 +40,12 @@ public class AutoButton : MonoBehaviour
         switch(clickFunction) {
             case ClickFunction.EndTurn:
                 OnClick = MenuManager.Instance.EndTurn;
+                break;
+            case ClickFunction.StartGamePVP:
+                OnClick = MainMenuScript.StartPVP;
+                break;
+            case ClickFunction.StartGameVAI:
+                OnClick = MainMenuScript.StartVAI;
                 break;
         }
     }

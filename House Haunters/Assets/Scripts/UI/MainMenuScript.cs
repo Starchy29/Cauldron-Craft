@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class MainMenuScript : MonoBehaviour
 {
@@ -14,6 +15,11 @@ public class MainMenuScript : MonoBehaviour
     private void Start()
     {
         instroButton.OnClick = ToggleInstructions;
+    }
+
+    private void Update()
+    {
+        Debug.Log(Mouse.current.position.ReadValue());
     }
 
     public static void StartPVP() {

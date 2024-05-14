@@ -20,7 +20,7 @@ public class InputManager
         if(Mouse.current == null) {
             return Vector2.zero;
         }
-
+        Debug.Log(Mouse.current.position.ReadValue());
         return Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
     }
 

@@ -9,13 +9,15 @@ public struct TileEffect {
     public GameObject prefab;
     public MonsterTrigger landEffect;
     public bool destroyOnUse;
+    public bool stopsMovement;
 
-    public TileEffect(StatusEffect? appliedStatus, int movementTax, int duration, GameObject prefab, MonsterTrigger landEffect, bool destroyOnUse = false) {
+    public TileEffect(StatusEffect? appliedStatus, int movementTax, int duration, GameObject prefab, MonsterTrigger landEffect, bool destroyOnUse = false, bool stopsMovement = false) {
         this.appliedStatus = appliedStatus;
         this.movementTax = movementTax;
         this.duration = duration;
         this.prefab = prefab;
         this.landEffect = landEffect;
         this.destroyOnUse = destroyOnUse;
+        this.stopsMovement = stopsMovement;
     }
 }

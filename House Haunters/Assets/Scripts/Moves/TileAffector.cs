@@ -11,6 +11,7 @@ public class TileAffector
     public int TurnsLeft { get; private set; }
 
     public int MovementTax { get { return Effect.movementTax; } }
+    public bool StopsMovement { get { return Effect.stopsMovement; } }
     public StatusEffect? AppliedStatus { get { return Effect.appliedStatus; } }
     public MonsterTrigger LandEffect { get { return Effect.landEffect; } }
 

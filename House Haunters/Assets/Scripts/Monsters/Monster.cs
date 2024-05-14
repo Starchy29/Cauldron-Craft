@@ -226,6 +226,11 @@ public class Monster : GridEntity
             openList.Remove(nextTile);
             closedList.Add(nextTile);
 
+            TileAffector nextEffect = level.GetTile(nextTile).CurrentEffect;
+            if(nextEffect != null && nextEffect.Controller != Controller && nextEffect.StopsMovement) {
+                continue;
+            }
+
             // update the neighbors
             foreach(Vector2Int direction in Global.Cardinals) {
                 Vector2Int neighbor = nextTile + direction;

@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode GameMode;
+    public static GameMode GameMode = GameMode.PVP;
     public static GameManager Instance { get; private set; }
 
     public CapturePoint Objective;

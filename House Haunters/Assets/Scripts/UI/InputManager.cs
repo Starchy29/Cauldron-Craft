@@ -13,7 +13,9 @@ public class InputManager
         return instance;
     } }
 
-    private InputManager() { }
+    private InputManager() {
+        Cursor.lockState = CursorLockMode.None;    
+    }
 
     // gets the world position of the mouse
     public Vector2 GetMousePosition() {

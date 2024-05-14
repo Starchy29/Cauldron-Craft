@@ -17,7 +17,7 @@ public class InputManager
 
     // gets the world position of the mouse
     public Vector2 GetMousePosition() {
-        return Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        return Camera.main.ScreenToWorldPoint(Input.mousePosition);
     }
 
     public bool SelectPressed() {

@@ -66,10 +66,6 @@ public class AIController
     }
 
     private Vector2Int FindTargetPosition(Team controller) {
-        if(GameManager.Instance.Objective.Controller != controller) {
-            return GameManager.Instance.Objective.Tile;
-        }
-
         ResourcePile closestUnclaimed = null;
         int closestDistance = 0;
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
@@ -78,10 +74,6 @@ public class AIController
                 closestUnclaimed = resource;
                 closestDistance = distance;
             }
-        }
-
-        if(closestUnclaimed == null) {
-            return GameManager.Instance.Objective.Tile;
         }
 
         return closestUnclaimed.Tile;

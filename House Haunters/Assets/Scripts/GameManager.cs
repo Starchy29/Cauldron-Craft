@@ -12,8 +12,6 @@ public class GameManager : MonoBehaviour
     public static GameMode GameMode = GameMode.PVP;
     public static GameManager Instance { get; private set; }
 
-    public CapturePoint Objective;
-
     public List<ResourcePile> AllResources { get; private set; }
     public Team CurrentTurn { get; private set; }
     public Team[] AllTeams { get; private set; }
@@ -52,6 +50,7 @@ public class GameManager : MonoBehaviour
     }
 
     public void PassTurn(Team turnEnder) {
+        // end the current turn
         currentTurnIndex++;
         if(currentTurnIndex >= AllTeams.Length) {
             currentTurnIndex = 0;
@@ -59,6 +58,21 @@ public class GameManager : MonoBehaviour
         CurrentTurn = AllTeams[currentTurnIndex];
 
         OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
+
+        // check for victory
+        Team winner = AllResources[0].Controller;
+        foreach(ResourcePile dispenser in AllResources) {
+            if(dispenser.Controller == null || dispenser.Controller != winner) {
+                winner = null;
+                break;
+            }
+        }
+        if(winner != null) {
+            GameOverviewDisplayer.Instance.ShowWinner(winner);
+            return;
+        }
+
+        // start next turn
         CurrentTurn.StartTurn();
         if(!CurrentTurn.IsAI) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);

@@ -78,7 +78,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(Ingredient.Decay, Ingredient.Flora, Ingredient.Flora,
             20, 4,
             new List<Move>() {
-                new UniqueMove("Portal", 2, MoveType.Movement, Move.Targets.Allies, new RangeSelector(3, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
+                new UniqueMove("Portal", 2, MoveType.Movement, Move.Targets.Allies, new RangeSelector(4, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
                 new ZoneMove("Will o' Wisps", 4, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null, "Creates a zone for three turns in which enemies take 1.5x damage"),
                 new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Deals 5 damage and curses the target for one turn", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }

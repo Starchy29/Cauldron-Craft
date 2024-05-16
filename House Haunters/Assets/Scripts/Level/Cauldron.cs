@@ -7,29 +7,41 @@ public class Cauldron : GridEntity
 {
     [SerializeField] private GameObject cookIndicator;
 
-    private MonsterName? cookingMonster;
-    private bool cookingTurn;
+    private MonsterName cookingMonster;
 
-    public bool Cooking { get { return cookingMonster.HasValue; } }
+    public enum State {
+        Ready,
+        Cooking,
+        Cooldown
+    }
+
+    public State CookState { get; private set; }
 
     protected override void Start() {
         base.Start();
-        Controller.OnTurnStart += FinishCook;
+        Controller.OnTurnStart += UpdateCook;
         Controller.OnTurnStart += NotifyCookable;
         Controller.OnTurnEnd += HideCookable;
         Controller.Spawnpoint = this;
     }
 
     public void StartCook(MonsterName monsterType) {
+        CookState = State.Cooking;
         cookingMonster = monsterType;
         cookIndicator.SetActive(true);
         cookIndicator.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
     }
 
-    private void FinishCook() {
-        if(!cookingMonster.HasValue) {
+    private void UpdateCook() {
+        if(CookState == State.Cooldown) {
+            CookState = State.Ready;
             return;
         }
+        if(CookState == State.Ready) {
+            return;
+        }
+
+        CookState = State.Cooldown;
 
         // find the spot to spawn on
         LevelGrid level = LevelGrid.Instance;
@@ -43,12 +55,15 @@ public class Cauldron : GridEntity
         Vector2Int spawnSpot = options[0];
 
         // spawn the monster
-        GameManager.Instance.SpawnMonster(cookingMonster.Value, spawnSpot, Controller);
-        cookingMonster = null;
+        GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         cookIndicator.SetActive(false);
     }
 
     private void NotifyCookable() {
+        if(CookState != State.Ready) {
+            return;
+        }
+
         int totalIngredients = 0;
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
             totalIngredients += Controller.Resources[ingredient];
@@ -61,7 +76,7 @@ public class Cauldron : GridEntity
     }
 
     private void HideCookable() {
-        if(!cookingMonster.HasValue) {
+        if(CookState != State.Cooking) {
             cookIndicator.SetActive(false);
         }
     }

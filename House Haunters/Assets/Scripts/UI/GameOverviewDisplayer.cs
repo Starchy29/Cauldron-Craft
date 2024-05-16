@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public class GameOverviewDisplayer : MonoBehaviour
 {
     [SerializeField] private TMPro.TextMeshPro textbox;
+    private IEnumerator coroutine;
 
     public static GameOverviewDisplayer Instance { get; private set; }
 
@@ -27,7 +28,13 @@ public class GameOverviewDisplayer : MonoBehaviour
         gameObject.SetActive(true);
         textbox.text = "Player " + (playerIndex+1) + "'s Turn";
         textbox.color = GameManager.Instance.AllTeams[playerIndex].TeamColor;
-        AnimationsManager.Instance.QueueAnimation(new DisappearanceAnimator(gameObject, 1f));
+        //AnimationsManager.Instance.QueueAnimation(new DisappearanceAnimator(gameObject, 1f));
+        if(coroutine != null) {
+            StopCoroutine(coroutine);
+            coroutine = null;
+        }
+        coroutine = CloseSoon();
+        StartCoroutine(coroutine);
     }
 
     public void ShowWinner(Team winner) {
@@ -41,5 +48,11 @@ public class GameOverviewDisplayer : MonoBehaviour
     private IEnumerator ReturnToMenuSoon() {
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene(0);
+    }
+
+    private IEnumerator CloseSoon() {
+        //StopCoroutine(CloseSoon);
+        yield return new WaitForSeconds(1f);
+        gameObject.SetActive(false);
     }
 }

@@ -104,7 +104,7 @@ public class MenuManager : MonoBehaviour
         }
 
         if(input.SelectPressed()) {
-            if(hoveredEntity == controller.Spawnpoint && !controller.Spawnpoint.Cooking) {
+            if(hoveredEntity == controller.Spawnpoint && controller.Spawnpoint.CookState == Cauldron.State.Ready) {
                 SetState(SelectionTarget.CraftChoice);
             }
             else if(hoveredEntity is Monster) {

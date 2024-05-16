@@ -31,6 +31,7 @@ public class Team
 
     public void AddResource(Ingredient type) {
         Resources[type]++;
+        ResourceDisplay.UpdateDisplay();
     }
 
     public bool CanBuy(MonsterName monsterType) {

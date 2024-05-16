@@ -52,7 +52,7 @@ public class MonstersData
             22, 3,
             new List<Move>() {
                 new ShieldMove("Thorn Guard", 2, new SelfSelector(), new Shield(Shield.Strength.Weak, 2, false, false, prefabs.thornShieldPrefab, DamageMeleeAttacker), null, "Blocks 25% damage and deals 6 damage to enemies that attack this within melee range"),
-                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), new TileEffect(null, 0, 3, prefabs.thornTrapPrefab, (lander) => { lander.TakeDamage(5, null); }, true, true), null, "Places a trap that deals 5 damage to an enemy that lands on it"),
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.thornTrapPrefab, 3, null, 0, (lander) => { lander.TakeDamage(5, null); }, true, true), null, "Places a trap that deals 5 damage to an enemy that lands on it"),
                 new Attack("Barb Bullet", 1, 6, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Deals 6 damage and pierces through enemies")
             }
         );
@@ -79,7 +79,7 @@ public class MonstersData
             20, 4,
             new List<Move>() {
                 new UniqueMove("Portal", 2, MoveType.Movement, Move.Targets.Allies, new RangeSelector(4, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
-                new ZoneMove("Will o' Wisps", 4, new ZoneSelector(2, 3), new TileEffect(StatusEffect.Haunted, 0, 3, prefabs.ExampleZone, null), null, "Creates a zone for three turns in which enemies take 1.5x damage"),
+                new ZoneMove("Will o' Wisps", 4, new ZoneSelector(2, 3), TileAffector.CreateBlueprint(prefabs.ExampleZone, 3, StatusEffect.Haunted, 0, null), null, "Creates a zone for three turns in which enemies take 1.5x damage"),
                 new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Deals 5 damage and curses the target for one turn", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
             }
         );

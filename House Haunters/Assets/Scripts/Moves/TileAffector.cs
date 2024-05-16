@@ -4,41 +4,61 @@ using UnityEngine;
 
 public class TileAffector
 {
-    private GameObject visual;
     private Vector2Int tile;
     public Team Controller { get; private set; }
-    public TileEffect Effect { get; private set; }
-    public int TurnsLeft { get; private set; }
 
-    public int MovementTax { get { return Effect.movementTax; } }
-    public bool StopsMovement { get { return Effect.stopsMovement; } }
-    public StatusEffect? AppliedStatus { get { return Effect.appliedStatus; } }
-    public MonsterTrigger LandEffect { get { return Effect.landEffect; } }
+    private GameObject visual;
+    public int Duration { get; private set; }
 
-    public static void ApplyTileEffect(Team controller, TileEffect effect, Vector2Int tile) {
-        LevelGrid.Instance.SetTileAffect(tile, new TileAffector(controller, effect, tile));
-    }
+    public StatusEffect? AppliedStatus { get; private set; }
+    public int MovementTax { get; private set; }
+    private MonsterTrigger landEffect;
+    public bool StopsMovement { get; private set; }
+    private bool destroyOnUse;
 
-    // create a tile effect in the level
-    private TileAffector(Team controller, TileEffect effect, Vector2Int tile) {
-        Controller = controller;
-        TurnsLeft = effect.duration;
-        this.tile = tile;
-        Effect = effect;
-        visual = GameObject.Instantiate(effect.prefab);
+    public static void ApplyEffect(TileAffector blueprint, Team controller, Vector2Int tile) {
+        GameObject visual = GameObject.Instantiate(blueprint.visual);
         visual.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
 
-        controller.OnTurnStart += DecreaseDuration;
+        TileAffector createdEffect = new TileAffector(visual, blueprint.Duration, blueprint.AppliedStatus, blueprint.MovementTax, blueprint.landEffect, blueprint.destroyOnUse, blueprint.StopsMovement);
+        createdEffect.tile = tile;
+        createdEffect.Controller = controller;
+        controller.OnTurnStart += createdEffect.DecreaseDuration;
+        LevelGrid.Instance.SetTileAffect(tile, createdEffect);
     }
 
-    private void DecreaseDuration() {
-        TurnsLeft--;
-        if(TurnsLeft <= 0) {
+    public static TileAffector CreateBlueprint(GameObject prefab, int duration, StatusEffect? appliedStatus, int movementTax, MonsterTrigger landEffect, bool destroyOnUse = false, bool stopsMovement = false) {
+        return new TileAffector(prefab, duration, appliedStatus, movementTax, landEffect, destroyOnUse, stopsMovement);
+    }
+
+    private TileAffector(GameObject visual, int duration, StatusEffect? appliedStatus, int movementTax, MonsterTrigger landEffect, bool destroyOnUse, bool stopsMovement) {
+        this.visual = visual;
+        Duration = duration;
+        AppliedStatus = appliedStatus;
+        MovementTax = movementTax;
+        this.landEffect = landEffect;
+        StopsMovement = stopsMovement;
+        this.destroyOnUse = destroyOnUse;
+    }
+
+    public void LandMonster(Monster lander) {
+        if(landEffect != null) {
+            landEffect(lander);
+        }
+
+        if(destroyOnUse) {
             Finish();
         }
     }
 
-    public void Finish() {
+    private void DecreaseDuration() {
+        Duration--;
+        if(Duration <= 0) {
+            Finish();
+        }
+    }
+
+    private void Finish() {
         AnimationsManager.Instance.QueueAnimation(new ZoneDestructionAnimator(visual));
         Controller.OnTurnStart -= DecreaseDuration;
         LevelGrid.Instance.SetTileAffect(tile, null);

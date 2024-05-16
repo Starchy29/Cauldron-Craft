@@ -90,13 +90,7 @@ public class LevelGrid : MonoBehaviour
 
         TileAffector effect = environmentGrid[tile.y, tile.x].CurrentEffect;
         if(entity is Monster && effect != null && effect.Controller != entity.Controller) {
-            if(effect.LandEffect != null) {
-                effect.LandEffect((Monster)entity);
-            }
-
-            if(effect.Effect.destroyOnUse) {
-                effect.Finish();
-            }
+            effect.LandMonster((Monster)entity);
         }
     }
 

@@ -205,7 +205,7 @@ public class MenuManager : MonoBehaviour
     public void SelectMove(int moveSlot) {
         selectedMoveSlot = moveSlot;
         Move move = selected.Stats.Moves[selectedMoveSlot];
-        bool filtered = move.TargetType == Move.Targets.UnaffectedFloor || move.TargetType == Move.Targets.Traversable || move.TargetType == Move.Targets.StandableSpot;
+        bool filtered = move.TargetType == Move.Targets.ZonePlaceable || move.TargetType == Move.Targets.Traversable || move.TargetType == Move.Targets.StandableSpot;
         tileGroups = selected.GetMoveOptions(selectedMoveSlot, filtered);
         tileGroupCenters = tileGroups.Map((List<Vector2Int> tileGroup) => { return Global.DetermineCenter(tileGroup); });
         SetState(SelectionTarget.Targets);

@@ -17,6 +17,11 @@ public class TileAffector
     private bool destroyOnUse;
 
     public static void ApplyEffect(TileAffector blueprint, Team controller, Vector2Int tile) {
+        TileAffector previousEffect = LevelGrid.Instance.GetTile(tile).CurrentEffect;
+        if(previousEffect != null) {
+            previousEffect.Finish();
+        }
+
         GameObject visual = GameObject.Instantiate(blueprint.visual);
         visual.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
 

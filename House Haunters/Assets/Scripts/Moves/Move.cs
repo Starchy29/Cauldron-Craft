@@ -18,7 +18,7 @@ public abstract class Move
     public enum Targets {
         Allies,
         Enemies,
-        UnaffectedFloor,
+        ZonePlaceable,
         StandableSpot,
         Traversable
     }
@@ -38,7 +38,7 @@ public abstract class Move
     public static Dictionary<Targets, FilterCheck> TargetFilters { get; private set; } = new Dictionary<Targets, FilterCheck>() {
         { Targets.Allies, IsAllyOn },
         { Targets.Enemies, IsEnemyOn },
-        { Targets.UnaffectedFloor, IsFloorAt },
+        { Targets.ZonePlaceable, CanPlaceZoneAt },
         { Targets.StandableSpot, IsStandable },
         { Targets.Traversable, IsTraversable }
     };
@@ -112,9 +112,9 @@ public abstract class Move
         return monster != null && monster.Controller != user.Controller;
     }
 
-    public static bool IsFloorAt(Monster user, Vector2Int tile) {
+    public static bool CanPlaceZoneAt(Monster user, Vector2Int tile) {
         WorldTile spot = LevelGrid.Instance.GetTile(tile);
-        return spot.Walkable && spot.CurrentEffect == null;
+        return spot.Walkable && (spot.CurrentEffect == null || spot.CurrentEffect.Controller == user.Controller);
     }
 
     public static bool IsStandable(Monster user, Vector2Int tile) {

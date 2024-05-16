@@ -6,21 +6,20 @@ public class ShieldMove : Move
 {
     public Shield AppliedShield { get; private set; }
 
-    public delegate void BonusEffect(Monster user, Monster shielded);
-    private BonusEffect OnUse;
+    private event EffectFunction OnUse;
     
-    public ShieldMove(string name, int cooldown, ISelector selection, Shield effect, AnimationQueuer effectAnimation, string description = "", BonusEffect bonusEffect = null) 
-        : base(name, cooldown, MoveType.Shield, Targets.Allies, selection, effectAnimation, description) 
+    public ShieldMove(string name, int cooldown, ISelector selection, Shield effect, AnimationQueuer effectAnimation, string description = "", EffectFunction bonusEffect = null) 
+        : base(name, cooldown, MoveType.Shield, Targets.Allies, selection, null, effectAnimation, description) 
     {
         AppliedShield = effect;
+        ApplyEffect = ApplyShield;
+        if(bonusEffect != null) {
+            OnUse += bonusEffect;
+        }
     }
 
-    protected override void ApplyEffect(Monster user, Vector2Int tile) {
-        Monster selectedMonster = LevelGrid.Instance.GetMonster(tile);
-        selectedMonster.ApplyShield(AppliedShield);
-        
-        if(OnUse != null) {
-            OnUse(user, selectedMonster);
-        }
+    private void ApplyShield(Monster user, Vector2Int tile) {
+        LevelGrid.Instance.GetMonster(tile).ApplyShield(AppliedShield);
+        OnUse?.Invoke(user, tile);
     }
 }

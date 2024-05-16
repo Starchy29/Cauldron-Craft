@@ -13,8 +13,7 @@ public enum MoveType {
     Zone
 }
 
-public abstract class Move
-{
+public class Move {
     public enum Targets {
         Allies,
         Enemies,
@@ -34,6 +33,9 @@ public abstract class Move
 
     private AnimationQueuer effectAnimation;
 
+    public delegate void EffectFunction(Monster user, Vector2Int tile);
+    protected EffectFunction ApplyEffect;
+
     public delegate bool FilterCheck(Monster user, Vector2Int tile);
     public static Dictionary<Targets, FilterCheck> TargetFilters { get; private set; } = new Dictionary<Targets, FilterCheck>() {
         { Targets.Allies, IsAllyOn },
@@ -43,7 +45,8 @@ public abstract class Move
         { Targets.Traversable, IsTraversable }
     };
 
-    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, AnimationQueuer effectAnimation, string description = "") {
+    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, EffectFunction effect, AnimationQueuer effectAnimation, string description = "") {
+        ApplyEffect = effect;
         Cooldown = cooldown;
         this.selection = selection;
         TargetType = targetType;
@@ -88,8 +91,6 @@ public abstract class Move
             ApplyEffect(user, tile);
         }
     }
-
-    protected abstract void ApplyEffect(Monster user, Vector2Int tile);
 
     private bool HasValidOption(Monster user, List<Vector2Int> tileGroup) {
         foreach(Vector2Int tile in tileGroup) {

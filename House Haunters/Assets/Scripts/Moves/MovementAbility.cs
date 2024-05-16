@@ -5,12 +5,16 @@ using UnityEngine;
 public class MovementAbility : Move
 {
     // constructor for a default walk move
-    public MovementAbility() : base("Move", 1, MoveType.Movement, Targets.Traversable, new RangeSelector((Monster user) => user.CurrentSpeed, false, false), AnimateWalk, "Reposition to a nearby tile") {}
+    public MovementAbility() : base("Move", 1, MoveType.Movement, Targets.Traversable, new RangeSelector((Monster user) => user.CurrentSpeed, false, false), null, AnimateWalk, "Reposition to a nearby tile") {
+        ApplyEffect = MoveMonster;
+    }
 
     // teleport ability
-    public MovementAbility(string name, string description, int cooldown, ISelector selection) : base(name, cooldown, MoveType.Movement, Targets.StandableSpot, selection, null, description) {}
+    public MovementAbility(string name, string description, int cooldown, ISelector selection) : base(name, cooldown, MoveType.Movement, Targets.StandableSpot, selection, null, null, description) {
+        ApplyEffect = MoveMonster;
+    }
 
-    protected override void ApplyEffect(Monster user, Vector2Int tile) {
+    private void MoveMonster(Monster user, Vector2Int tile) {
         LevelGrid.Instance.MoveEntity(user, tile);
     }
 

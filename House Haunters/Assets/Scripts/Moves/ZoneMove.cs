@@ -4,15 +4,16 @@ using UnityEngine;
 
 class ZoneMove : Move
 {
-    public TileAffector Effect { get; private set; }
+    public TileAffector TileEffect { get; private set; }
 
     public ZoneMove(string name, int cooldown, ISelector selector, TileAffector effect, AnimationQueuer effectAnimation, string description = "") 
-        : base(name, cooldown, MoveType.Zone, Targets.ZonePlaceable, selector, effectAnimation, description)
+        : base(name, cooldown, MoveType.Zone, Targets.ZonePlaceable, selector, null, effectAnimation, description)
     {
-        Effect = effect;
+        TileEffect = effect;
+        ApplyEffect = PlaceZone;
     }
 
-    protected override void ApplyEffect(Monster user, Vector2Int tile) {
-        TileAffector.ApplyEffect(Effect, user.Controller, tile);
+    private void PlaceZone(Monster user, Vector2Int tile) {
+        TileAffector.ApplyEffect(TileEffect, user.Controller, tile);
     }
 }

@@ -6,20 +6,20 @@ public class StatusMove : Move
 {
     private StatusAilment condition;
 
-    public delegate void ExtraEffect(Monster user, Vector2Int tile);
-    private ExtraEffect extraEffect;
+    private event EffectFunction extraEffect;
 
-    public StatusMove(string name, int cooldown, bool forAllies, StatusAilment condition, ISelector selection, AnimationQueuer animation, string description = "", ExtraEffect extraEffect = null)
-        : base(name, cooldown, forAllies ? MoveType.Support : MoveType.Disrupt, forAllies ? Targets.Allies : Targets.Enemies, selection, animation, description)
+    public StatusMove(string name, int cooldown, bool forAllies, StatusAilment condition, ISelector selection, AnimationQueuer animation, string description = "", EffectFunction extraEffect = null)
+        : base(name, cooldown, forAllies ? MoveType.Support : MoveType.Disrupt, forAllies ? Targets.Allies : Targets.Enemies, selection, null, animation, description)
     {
         this.condition = condition;
-        this.extraEffect = extraEffect;
+        ApplyEffect = ApplyStatus;
+        if(extraEffect != null) {
+            this.extraEffect += extraEffect;
+        }
     }
 
-    protected override void ApplyEffect(Monster user, Vector2Int tile) {
+    private void ApplyStatus(Monster user, Vector2Int tile) {
         LevelGrid.Instance.GetMonster(tile).ApplyStatus(condition, user);
-        if(extraEffect != null) {
-            extraEffect(user, tile);
-        }
+        extraEffect?.Invoke(user, tile);
     }
 }

@@ -26,7 +26,7 @@ public class MonsterType
         Speed = speed;
 
         Moves = new Move[specialMoves.Count + 1];
-        Moves[0] = new MovementAbility();
+        Moves[0] = new MovementAbility(speed);
         for(int i = 1; i < Moves.Length; i++) {
             Moves[i] = specialMoves[i-1];
         }

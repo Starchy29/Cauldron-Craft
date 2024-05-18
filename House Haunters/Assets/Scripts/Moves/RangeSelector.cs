@@ -5,32 +5,20 @@ using UnityEngine;
 // selects a single item within range
 public class RangeSelector : ISelector
 {
-    private MonsterValue RangeGetter;
-    private int simpleRange;
-
     public bool SelfSelectable { get; private set; }
     public bool NeedsLineOfSight { get; private set; }
+    public int Range { get; private set; }
 
     public RangeSelector(int range, bool selfSelectable, bool needsLineOfSight) {
-        simpleRange = range;
-        SelfSelectable = selfSelectable;
-        NeedsLineOfSight = needsLineOfSight;
-    }
-
-    public RangeSelector(MonsterValue rangeFunction, bool selfSelectable, bool needsLineOfSight) {
-        RangeGetter = rangeFunction;
+        Range = range;
         SelfSelectable = selfSelectable;
         NeedsLineOfSight = needsLineOfSight;
     }
 
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
-        return LevelGrid.Instance.GetTilesInRange(user.Tile, GetRange(user), false)
+        return LevelGrid.Instance.GetTilesInRange(user.Tile, Range, false)
             .Filter((Vector2Int tile) => { return (SelfSelectable || tile != user.Tile) && (!NeedsLineOfSight || HasLineOfSight(user.Tile, tile)); })
             .Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
-    }
-
-    public int GetRange(Monster user) {
-        return RangeGetter == null ? simpleRange : RangeGetter(user);
     }
 
     private static bool HasLineOfSight(Vector2Int startTile, Vector2Int endTile) {

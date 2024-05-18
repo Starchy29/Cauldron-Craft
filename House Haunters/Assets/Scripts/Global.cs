@@ -104,6 +104,16 @@ public static class Global
         return null;
     }
 
+    public static bool Contains<T>(this T[] array, T value) {
+        for(int i = 0; i < array.Length; i++) {
+            if(array[i].Equals(value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static int CalcTileDistance(Vector2Int start, Vector2Int end) {
         return Mathf.Abs(start.x - end.x) + Mathf.Abs(start.y - end.y);
     }

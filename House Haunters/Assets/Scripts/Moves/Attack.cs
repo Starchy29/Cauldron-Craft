@@ -10,7 +10,7 @@ public class Attack : Move
     private HitTrigger OnHit;
 
     public Attack(string name, int cooldown, int damage, ISelector selection, AnimationQueuer effectAnimation, string description = "", HitTrigger hitEffect = null) 
-        : base(name, cooldown, MoveType.Attack, Targets.Enemies, selection, null, effectAnimation, description)
+        : base(name, cooldown, selection.Range > 1 ? MoveType.RangedAttack : MoveType.MeleeAttack, Targets.Enemies, selection, null, effectAnimation, description)
     {
         Damage = damage;
         OnHit = hitEffect;

@@ -14,15 +14,6 @@ public class MoveButton : AutoButton
     private int moveSlot;
     public List<Vector2Int> CoveredArea { get; private set; }
 
-    private static Dictionary<MoveType, Color> moveTypeToColor = new Dictionary<MoveType, Color>() {
-        { MoveType.Attack , new Color(0.7f, 0.5f, 0.5f) },
-        { MoveType.Shield , new Color(0.5f, 0.5f, 0.7f) },
-        { MoveType.Movement , new Color(0.5f, 0.7f, 0.5f) },
-        { MoveType.Support , new Color(0.7f, 0.5f, 0.3f) },
-        { MoveType.Disrupt , new Color(0.7f, 0.3f, 0.7f) },
-        { MoveType.Zone , new Color(0.3f, 0.7f, 0.7f) }
-    };
-
     void Awake() {
         OnHover = HighlightArea;
         OnMouseLeave = HideHighlight;

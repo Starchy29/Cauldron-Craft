@@ -6,11 +6,15 @@ public delegate void AnimationQueuer(Monster user, List<Vector2Int> tiles);
 
 public enum MoveType {
     Movement,
-    Attack,
+    RangedAttack,
+    MeleeAttack,
+    Heal,
+    Poison,
     Shield,
-    Support,
+    Boost,
     Disrupt,
-    Zone
+    Shift,
+    Terrain
 }
 
 public class Move {

@@ -5,13 +5,13 @@ using UnityEngine;
 // selects a square area within a larger square area
 public class ZoneSelector : ISelector
 {
-    public int Radius { get; private set; }
+    public int Range { get; private set; }
     public int Width { get; private set; }
 
     private LevelGrid level;
 
     public ZoneSelector(int reachRadius, int width) {
-        Radius = reachRadius;
+        Range = reachRadius;
         Width = width;
     }
 
@@ -19,8 +19,8 @@ public class ZoneSelector : ISelector
         level = LevelGrid.Instance;
         List<List<Vector2Int>> groups = new List<List<Vector2Int>>();
 
-        for(int x = -Radius; x <= Radius - Width + 1; x++) {
-            for(int y = -Radius; y <= Radius - Width + 1; y++) {
+        for(int x = -Range; x <= Range - Width + 1; x++) {
+            for(int y = -Range; y <= Range - Width + 1; y++) {
                 Vector2Int bottomLeft = user.Tile + new Vector2Int(x, y);
                 List<Vector2Int> group = GenerateSquare(bottomLeft);
                 if(group.Count > 0) {

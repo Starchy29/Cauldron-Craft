@@ -9,7 +9,7 @@ public class StatusMove : Move
     private event EffectFunction extraEffect;
 
     public StatusMove(string name, int cooldown, bool forAllies, StatusAilment condition, ISelector selection, AnimationQueuer animation, string description = "", EffectFunction extraEffect = null)
-        : base(name, cooldown, forAllies ? MoveType.Support : MoveType.Disrupt, forAllies ? Targets.Allies : Targets.Enemies, selection, null, animation, description)
+        : base(name, cooldown, DetermineMoveType(condition, forAllies), forAllies ? Targets.Allies : Targets.Enemies, selection, null, animation, description)
     {
         this.condition = condition;
         ApplyEffect = ApplyStatus;
@@ -21,5 +21,17 @@ public class StatusMove : Move
     private void ApplyStatus(Monster user, Vector2Int tile) {
         LevelGrid.Instance.GetMonster(tile).ApplyStatus(condition, user);
         extraEffect?.Invoke(user, tile);
+    }
+
+    private static MoveType DetermineMoveType(StatusAilment condition, bool forAllies) {
+        if(condition.effects.Contains(StatusEffect.Regeneration)) {
+            return MoveType.Heal;
+        }
+
+        if(condition.effects.Contains(StatusEffect.Poison)) {
+            return MoveType.Poison;
+        }
+
+        return forAllies ? MoveType.Boost : MoveType.Disrupt;
     }
 }

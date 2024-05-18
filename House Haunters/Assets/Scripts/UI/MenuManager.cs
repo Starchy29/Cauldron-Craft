@@ -216,15 +216,15 @@ public class MenuManager : MonoBehaviour
         }
 
         // show health bars on possible targets
-        if(move.Type != MoveType.Zone) {
-            targetedHealthBars = new List<HealthBarScript>();
-            List<Vector2Int> tilesWithMonsters = allTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });
-            foreach(Vector2Int tile in tilesWithMonsters) {
-                Monster healthBarHaver = level.GetMonster(tile);
-                healthBarHaver.healthBar.gameObject.SetActive(true);
-                targetedHealthBars.Add(healthBarHaver.healthBar);
-            }
-        }
+        //if(move.Type != MoveType.Zone) {
+        //    targetedHealthBars = new List<HealthBarScript>();
+        //    List<Vector2Int> tilesWithMonsters = allTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });
+        //    foreach(Vector2Int tile in tilesWithMonsters) {
+        //        Monster healthBarHaver = level.GetMonster(tile);
+        //        healthBarHaver.healthBar.gameObject.SetActive(true);
+        //        targetedHealthBars.Add(healthBarHaver.healthBar);
+        //    }
+        //}
 
         level.ColorTiles(allTiles, TileHighlighter.State.Selectable);
         level.ColorTiles(null, TileHighlighter.State.Highlighted);

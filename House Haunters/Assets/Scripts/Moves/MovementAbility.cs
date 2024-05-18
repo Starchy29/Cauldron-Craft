@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class MovementAbility : Move
 {
-    // constructor for a default walk move
-    public MovementAbility() : base("Move", 1, MoveType.Movement, Targets.Traversable, new RangeSelector((Monster user) => user.CurrentSpeed, false, false), null, AnimateWalk, "Reposition to a nearby tile") {
+    // constructor for a default walk move. Add speed boost to the range because it filters out tiles that are too far using the speed property
+    public MovementAbility(int speed) : base("Move", 1, MoveType.Movement, Targets.Traversable, new RangeSelector(speed + StatusAilment.SPEED_BOOST, false, false), null, AnimateWalk, "Reposition to a nearby tile") {
         ApplyEffect = MoveMonster;
     }
 

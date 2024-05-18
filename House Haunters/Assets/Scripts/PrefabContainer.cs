@@ -31,12 +31,16 @@ public class PrefabContainer : MonoBehaviour
         };
 
         moveTypeToSprite = new Dictionary<MoveType, Sprite>() {
-            { MoveType.Attack, attackIcon },
+            { MoveType.RangedAttack, attackIcon },
+            { MoveType.MeleeAttack, attackIcon },
             { MoveType.Shield, defendIcon },
             { MoveType.Movement, movementIcon },
-            { MoveType.Zone, zoneIcon },
-            { MoveType.Support, supportIcon },
-            { MoveType.Disrupt, disruptIcon }
+            { MoveType.Shift, movementIcon },
+            { MoveType.Terrain, zoneIcon },
+            { MoveType.Boost, supportIcon },
+            { MoveType.Disrupt, disruptIcon },
+            { MoveType.Heal, supportIcon },
+            { MoveType.Poison, disruptIcon }
         };
 
         statusToSprite = new Dictionary<StatusEffect, Sprite>() {

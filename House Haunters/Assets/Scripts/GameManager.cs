@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode GameMode = GameMode.PVP;
+    public static GameMode GameMode = GameMode.VSAI;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -20,7 +20,6 @@ public class GameManager : MonoBehaviour
     public event TurnEndEvent OnTurnEnd;
 
     private int currentTurnIndex;
-    private AIController enemyAI;
     private AnimationsManager animator;
 
     void Awake() {
@@ -28,7 +27,6 @@ public class GameManager : MonoBehaviour
         AllTeams = new Team[2];
         AllTeams[0] = new Team(Color.blue, false, Ingredient.Flora);
         AllTeams[1] = new Team(Color.red, GameMode == GameMode.VSAI, Ingredient.Decay);
-        enemyAI = new AIController();
         AllResources = new List<ResourcePile>();
 
         CurrentTurn = AllTeams[currentTurnIndex];
@@ -38,14 +36,14 @@ public class GameManager : MonoBehaviour
     void Start() {
         animator = AnimationsManager.Instance;
         CurrentTurn.StartTurn();
-        if(!CurrentTurn.IsAI) {
+        if(CurrentTurn.AI == null) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);
         }
     }
 
     void Update() {
-        if(CurrentTurn.IsAI && !animator.Animating) {
-            enemyAI.ChooseMove(CurrentTurn);
+        if(CurrentTurn.AI != null && !animator.Animating) {
+            CurrentTurn.AI.ChooseMove();
         }
     }
 
@@ -74,7 +72,7 @@ public class GameManager : MonoBehaviour
 
         // start next turn
         CurrentTurn.StartTurn();
-        if(!CurrentTurn.IsAI) {
+        if(CurrentTurn.AI == null) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);
         }
         GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);

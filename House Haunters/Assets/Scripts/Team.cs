@@ -9,7 +9,7 @@ public class Team
     public Color TeamColor { get; private set; }
     public List<Monster> Teammates { get; private set; }
     public Dictionary<Ingredient, int> Resources { get; private set; }
-    public bool IsAI { get; private set; }
+    public AIController AI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
     public ResourceTracker ResourceDisplay { get; set; }
 
@@ -18,7 +18,6 @@ public class Team
 
     public Team(Color color, bool isAI, Ingredient? startBatch = null) {
         TeamColor = color;
-        IsAI = isAI;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
@@ -26,6 +25,10 @@ public class Team
         }
         if(startBatch.HasValue) {
             Resources[startBatch.Value] = 3;
+        }
+
+        if(isAI) {
+            AI = new AIController(this);
         }
     }
 

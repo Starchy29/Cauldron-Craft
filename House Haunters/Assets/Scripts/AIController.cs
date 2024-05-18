@@ -4,21 +4,17 @@ using UnityEngine;
 
 public class AIController
 {
-    public AIController() {}
+    private Team team;
+
+    public AIController(Team team) {
+        this.team = team;
+    }
 
     // chooses 1 move at a time
-    public void ChooseMove(Team team) {
-        //team.EndTurn(); return;
-        List<MonsterName> buyOptions = new List<MonsterName>();
-        foreach(MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
-            if(team.CanBuy(monsterType)) {
-                buyOptions.Add(monsterType);
-            }
-        }
-        if(buyOptions.Count > 0) {
-            team.BuyMonster(buyOptions[Random.Range(0, buyOptions.Count)]);
-        }
+    public void ChooseMove() {
+        AttemptCraft();
 
+        Vector2Int targetPosition = FindTargetPosition();
         foreach(Monster monster in team.Teammates) {
             List<int> moveOptions = GetUsableMoveSlots(monster);
             if(moveOptions.Count == 0) {
@@ -43,7 +39,6 @@ public class AIController
 
             // when moving, bias towards the current objective
             if(chosenMove is MovementAbility) {
-                Vector2Int targetPosition = FindTargetPosition(team);
                 targetOptions.Sort((List<Vector2Int> tile1, List<Vector2Int> tile2) => { return Global.CalcTileDistance(tile1[0], targetPosition) - Global.CalcTileDistance(tile2[0], targetPosition); });
                 chosenTargets /= 3; // only choose from the better portion of options
             }
@@ -65,17 +60,34 @@ public class AIController
         return moveOptions;
     }
 
-    private Vector2Int FindTargetPosition(Team controller) {
+    private Vector2Int FindTargetPosition() {
         ResourcePile closestUnclaimed = null;
         int closestDistance = 0;
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            int distance = Global.CalcTileDistance(resource.Tile, controller.Spawnpoint.Tile);
-            if(resource.Controller != controller && (closestUnclaimed == null || distance < closestDistance)) {
+            int distance = Global.CalcTileDistance(resource.Tile, team.Spawnpoint.Tile);
+            if(resource.Controller != team && (closestUnclaimed == null || distance < closestDistance)) {
                 closestUnclaimed = resource;
                 closestDistance = distance;
             }
         }
 
         return closestUnclaimed.Tile;
+    }
+
+    private void AttemptCraft() {
+        if(team.Spawnpoint.CookState != Cauldron.State.Ready) {
+            return;
+        }
+
+        List<MonsterName> buyOptions = new List<MonsterName>();
+        foreach(MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
+            if(team.CanBuy(monsterType)) {
+                buyOptions.Add(monsterType);
+            }
+        }
+
+        if(buyOptions.Count > 0) {
+            team.BuyMonster(buyOptions[Random.Range(0, buyOptions.Count)]);
+        }
     }
 }

@@ -26,6 +26,10 @@ public class Cauldron : GridEntity
     }
 
     public void StartCook(MonsterName monsterType) {
+        if(CookState != State.Ready) {
+            return;
+        }
+
         CookState = State.Cooking;
         cookingMonster = monsterType;
         cookIndicator.SetActive(true);

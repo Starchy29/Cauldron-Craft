@@ -20,7 +20,7 @@ public class Shield
         { Strength.Invincible, 0f }
     };
 
-    public delegate void BlockEffect(Monster attacker, Monster blocker);
+    public delegate void BlockEffect(Monster attacker, Monster blocker, Move attack);
     public BlockEffect OnBlock { get; private set; }
 
     public Strength StrengthLevel { get; private set; }

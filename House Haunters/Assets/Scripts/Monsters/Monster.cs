@@ -64,8 +64,8 @@ public class Monster : GridEntity
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
-    public void TakeDamage(int amount, Monster source) {
-        Shield.BlockEffect queuedBlockEffect = null;
+    public void TakeDamage(int amount, Monster source = null, Move attack = null) {
+        Shield.BlockEffect QueuedBlockEffect = null; // make sure the block effect animations play after the damage animation
         if(source != null) {
             float multiplier = 1f;
             if(HasStatus(StatusEffect.Haunted)) {
@@ -74,7 +74,7 @@ public class Monster : GridEntity
             if(CurrentShield != null) {
                 multiplier *= CurrentShield.DamageMultiplier;
                 if(CurrentShield.OnBlock != null) {
-                    queuedBlockEffect = CurrentShield.OnBlock;
+                    QueuedBlockEffect = CurrentShield.OnBlock;
                 }
                 if(CurrentShield.BlocksOnce && multiplier < 1.0f) { // only remove the shield if this shield is meant to block damage
                     RemoveShield();
@@ -91,8 +91,8 @@ public class Monster : GridEntity
         }
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
 
-        if(queuedBlockEffect != null) {
-            queuedBlockEffect(source, this);
+        if(QueuedBlockEffect != null) {
+            QueuedBlockEffect(source, this, attack);
         }
 
         if(Health == 0) {

@@ -25,7 +25,7 @@ public class Team
             Resources[type] = 0;
         }
         if(startBatch.HasValue) {
-            Resources[startBatch.Value] = 5;
+            Resources[startBatch.Value] = 3;
         }
     }
 

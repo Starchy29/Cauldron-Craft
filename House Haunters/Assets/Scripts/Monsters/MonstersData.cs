@@ -175,8 +175,8 @@ public class MonstersData
             }
         }
 
-        level.MoveEntity(target, furthestPull);
         AnimationsManager.Instance.QueueAnimation(new PathAnimator(target.gameObject, new List<Vector3>() { level.Tiles.GetCellCenterWorld((Vector3Int)furthestPull) }, 15f));
+        level.MoveEntity(target, furthestPull);
     }
 
     private static void SwapPosition(Monster user, Vector2Int targetTile) {

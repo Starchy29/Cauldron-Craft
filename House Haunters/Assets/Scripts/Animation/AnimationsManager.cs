@@ -9,7 +9,9 @@ public class AnimationsManager : MonoBehaviour
     private Queue<IMoveAnimator> animationQueue;
 
     public bool Animating { get { return animationQueue.Count > 0; } }
-    public event Trigger OnAnimationsEnd;
+
+    public delegate void TurnTrigger(Team turn);
+    public event TurnTrigger OnAnimationsEnd;
 
     void Awake() {
         Instance = this;
@@ -17,17 +19,17 @@ public class AnimationsManager : MonoBehaviour
     }
 
     void Update() {
-        if(!Animating) {
+        if(animationQueue.Count == 0) {
             return;
         }
 
         animationQueue.Peek().Update(Time.deltaTime);
         if(animationQueue.Peek().Completed) {
             animationQueue.Dequeue();
-            if(Animating) {
+            if(animationQueue.Count > 0) {
                 animationQueue.Peek().Start();
             } else {
-                OnAnimationsEnd?.Invoke();
+                OnAnimationsEnd?.Invoke(GameManager.Instance.CurrentTurn);
             }
         }
     }

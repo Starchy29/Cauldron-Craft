@@ -64,7 +64,7 @@ public class TileAffector
     }
 
     private void Finish() {
-        AnimationsManager.Instance.QueueAnimation(new ZoneDestructionAnimator(visual));
+        AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(visual));
         Controller.OnTurnStart -= DecreaseDuration;
         LevelGrid.Instance.SetTileAffect(tile, null);
     }

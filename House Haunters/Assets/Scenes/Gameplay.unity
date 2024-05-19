@@ -1266,6 +1266,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Monster Spawner (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 243638755086641671, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1441488696228719936, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 18.51

@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode GameMode = GameMode.VSAI;
+    public static GameMode GameMode = GameMode.PVP;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -41,12 +41,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Update() {
-        if(CurrentTurn.AI != null && !animator.Animating) {
-            CurrentTurn.AI.ChooseMove();
-        }
-    }
-
     public void PassTurn(Team turnEnder) {
         // end the current turn
         currentTurnIndex++;
@@ -72,9 +66,6 @@ public class GameManager : MonoBehaviour
 
         // start next turn
         CurrentTurn.StartTurn();
-        if(CurrentTurn.AI == null) {
-            MenuManager.Instance.StartPlayerTurn(CurrentTurn);
-        }
         GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
     }
 

@@ -8,11 +8,14 @@ public class AIController
 
     public AIController(Team team) {
         this.team = team;
+        AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
     }
 
     // chooses 1 move at a time
-    public void ChooseMove() {
-        AttemptCraft();
+    public void ChooseMove(Team currentTurn) {
+        if(currentTurn != team) {
+            return;
+        }
 
         Vector2Int targetPosition = FindTargetPosition();
         foreach(Monster monster in team.Teammates) {
@@ -46,6 +49,8 @@ public class AIController
             monster.UseMove(chosenMoveSlot, targetOptions[chosenTargets]);
             return;
         }
+
+        AttemptCraft();
 
         team.EndTurn();
     }

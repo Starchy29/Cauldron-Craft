@@ -36,11 +36,10 @@ public class MenuManager : MonoBehaviour
     }
 
     void Start() {
-        state = SelectionTarget.Monster;
         UseKBMouse = true;
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
-        AnimationsManager.Instance.OnAnimationsEnd += () => { if(gameManager.CurrentTurn == controller) SetState(SelectionTarget.Monster); };
+        AnimationsManager.Instance.OnAnimationsEnd += (Team currentTurn) => { if(currentTurn == controller) SetState(SelectionTarget.Monster); };
         SetState(SelectionTarget.Monster);
     }
 
@@ -121,7 +120,6 @@ public class MenuManager : MonoBehaviour
 
     public void StartPlayerTurn(Team player) {
         controller = player;
-        SetState(SelectionTarget.Monster);
     }
 
     private void SetState(SelectionTarget state) {

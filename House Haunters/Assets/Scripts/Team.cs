@@ -78,6 +78,10 @@ public class Team
         }
 
         OnTurnStart?.Invoke();
+
+        if(AI == null) {
+            MenuManager.Instance.StartPlayerTurn(this);
+        }
     }
 
     public void EndTurn() {

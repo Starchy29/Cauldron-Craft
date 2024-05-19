@@ -40,7 +40,6 @@ public class MenuManager : MonoBehaviour
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
         AnimationsManager.Instance.OnAnimationsEnd += (Team currentTurn) => { if(currentTurn == controller) SetState(SelectionTarget.Monster); };
-        SetState(SelectionTarget.Monster);
     }
 
     void Update() {

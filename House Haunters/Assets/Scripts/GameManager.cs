@@ -38,6 +38,8 @@ public class GameManager : MonoBehaviour
         CurrentTurn.StartTurn();
         if(CurrentTurn.AI == null) {
             MenuManager.Instance.StartPlayerTurn(CurrentTurn);
+        } else {
+            CurrentTurn.AI.ChooseMove(CurrentTurn);
         }
     }
 

@@ -210,19 +210,22 @@ public class MenuManager : MonoBehaviour
 
         List<Vector2Int> allTiles = new List<Vector2Int>();
         foreach(List<Vector2Int> group in tileGroups) {
-            allTiles.AddRange(group);
+            allTiles.AddRange(group); // will add duplicates
         }
 
         // show health bars on possible targets
-        //if(move.Type != MoveType.Zone) {
-        //    targetedHealthBars = new List<HealthBarScript>();
-        //    List<Vector2Int> tilesWithMonsters = allTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });
-        //    foreach(Vector2Int tile in tilesWithMonsters) {
-        //        Monster healthBarHaver = level.GetMonster(tile);
-        //        healthBarHaver.healthBar.gameObject.SetActive(true);
-        //        targetedHealthBars.Add(healthBarHaver.healthBar);
-        //    }
-        //}
+        if(move.Type == MoveType.RangedAttack || move.Type == MoveType.MeleeAttack || move.Type == MoveType.Heal || move.Type == MoveType.Poison) {
+            bool checkAllies = move.Type == MoveType.Heal;
+            targetedHealthBars = new List<HealthBarScript>();
+            List<Vector2Int> tilesWithMonsters = allTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });
+            foreach(Vector2Int tile in tilesWithMonsters) {
+                Monster healthBarHaver = level.GetMonster(tile);
+                if((healthBarHaver.Controller == controller) == checkAllies) {
+                    healthBarHaver.healthBar.gameObject.SetActive(true);
+                    targetedHealthBars.Add(healthBarHaver.healthBar);
+                }
+            }
+        }
 
         level.ColorTiles(allTiles, TileHighlighter.State.Selectable);
         level.ColorTiles(null, TileHighlighter.State.Highlighted);

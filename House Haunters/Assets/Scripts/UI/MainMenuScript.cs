@@ -17,12 +17,12 @@ public class MainMenuScript : MonoBehaviour
     }
 
     public static void StartPVP() {
-        GameManager.GameMode = GameMode.PVP;
+        GameManager.Mode = GameMode.PVP;
         SceneManager.LoadScene(1);
     }
 
     public static void StartVAI() {
-        GameManager.GameMode = GameMode.VSAI;
+        GameManager.Mode = GameMode.VSAI;
         SceneManager.LoadScene(1);
     }
 

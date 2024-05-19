@@ -76,6 +76,7 @@ public class PrefabContainer : MonoBehaviour
     public GameObject TempMonsterProjectile;
     public GameObject ExampleZone;
     public GameObject ExampleShield;
+    public GameObject SpawnSpeedPrefab;
 
     [Header("Status Effect")]
     #region statuses

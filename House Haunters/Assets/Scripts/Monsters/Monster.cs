@@ -25,6 +25,8 @@ public class Monster : GridEntity
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -StatusAilment.SPEED_BOOST : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
+    public static PathData[,] pathDistances; // set by level grid in Start()
+
     protected override void Start() {} // unlike other grid entities, only spawn from code
 
     public void Setup(MonsterName monsterType, Team controller) {
@@ -112,7 +114,7 @@ public class Monster : GridEntity
     }
 
     public void ApplyStatus(StatusAilment blueprint, Monster user) {
-        if(CurrentShield != null && user.Controller != this.Controller && CurrentShield.BlocksStatus) {
+        if(user != null && user.Controller != this.Controller && CurrentShield != null && CurrentShield.BlocksStatus) {
             if(CurrentShield.BlocksOnce) {
                 RemoveShield();
             }
@@ -176,7 +178,7 @@ public class Monster : GridEntity
         CurrentShield = null;
     }
 
-    private struct PathData {
+    public struct PathData {
         public Vector2Int? previous;
         public int travelDistance;
         public int distanceToEnd;
@@ -186,38 +188,37 @@ public class Monster : GridEntity
     // returns null if this monster cannot get to the tile with one movement
     public List<Vector2Int> FindPath(Vector2Int endTile) {
         LevelGrid level = LevelGrid.Instance;
-        if(!CanMoveTo(endTile)) {
+        if(!CanMoveTo(endTile) || Global.CalcTileDistance(Tile, endTile) > CurrentSpeed) {
             return null;
         }
 
         // set up data array for pathfinding
-        PathData[,] distances = new PathData[LevelGrid.Instance.Height, LevelGrid.Instance.Width];
         for(int y = 0; y < LevelGrid.Instance.Height; y++) {
             for(int x = 0; x < LevelGrid.Instance.Width; x++) {
-                distances[y, x] = new PathData();
+                pathDistances[y, x] = new PathData();
             }
         }
-        distances[Tile.y, Tile.x].travelDistance = 0;
-        distances[Tile.y, Tile.x].distanceToEnd = Global.CalcTileDistance(Tile, endTile);
+        pathDistances[Tile.y, Tile.x].travelDistance = 0;
+        pathDistances[Tile.y, Tile.x].distanceToEnd = Global.CalcTileDistance(Tile, endTile);
 
         // find the shortest path using A*
         List<Vector2Int> closedList = new List<Vector2Int>();
         List<Vector2Int> openList = new List<Vector2Int>() { Tile };
         while(openList.Count > 0) {
             // find the best option in the open list
-            Vector2Int nextTile = openList.Min((Vector2Int tile) => { return distances[tile.y, tile.x].Estimate; });
+            Vector2Int nextTile = openList.Min((Vector2Int tile) => { return pathDistances[tile.y, tile.x].Estimate; });
 
             // check if this is the end
             if(nextTile == endTile) {
-                if(distances[nextTile.y, nextTile.x].travelDistance > Stats.Speed) {
+                if(pathDistances[nextTile.y, nextTile.x].travelDistance > CurrentSpeed) {
                     // invalid if too many steps
                     return null;
                 }
 
                 List<Vector2Int> path = new List<Vector2Int>();
-                while(distances[nextTile.y, nextTile.x].previous != null) {
+                while(pathDistances[nextTile.y, nextTile.x].previous != null) {
                     path.Add(nextTile);
-                    nextTile = distances[nextTile.y, nextTile.x].previous.Value;
+                    nextTile = pathDistances[nextTile.y, nextTile.x].previous.Value;
                 }
                 path.Reverse();
                 return path;
@@ -245,18 +246,18 @@ public class Monster : GridEntity
 
                 bool inOpen = openList.Contains(neighbor);
                 bool inClosed = closedList.Contains(neighbor);
-                int discoveredDistance = distances[nextTile.y, nextTile.x].travelDistance + level.GetTile(neighbor).GetTravelCost(this);
+                int discoveredDistance = pathDistances[nextTile.y, nextTile.x].travelDistance + level.GetTile(neighbor).GetTravelCost(this);
                 if(!inOpen && !inClosed) {
                     // found a new route
                     openList.Add(neighbor);
-                    distances[neighbor.y, neighbor.x].previous = nextTile;
-                    distances[neighbor.y, neighbor.x].travelDistance = discoveredDistance;
-                    distances[neighbor.y, neighbor.x].distanceToEnd = Global.CalcTileDistance(neighbor, endTile);
+                    pathDistances[neighbor.y, neighbor.x].previous = nextTile;
+                    pathDistances[neighbor.y, neighbor.x].travelDistance = discoveredDistance;
+                    pathDistances[neighbor.y, neighbor.x].distanceToEnd = Global.CalcTileDistance(neighbor, endTile);
                 }
-                else if(inOpen && discoveredDistance < distances[neighbor.y, neighbor.x].travelDistance) {
+                else if(inOpen && discoveredDistance < pathDistances[neighbor.y, neighbor.x].travelDistance) {
                     // found a shorter route
-                    distances[neighbor.y, neighbor.x].previous = nextTile;
-                    distances[neighbor.y, neighbor.x].travelDistance = discoveredDistance;
+                    pathDistances[neighbor.y, neighbor.x].previous = nextTile;
+                    pathDistances[neighbor.y, neighbor.x].travelDistance = discoveredDistance;
                 }
             }
         }

@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode GameMode = GameMode.PVP;
+    public static GameMode Mode = GameMode.VSAI;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
         Instance = this;
         AllTeams = new Team[2];
         AllTeams[0] = new Team(Color.blue, false, Ingredient.Flora);
-        AllTeams[1] = new Team(Color.red, GameMode == GameMode.VSAI, Ingredient.Decay);
+        AllTeams[1] = new Team(Color.red, Mode == GameMode.VSAI, Ingredient.Decay);
         AllResources = new List<ResourcePile>();
 
         CurrentTurn = AllTeams[currentTurnIndex];
@@ -69,11 +69,12 @@ public class GameManager : MonoBehaviour
         GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
     }
 
-    public void SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
+    public Monster SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {
         Monster spawned = Instantiate(PrefabContainer.Instance.BaseMonsterPrefab).GetComponent<Monster>();
         spawned.Setup(monsterType, controller);
         LevelGrid.Instance.PlaceEntity(spawned, startTile);
         spawned.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)startTile);
+        return spawned;
     }
 
     // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator

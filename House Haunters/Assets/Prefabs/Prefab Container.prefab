@@ -24,13 +24,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 75551579794273050}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1802742013444809440
 MonoBehaviour:
@@ -59,6 +59,7 @@ MonoBehaviour:
   TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}
   ExampleShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
+  SpawnSpeedPrefab: {fileID: 6302334804222086484, guid: efc22b2cd0ce75f4ca1d6cbb064b22ec, type: 3}
   regenIcon: {fileID: 21300000, guid: 2c1978ebdfa13294f8ecbe82a936eb11, type: 3}
   strengthIcon: {fileID: 21300000, guid: 49934fbc93640754899a2013fdc5533e, type: 3}
   hasteIcon: {fileID: 21300000, guid: 233cfbf06c1a86c4a978d7d3d95236a1, type: 3}

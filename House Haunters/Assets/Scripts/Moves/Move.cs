@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public delegate void AnimationQueuer(Monster user, List<Vector2Int> tiles);
-
 public enum MoveType {
     Movement,
     RangedAttack,
@@ -80,18 +78,19 @@ public class Move {
     }
 
     public void Use(Monster user, List<Vector2Int> tiles) {
+        List<Vector2Int> filteredTiles = tiles;
         if(TargetType != Targets.Traversable) { // avoid pathfinding extra times
-            tiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
+            filteredTiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
         }
 
         if(effectAnimation != null) {
-            effectAnimation(user, tiles);
+            effectAnimation.QueueAnimation(user, effectAnimation.UseFilteredSelection ? filteredTiles : tiles);
         } else {
             // for moves that temporarily have no animation
             AnimationsManager.Instance.QueueAnimation(new DummyAnimation());
         }
 
-        foreach(Vector2Int tile in tiles) {
+        foreach(Vector2Int tile in filteredTiles) {
             ApplyEffect(user, tile);
         }
     }

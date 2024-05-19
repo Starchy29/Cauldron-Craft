@@ -35,7 +35,7 @@ public class MonstersData
             new List<Move>() {
                 new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(4); }, null, "Heals an ally for 4 health."),
                 new StatusMove("Haunt", 3, false, new StatusAilment(StatusEffect.Haunted, 3, prefabs.spookHaunt), new RangeSelector(1, false, false), null, "The target takes 1.5x damage for 3 turns."),
-                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, false), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals 3 health from the target.", StealHealth)
+                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, true), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals 3 health from the target.", StealHealth)
             }
         );
 
@@ -92,29 +92,29 @@ public class MonstersData
     #region Animation Helpers
     // these create functions that queue animations
     private static AnimationQueuer AnimateParticle(GameObject particlePrefab) {
-        return (Monster user, List<Vector2Int> tiles) => {
+        return new AnimationQueuer(false, (Monster user, List<Vector2Int> tiles) => {
             GameObject particle = GameObject.Instantiate(particlePrefab);
             particle.transform.position = Global.DetermineCenter(tiles);
-        };
+        });
     }
 
     private static AnimationQueuer AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, bool reversed = false) {
-        return (Monster user, List<Vector2Int> tiles) => {
+        return new AnimationQueuer(true, (Monster user, List<Vector2Int> tiles) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)tiles[0]);
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, reversed ? end : start, reversed ? start : end, speed));
-        };
+        });
     }
 
     private static AnimationQueuer AnimateLinearShot(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, int tileRange) {
-        return (Monster user, List<Vector2Int> tiles) => {
+        return new AnimationQueuer(true, (Monster user, List<Vector2Int> tiles) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 direction = ((Vector2)(tiles[0] - user.Tile)).normalized;
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile) + tileRange * direction;
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
-        };
+        });
     }
 
     //private static AnimationQueuer AnimateStatus(GameObject effectParticlePrefab, int duration) {

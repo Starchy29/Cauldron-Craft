@@ -66,8 +66,8 @@ public class Team
         AnimationsManager animator = AnimationsManager.Instance;
         foreach(Ingredient ingredient in data.Recipe) {
             Resources[ingredient]--;
-            animator.QueueAnimation(new IngredientAnimator(Spawnpoint, ingredient));
         }
+        animator.QueueAnimation(new IngredientAnimator(Spawnpoint, data.Recipe));
         ResourceDisplay.UpdateDisplay();
 
         Spawnpoint.StartCook(type);

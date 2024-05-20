@@ -78,9 +78,9 @@ MonoBehaviour:
   demonStrength: {fileID: 2558898771775421549, guid: 2ad4ec7a1a5045643bd28a59485c4939, type: 3}
   fireballBlast: {fileID: 6354854305594624939, guid: c3495ba7b2773e945aa8b4da9237c5ea, type: 3}
   demonCurse: {fileID: 8509943955392034232, guid: f640d6297da60c04d9ef5562d3b792eb, type: 3}
-  thornbushSprite: {fileID: 21300000, guid: b3747e2ffc587154087853a08f6c9e0a, type: 3}
-  thornTrapPrefab: {fileID: 8310442494393957005, guid: a74f52805bbb3fd4dbe3a5c408cf3d34, type: 3}
-  thornShieldPrefab: {fileID: 4864488922578185088, guid: c812e527930d41348bd422d4d0a219ea, type: 3}
+  cactusSprite: {fileID: 21300000, guid: b3747e2ffc587154087853a08f6c9e0a, type: 3}
+  spikeTrapPrefab: {fileID: 8310442494393957005, guid: a74f52805bbb3fd4dbe3a5c408cf3d34, type: 3}
+  spikeShieldPrefab: {fileID: 4864488922578185088, guid: c812e527930d41348bd422d4d0a219ea, type: 3}
   thornShot: {fileID: 8245164862100309878, guid: 5c47a9a8ffc195e428db06c764f9a623, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
   tangleVines: {fileID: 942366795742568175, guid: 98d98deb730289a429580ef2230b374c, type: 3}

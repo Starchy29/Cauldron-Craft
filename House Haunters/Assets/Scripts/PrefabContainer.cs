@@ -17,7 +17,7 @@ public class PrefabContainer : MonoBehaviour
         monsterToSprite = new Dictionary<MonsterName, Sprite>() {
             { MonsterName.Demon, demonSprite },
             { MonsterName.LostSoul, soulSprite },
-            { MonsterName.Cactus, thornbushSprite },
+            { MonsterName.Cactus, cactusSprite },
             { MonsterName.Flytrap, flytrapSprite },
             { MonsterName.Fungus, fungusSprite },
             { MonsterName.Jackolantern, jackolanternSprite }
@@ -109,11 +109,11 @@ public class PrefabContainer : MonoBehaviour
     public GameObject demonCurse;
     #endregion
 
-    [Header("Thorn Bush")]
-    #region thorn bush
-    public Sprite thornbushSprite;
-    public GameObject thornTrapPrefab;
-    public GameObject thornShieldPrefab;
+    [Header("Cactus")]
+    #region cactus
+    public Sprite cactusSprite;
+    public GameObject spikeTrapPrefab;
+    public GameObject spikeShieldPrefab;
     public GameObject thornShot;
     #endregion
 

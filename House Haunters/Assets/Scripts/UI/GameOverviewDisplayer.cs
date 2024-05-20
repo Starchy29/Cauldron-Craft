@@ -24,9 +24,9 @@ public class GameOverviewDisplayer : MonoBehaviour
             return;
         }
         
-        gameObject.SetActive(true);
         textbox.text = "Player " + (playerIndex+1) + "'s Turn";
         textbox.color = GameManager.Instance.AllTeams[playerIndex].TeamColor;
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(gameObject, true));
         AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(gameObject, false));
     }

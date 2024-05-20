@@ -7,13 +7,15 @@ public class AppearanceAnimator : IMoveAnimator
     public bool Completed { get; private set; }
 
     private GameObject appearer;
+    private bool visible;
 
-    public AppearanceAnimator(GameObject appearer) {
+    public AppearanceAnimator(GameObject appearer, bool visible) {
         this.appearer = appearer;
+        this.visible = visible;
     }
 
     public void Start() {
-        appearer.SetActive(true);
+        appearer.SetActive(visible);
         Completed = true;
     }
 

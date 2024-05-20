@@ -87,7 +87,7 @@ public class Move {
             effectAnimation.QueueAnimation(user, effectAnimation.UseFilteredSelection ? filteredTiles : tiles);
         } else {
             // for moves that temporarily have no animation
-            AnimationsManager.Instance.QueueAnimation(new DummyAnimation());
+            AnimationsManager.Instance.QueueAnimation(new PauseAnimator(0.2f));
         }
 
         foreach(Vector2Int tile in filteredTiles) {

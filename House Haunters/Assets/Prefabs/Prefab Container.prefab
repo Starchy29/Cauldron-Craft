@@ -60,6 +60,7 @@ MonoBehaviour:
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}
   ExampleShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
   SpawnSpeedPrefab: {fileID: 6302334804222086484, guid: efc22b2cd0ce75f4ca1d6cbb064b22ec, type: 3}
+  IngredientVFX: {fileID: 7712678480373355417, guid: 6da443e11232dbd4ba60f4a252a5ae90, type: 3}
   regenIcon: {fileID: 21300000, guid: 2c1978ebdfa13294f8ecbe82a936eb11, type: 3}
   strengthIcon: {fileID: 21300000, guid: 49934fbc93640754899a2013fdc5533e, type: 3}
   hasteIcon: {fileID: 21300000, guid: 233cfbf06c1a86c4a978d7d3d95236a1, type: 3}

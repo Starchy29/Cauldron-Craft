@@ -20,12 +20,8 @@ public class BuyMonsterButton : AutoButton
 
         monsterImage.sprite = PrefabContainer.Instance.monsterToSprite[monster];
 
-        int nextIngredient = 0;
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            for(int i = 0; i < data.Recipe[ingredient]; i++) {
-                ingredientLogos[nextIngredient].sprite = PrefabContainer.Instance.ingredientToSprite[ingredient];
-                nextIngredient++;
-            }
+        for(int i = 0; i < data.Recipe.Count; i++) {
+            ingredientLogos[i].sprite = PrefabContainer.Instance.ingredientToSprite[data.Recipe[i]];
         }
     }
 }

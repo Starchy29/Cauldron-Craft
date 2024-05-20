@@ -27,7 +27,8 @@ public class GameOverviewDisplayer : MonoBehaviour
         gameObject.SetActive(true);
         textbox.text = "Player " + (playerIndex+1) + "'s Turn";
         textbox.color = GameManager.Instance.AllTeams[playerIndex].TeamColor;
-        AnimationsManager.Instance.QueueAnimation(new DisappearanceAnimator(gameObject, 1f));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(gameObject, false));
     }
 
     public void ShowWinner(Team winner) {

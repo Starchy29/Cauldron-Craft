@@ -131,7 +131,7 @@ public class Monster : GridEntity
         visual.transform.SetParent(transform);
         visual.transform.localPosition = Vector3.zero;
         visual.SetActive(false);
-        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual));
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
 
         StatusAilment affliction = new StatusAilment(blueprint.effects, blueprint.duration, visual);
         Statuses.Add(affliction);

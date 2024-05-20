@@ -39,8 +39,17 @@ public class Team
 
     public bool CanBuy(MonsterName monsterType) {
         MonsterType monster = MonstersData.Instance.GetMonsterData(monsterType);
+
+        Dictionary<Ingredient, int> requirements = new Dictionary<Ingredient, int>();
+        foreach(Ingredient ingredient in monster.Recipe) {
+            if(!requirements.ContainsKey(ingredient)) {
+                requirements[ingredient] = 0;
+            }
+            requirements[ingredient]++;
+        }
+
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            if(Resources[ingredient] < monster.Recipe[ingredient]) {
+            if(requirements.ContainsKey(ingredient) && Resources[ingredient] < requirements[ingredient]) {
                 return false;
             }
         }
@@ -53,9 +62,11 @@ public class Team
             return;
         }
 
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            MonsterType data = MonstersData.Instance.GetMonsterData(type);
-            Resources[ingredient] -= data.Recipe[ingredient];
+        MonsterType data = MonstersData.Instance.GetMonsterData(type);
+        AnimationsManager animator = AnimationsManager.Instance;
+        foreach(Ingredient ingredient in data.Recipe) {
+            Resources[ingredient]--;
+            animator.QueueAnimation(new IngredientAnimator(Spawnpoint, ingredient));
         }
         ResourceDisplay.UpdateDisplay();
 

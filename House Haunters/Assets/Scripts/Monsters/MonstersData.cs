@@ -30,7 +30,7 @@ public class MonstersData
 
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
-        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             18, 4,
             new List<Move>() {
                 new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(4); }, null, "Heals an ally for 4 health."),
@@ -39,7 +39,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Demon] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Decay,
+        monsterTypes[(int)MonsterName.Demon] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             20, 4,
             new List<Move>() {
                 new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "Increases damage dealt and taken by 1.5x for 3 turns"),
@@ -48,7 +48,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Cactus] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
+        monsterTypes[(int)MonsterName.Cactus] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             21, 3,
             new List<Move>() {
                 new ShieldMove("Needle Guard", 2, new SelfSelector(), new Shield(Shield.Strength.Weak, 2, false, false, prefabs.spikeShieldPrefab, DamageMeleeAttacker), null, "Blocks 25% damage and deals 6 damage to enemies that attack this within melee range"),
@@ -57,7 +57,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(Ingredient.Flora, Ingredient.Flora, Ingredient.Flora,
+        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             23, 3,
             new List<Move>() {
                 new StatusMove("Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null, "Applies regeneration for 3 turns"),
@@ -66,7 +66,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(Ingredient.Decay, Ingredient.Decay, Ingredient.Flora,
+        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
             18, 3,
             new List<Move>() {
                 new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), new RangeSelector(1, false, false), null, "The target is reduced to one action for 2 turns"),
@@ -75,7 +75,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(Ingredient.Decay, Ingredient.Flora, Ingredient.Flora,
+        monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Flora },
             20, 4,
             new List<Move>() {
                 new Move("Portal", 2, MoveType.Shift, Move.Targets.Allies, new RangeSelector(4, false, false), SwapPosition, null, "Swaps position with a nearby ally."),

@@ -34,8 +34,9 @@ public class Cauldron : GridEntity
 
         CookState = State.Cooking;
         cookingMonster = monsterType;
-        cookIndicator.SetActive(true);
         cookIndicator.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
+        cookIndicator.SetActive(false);
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, true));
     }
 
     private void UpdateCook() {

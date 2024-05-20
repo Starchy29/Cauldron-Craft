@@ -17,7 +17,7 @@ public class PrefabContainer : MonoBehaviour
         monsterToSprite = new Dictionary<MonsterName, Sprite>() {
             { MonsterName.Demon, demonSprite },
             { MonsterName.LostSoul, soulSprite },
-            { MonsterName.ThornBush, thornbushSprite },
+            { MonsterName.Cactus, thornbushSprite },
             { MonsterName.Flytrap, flytrapSprite },
             { MonsterName.Fungus, fungusSprite },
             { MonsterName.Jackolantern, jackolanternSprite }

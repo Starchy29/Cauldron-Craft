@@ -40,17 +40,17 @@ public class TileHighlighter : MonoBehaviour
                 break;
         }
 
-        if(selected) {
-            sprite.color = new Color(0f, 0.2f, 0.8f, ALPHA); // blue
+        if(highlighted) {
+            sprite.color = new Color(0.8f, 0.8f, 0.2f, ALPHA); // yellow
+        }
+        else if(selected) {
+            sprite.color = new Color(0f, 0.8f, 0.2f, ALPHA); // green
         }
         else if(hovered) {
-            sprite.color = new Color(0f, 0.8f, 0.2f, ALPHA); // green
+            sprite.color = new Color(0f, 0.2f, 0.8f, ALPHA); // blue
         }
         else if(selectable) {
             sprite.color = new Color(0.0f, 0.8f, 0.8f, ALPHA); // light blue
-        }
-        else if(highlighted) {
-            sprite.color = new Color(0.8f, 0.8f, 0.0f, ALPHA); // yellow
         }
         else {
             sprite.color = new Color(0f, 0f, 0f, 0f);

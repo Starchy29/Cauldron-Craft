@@ -23,7 +23,7 @@ public enum StatusEffect
 
 public class StatusAilment : IEquatable<StatusAilment>
 {
-    public const int SPEED_BOOST = 2;
+    public const int SPEED_BOOST = 1;
 
     public static StatusEffect[] negativeStatuses = new StatusEffect[] { 
         StatusEffect.Poison, 

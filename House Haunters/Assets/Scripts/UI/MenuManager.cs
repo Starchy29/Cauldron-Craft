@@ -145,6 +145,7 @@ public class MenuManager : MonoBehaviour
         level.ColorTiles(null, TileHighlighter.State.Highlighted);
         level.ColorTiles(null, TileHighlighter.State.Hovered);
         level.ColorTiles(null, TileHighlighter.State.Selectable);
+        level.ColorTiles(null, TileHighlighter.State.Selected);
 
         if(controller != null) {
             foreach(Monster teammate in controller.Teammates) {
@@ -169,6 +170,7 @@ public class MenuManager : MonoBehaviour
                     }
                 }
                 moveMenu.Open(selected, controller);
+                level.ColorTiles(new List<Vector2Int>() { selected.Tile }, TileHighlighter.State.Selected);
                 break;
             case SelectionTarget.Targets:
                 break;

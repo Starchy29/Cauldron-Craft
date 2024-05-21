@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GridEntity : MonoBehaviour
 {
-    [SerializeField] protected SpriteRenderer renderer;
+    [SerializeField] protected SpriteRenderer spriteRenderer;
     [SerializeField] private int startTeam;
     public Vector2Int Tile { get; set; }
 
@@ -13,7 +13,7 @@ public class GridEntity : MonoBehaviour
         get { return controller; }
         set {
             controller = value;
-            renderer.material.color = Controller == null ? Color.clear : Controller.TeamColor;
+            spriteRenderer.material.color = Controller == null ? Color.clear : Controller.TeamColor;
         }
     }
 
@@ -24,5 +24,15 @@ public class GridEntity : MonoBehaviour
         if(startTeam >= 0) {
             Controller = GameManager.Instance.AllTeams[startTeam];
         }
+    }
+
+    public void UpdateSortingOrder() {
+        spriteRenderer.sortingOrder = (int)(-100 * transform.position.y);
+    }
+
+    public void SetSpriteFlip(bool flipped) {
+        Vector3 scale = spriteRenderer.gameObject.transform.localScale;
+        scale.x = (flipped ? -1 : 1) * Mathf.Abs(scale.x);
+        spriteRenderer.gameObject.transform.localScale = scale;
     }
 }

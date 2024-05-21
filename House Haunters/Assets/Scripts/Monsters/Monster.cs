@@ -31,7 +31,7 @@ public class Monster : GridEntity
 
     public void Setup(MonsterName monsterType, Team controller) {
         controller.Join(this);
-        renderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
+        spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         MoveCounter.Setup(this);
 
@@ -145,6 +145,14 @@ public class Monster : GridEntity
         Stats.Moves[moveSlot].Use(this, tiles);
         Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
         MovesLeft--;
+
+        Vector2 selectionMid = Global.DetermineCenter(tiles);
+        if(selectionMid.x > transform.position.x) {
+            SetSpriteFlip(false);
+        }
+        else if(selectionMid.x < transform.position.x) {
+            SetSpriteFlip(true);
+        }
     }
 
     public bool CanUse(int moveSlot) {

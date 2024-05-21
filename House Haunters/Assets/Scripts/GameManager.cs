@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.PVP;
+    public static GameMode Mode = GameMode.VSAI;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -76,6 +76,8 @@ public class GameManager : MonoBehaviour
         spawned.Setup(monsterType, controller);
         LevelGrid.Instance.PlaceEntity(spawned, startTile);
         spawned.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)startTile);
+        spawned.SetSpriteFlip(startTile.x > LevelGrid.Instance.Width / 2);
+        spawned.UpdateSortingOrder();
         return spawned;
     }
 

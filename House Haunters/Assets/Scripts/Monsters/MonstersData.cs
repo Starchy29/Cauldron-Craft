@@ -175,7 +175,7 @@ public class MonstersData
             }
         }
 
-        AnimationsManager.Instance.QueueAnimation(new PathAnimator(target.gameObject, new List<Vector3>() { level.Tiles.GetCellCenterWorld((Vector3Int)furthestPull) }, 15f));
+        AnimationsManager.Instance.QueueAnimation(new PathAnimator(target, new List<Vector3>() { level.Tiles.GetCellCenterWorld((Vector3Int)furthestPull) }, 15f));
         level.MoveEntity(target, furthestPull);
     }
 

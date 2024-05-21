@@ -43,7 +43,7 @@ public class Cauldron : GridEntity
         // pause during cooldown
         if(CookState == State.Cooldown) {
             CookState = State.Ready;
-            renderer.sprite = fullSprite;
+            spriteRenderer.sprite = fullSprite;
             return;
         }
 
@@ -54,7 +54,7 @@ public class Cauldron : GridEntity
 
         // finish cook
         CookState = State.Cooldown;
-        renderer.sprite = emptySprite;
+        spriteRenderer.sprite = emptySprite;
 
         // find the spot to spawn on
         LevelGrid level = LevelGrid.Instance;

@@ -234,6 +234,6 @@ public class MenuManager : MonoBehaviour
 
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
-        SetState(SelectionTarget.Monster);
+        SetState(SelectionTarget.Animations);
     }
 }

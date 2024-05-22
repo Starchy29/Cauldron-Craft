@@ -25,8 +25,8 @@ public class GameManager : MonoBehaviour
     void Awake() {
         Instance = this;
         AllTeams = new Team[2];
-        AllTeams[0] = new Team(Color.blue, false, Ingredient.Flora);
-        AllTeams[1] = new Team(Color.red, Mode == GameMode.VSAI, Ingredient.Decay);
+        AllTeams[0] = new Team(Color.blue, false, Ingredient.Decay);
+        AllTeams[1] = new Team(Color.red, Mode == GameMode.VSAI, Ingredient.Flora);
         AllResources = new List<ResourcePile>();
 
         CurrentTurn = AllTeams[currentTurnIndex];

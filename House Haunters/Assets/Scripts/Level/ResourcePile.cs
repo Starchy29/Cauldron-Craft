@@ -13,6 +13,7 @@ public enum Ingredient
 public class ResourcePile : GridEntity
 {
     [SerializeField] private Ingredient type;
+    [SerializeField] private GameObject floorCoverPrefab;
     public Ingredient Type { get { return type; } }
     private bool cooldown;
 
@@ -20,6 +21,14 @@ public class ResourcePile : GridEntity
         base.Start();
         GameManager.Instance.OnTurnEnd += TurnEndCheck;
         GameManager.Instance.AllResources.Add(this);
+
+        List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
+        foreach(Vector2Int tile in openAdjTiles) {
+            GameObject floorCover = Instantiate(floorCoverPrefab);
+            floorCover.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
+            floorCover.transform.localScale = new Vector3(Random.value < 0.5f ? 1 : -1, Random.value < 0.5f ? 1 : -1, 1);
+            floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);
+        }
     }
 
     private void TurnEndCheck(Team turnEnder, Team nextTurn) {

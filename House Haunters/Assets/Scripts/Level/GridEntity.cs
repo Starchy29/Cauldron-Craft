@@ -21,6 +21,7 @@ public class GridEntity : MonoBehaviour
         Tile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(transform.position);
         transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)Tile);
         LevelGrid.Instance.PlaceEntity(this, Tile);
+        UpdateSortingOrder();
         if(startTeam >= 0) {
             Controller = GameManager.Instance.AllTeams[startTeam];
         }

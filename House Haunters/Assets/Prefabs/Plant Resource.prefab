@@ -134,4 +134,4 @@ MonoBehaviour:
   spriteRenderer: {fileID: 648583407269900374}
   startTeam: 0
   type: 1
-  floorCoverPrefab: {fileID: 6389706594899059731, guid: 3a7480f9e5165be4fafe2bfb2459a097, type: 3}
+  floorCoverPrefab: {fileID: 3966235385189720172, guid: fee2e37cfcd1ee34b8966ded5c75df64, type: 3}

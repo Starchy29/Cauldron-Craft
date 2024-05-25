@@ -26,7 +26,9 @@ public class ResourcePile : GridEntity
         foreach(Vector2Int tile in openAdjTiles) {
             GameObject floorCover = Instantiate(floorCoverPrefab);
             floorCover.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
-            floorCover.transform.localScale = new Vector3(Random.value < 0.5f ? 1 : -1, Random.value < 0.5f ? 1 : -1, 1);
+            floorCover.transform.position = transform.position + 0.8f * (floorCover.transform.position - transform.position);
+
+            floorCover.transform.localScale = new Vector3(Random.value < 0.5f ? 1f : 1f, Random.value < 0.5f ? 1f : 1f, 1f);
             floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);
         }
     }

@@ -76,7 +76,7 @@ public class AIController
             }
         }
 
-        return closestUnclaimed.Tile;
+        return closestUnclaimed == null ? Vector2Int.zero : closestUnclaimed.Tile;
     }
 
     private void AttemptCraft() {

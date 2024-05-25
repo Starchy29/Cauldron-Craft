@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.PVP;
+    public static GameMode Mode = GameMode.VSAI;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -36,11 +36,7 @@ public class GameManager : MonoBehaviour
     void Start() {
         animator = AnimationsManager.Instance;
         CurrentTurn.StartTurn();
-        if(CurrentTurn.AI == null) {
-            MenuManager.Instance.StartPlayerTurn(CurrentTurn);
-        } else {
-            CurrentTurn.AI.ChooseMove(CurrentTurn);
-        }
+        GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
     }
 
     public void PassTurn(Team turnEnder) {

@@ -229,8 +229,9 @@ public class Monster : GridEntity
             openList.Remove(nextTile);
             closedList.Add(nextTile);
 
+            // prevent moving to a neighbor when the tile is trapped
             TileAffector nextEffect = level.GetTile(nextTile).CurrentEffect;
-            if(nextEffect != null && nextEffect.Controller != Controller && nextEffect.StopsMovement) {
+            if(nextTile != Tile && nextEffect != null && nextEffect.Controller != Controller && nextEffect.StopsMovement) {
                 continue;
             }
 

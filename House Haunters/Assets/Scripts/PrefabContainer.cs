@@ -52,8 +52,6 @@ public class PrefabContainer : MonoBehaviour
             { StatusEffect.Fear, fearIcon },
             { StatusEffect.Slowness, slowIcon },
             { StatusEffect.Drowsiness, drowsinessIcon },
-            { StatusEffect.Frozen, freezeIcon },
-            { StatusEffect.Cursed, cursedIcon },
             { StatusEffect.Haunted, hauntedIcon },
         };
     }
@@ -90,8 +88,6 @@ public class PrefabContainer : MonoBehaviour
     public Sprite fearIcon;
     public Sprite slowIcon;
     public Sprite drowsinessIcon;
-    public Sprite freezeIcon;
-    public Sprite cursedIcon;
     public Sprite hauntedIcon;
     #endregion
 

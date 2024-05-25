@@ -16,8 +16,6 @@ public enum StatusEffect
     Fear,
     Slowness,
     Drowsiness,
-    Frozen,
-    Cursed,
     Haunted
 }
 
@@ -29,8 +27,6 @@ public class StatusAilment : IEquatable<StatusAilment>
         StatusEffect.Poison, 
         StatusEffect.Fear,
         StatusEffect.Slowness,
-        StatusEffect.Frozen,
-        StatusEffect.Cursed,
         StatusEffect.Haunted
     };
 

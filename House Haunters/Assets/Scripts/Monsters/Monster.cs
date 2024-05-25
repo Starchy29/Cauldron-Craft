@@ -55,10 +55,6 @@ public class Monster : GridEntity
     }
 
     public void Heal(int amount) {
-        if(HasStatus(StatusEffect.Cursed)) {
-            return;
-        }
-
         Health += amount;
         if(Health > Stats.Health) {
             Health = Stats.Health;
@@ -156,9 +152,7 @@ public class Monster : GridEntity
     }
 
     public bool CanUse(int moveSlot) {
-        Move move = Stats.Moves[moveSlot];
-        return move != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && !(HasStatus(StatusEffect.Frozen) && move.Type == MoveType.Movement) 
-            && GetMoveOptions(moveSlot).Count > 0;
+        return Stats.Moves[moveSlot] != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && GetMoveOptions(moveSlot).Count > 0;
     }
 
     public void ApplyShield(Shield shield) {

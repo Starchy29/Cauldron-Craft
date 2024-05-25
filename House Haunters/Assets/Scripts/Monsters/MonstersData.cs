@@ -43,7 +43,7 @@ public class MonstersData
             20, 4,
             new List<Move>() {
                 new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), new SelfSelector(), null, "Increases damage dealt and taken by 1.5x for 3 turns"),
-                new StatusMove("Void", 3, false, new StatusAilment(StatusEffect.Cursed, 3, prefabs.demonCurse), new ZoneSelector(2, 2), null, "Blocks healing for 3 turns and removes the target's shield", EliminateShield),
+                new Move("Void Mark", 4, MoveType.Poison, Move.Targets.Enemies, new RangeSelector(1, false, false), WitherStatus.Apply, null, "Deals 4 damage for 3 turns."),
                 new Attack("Fireball", 1, 6, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 6 damage to the target and 4 damage to enemies adjacent to the target", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
             }
         );
@@ -80,7 +80,7 @@ public class MonstersData
             new List<Move>() {
                 new Move("Portal", 2, MoveType.Shift, Move.Targets.Allies, new RangeSelector(4, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
                 new ZoneMove("Will o' Wisps", 4, new ZoneSelector(2, 3), TileAffector.CreateBlueprint(prefabs.ExampleZone, 3, StatusEffect.Haunted, 0, null), null, "Creates a zone for three turns in which enemies take 1.5x damage"),
-                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Deals 5 damage and curses the target for one turn", ApplyStatusOnHit(new StatusAilment(StatusEffect.Cursed, 1, prefabs.demonCurse)))
+                new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Deals 5 damage")
             }
         );
     }

@@ -119,6 +119,15 @@ public class MenuManager : MonoBehaviour
 
     public void StartPlayerTurn(Team player) {
         controller = player;
+
+        // move the menu to the side of the current player. Assumes these are children of the camera
+        Vector3 endPos = endTurnButton.transform.localPosition;
+        endPos.x = (player.OnLeft ? -1 : 1) * Mathf.Abs(endPos.x);
+        endTurnButton.transform.localPosition = endPos;
+
+        Vector3 craftPos = buyMenu.transform.localPosition;
+        craftPos.x = (player.OnLeft ? -1 : 1) * Mathf.Abs(craftPos.x);
+        buyMenu.transform.localPosition = craftPos;
     }
 
     private void SetState(SelectionTarget state) {
@@ -163,7 +172,6 @@ public class MenuManager : MonoBehaviour
                 }
                 break;
             case SelectionTarget.Move:
-                endTurnButton.gameObject.SetActive(true);
                 if(controller != null) {
                     foreach(Monster teammate in controller.Teammates) {
                         teammate.MoveCounter.Open();

@@ -12,6 +12,7 @@ public class Team
     public AIController AI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
     public ResourceTracker ResourceDisplay { get; set; }
+    public bool OnLeft { get { return Spawnpoint != null && Spawnpoint.Tile.x < LevelGrid.Instance.Width / 2; } }
 
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;

@@ -35,8 +35,9 @@ public class MoveMenu : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void Open(Monster monster, Team player) {
+    public void Open(Monster monster, Team opener) {
         gameObject.SetActive(true);
+        transform.localPosition = new Vector3((monster.Controller.OnLeft ? -1 : 1) * Mathf.Abs(transform.localPosition.x), transform.localPosition.y, transform.localPosition.z); // assumes this is a child of the camera
         Move[] moves = monster.Stats.Moves;
 
         // set up move buttoms
@@ -52,7 +53,7 @@ public class MoveMenu : MonoBehaviour
             buttons[i].gameObject.SetActive(true);
             buttons[i].transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f + (i + 1) * (buttonHeight + BUTTON_GAP), 0);
             buttons[i].SetMove(monster, i);
-            buttons[i].Disabled = monster.Controller != player || !monster.CanUse(i);
+            buttons[i].Disabled = monster.Controller != opener || !monster.CanUse(i);
         }
 
         MonsterInfoAnchor.transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f, 0);

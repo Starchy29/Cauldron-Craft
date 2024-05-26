@@ -5,7 +5,7 @@ using UnityEngine;
 public class Hoverer : MonoBehaviour
 {
     [SerializeField] private float range;
-    [SerializeField] private float speed;
+    [SerializeField] private float speedMultiplier;
 
     private float time;
     private float startY;
@@ -16,7 +16,7 @@ public class Hoverer : MonoBehaviour
     }
 
     void Update() {
-        time += Time.deltaTime * speed;
+        time += Time.deltaTime * speedMultiplier;
         time %= 2 * Mathf.PI;
         
         Vector3 newPos = transform.localPosition;

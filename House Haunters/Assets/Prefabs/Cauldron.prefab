@@ -101,7 +101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   range: 0.05
-  speed: 4
+  speedMultiplier: 4
 --- !u!1 &2102336178557980548
 GameObject:
   m_ObjectHideFlags: 0

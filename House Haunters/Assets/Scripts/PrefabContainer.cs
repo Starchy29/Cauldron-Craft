@@ -76,6 +76,7 @@ public class PrefabContainer : MonoBehaviour
     public GameObject ExampleShield;
     public GameObject SpawnSpeedPrefab;
     public GameObject IngredientVFX;
+    public GameObject HarvestParticle;
 
     [Header("Status Effect")]
     #region statuses

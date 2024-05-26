@@ -14,6 +14,7 @@ public class ResourcePile : GridEntity
 {
     [SerializeField] private Ingredient type;
     [SerializeField] private GameObject floorCoverPrefab;
+    [SerializeField] private GameObject productionIndicator;
     public Ingredient Type { get { return type; } }
     private bool cooldown;
 
@@ -21,6 +22,7 @@ public class ResourcePile : GridEntity
         base.Start();
         GameManager.Instance.OnTurnEnd += TurnEndCheck;
         GameManager.Instance.AllResources.Add(this);
+        cooldown = true;
 
         List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
         foreach(Vector2Int tile in openAdjTiles) {
@@ -43,11 +45,14 @@ public class ResourcePile : GridEntity
         
         if(cooldown) {
             cooldown = false;
+            productionIndicator.SetActive(true);
             return;
         }
 
         Controller.AddResource(type);
+        SpawnHarvestParticle();
         cooldown = true;
+        productionIndicator.SetActive(false);
     }
 
     private void CheckCapture() {
@@ -86,7 +91,16 @@ public class ResourcePile : GridEntity
             Controller = capturer;
             Controller.AddResource(type);
             Controller.AddResource(type);
+            SpawnHarvestParticle();
+            SpawnHarvestParticle();
             cooldown = false;
+            productionIndicator.SetActive(true);
         }
+    }
+
+    private void SpawnHarvestParticle() {
+        GameObject harvest = Instantiate(PrefabContainer.Instance.HarvestParticle);
+        harvest.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.ingredientToSprite[type];
+        harvest.transform.position = transform.position;
     }
 }

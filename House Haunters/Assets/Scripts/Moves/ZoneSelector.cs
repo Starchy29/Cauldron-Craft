@@ -5,6 +5,8 @@ using UnityEngine;
 // selects a square area within a larger square area
 public class ZoneSelector : ISelector
 {
+    public static ZoneSelector AOESelector { get; private set; } = new ZoneSelector(1, 3);
+
     public int Range { get; private set; }
     public int Width { get; private set; }
 

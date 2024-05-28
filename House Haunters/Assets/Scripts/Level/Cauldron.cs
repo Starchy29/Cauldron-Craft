@@ -69,7 +69,7 @@ public class Cauldron : GridEntity
 
         // spawn the monster
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
-        spawned.ApplyStatus(new StatusAilment(StatusEffect.Haste, 1, PrefabContainer.Instance.SpawnSpeedPrefab), null);
+        spawned.ApplyStatus(new StatusAilment(StatusEffect.Swiftness, 1, PrefabContainer.Instance.SpawnSpeedPrefab), null);
         cookIndicator.SetActive(false);
     }
 

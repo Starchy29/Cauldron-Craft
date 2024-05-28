@@ -18,7 +18,9 @@ public class MoveMenu : MonoBehaviour
     private int numButtons;
     private float buttonHeight;
     private const float BUTTON_GAP = 0.2f;
-    private List<GameObject> statusIcons = new List<GameObject>();
+
+    private List<GameObject> activeStatusIcons = new List<GameObject>();
+    private Dictionary<StatusEffect, StatusIcon> normalIcons;
 
     public GameObject Background { get; private set; }
 
@@ -32,6 +34,9 @@ public class MoveMenu : MonoBehaviour
 
         Background = transform.GetChild(0).gameObject;
         buttonHeight = MoveButtonPrefab.transform.localScale.y;
+
+        SetUpStatusIcons();
+
         gameObject.SetActive(false);
     }
 
@@ -77,30 +82,30 @@ public class MoveMenu : MonoBehaviour
 
         // set up shield
 
-        // set up statuses
-        foreach(GameObject oldStatus in statusIcons) {
-            Destroy(oldStatus);
+        // find which status icons to show
+        foreach(GameObject oldStatus in activeStatusIcons) {
+            oldStatus.SetActive(false);
         }
-        statusIcons.Clear();
+        activeStatusIcons.Clear();
 
-        Dictionary<StatusEffect, int> statusDurations = new Dictionary<StatusEffect, int>();
         foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
             if(monster.HasStatus(effect)) {
-                statusDurations[effect] = 0; // 0 indicates the status is a result of the terrain the monster is standing on
+                activeStatusIcons.Add(normalIcons[effect].gameObject);
+                normalIcons[effect].duration = 0; // 0 indicates the status is a result of the terrain the monster is standing on
             }
         }
-        StatusEffect[] statusList = statusDurations.Keys.ToArray();
 
         foreach(StatusAilment ailment in monster.Statuses) {
             foreach(StatusEffect effect in ailment.effects) {
-                if(ailment.duration > statusDurations[effect]) {
-                    statusDurations[effect] = ailment.duration;
+                if(ailment.duration > normalIcons[effect].duration) {
+                    normalIcons[effect].duration = ailment.duration;
                 }
             }
         }
 
+        // place status icons
         int statusDims = 1;
-        while(statusDurations.Count > statusDims * statusDims) {
+        while(activeStatusIcons.Count > statusDims * statusDims) {
             statusDims++; // keep the statuses in a square grid
         }
         
@@ -110,15 +115,57 @@ public class MoveMenu : MonoBehaviour
         float gapWidth = zoneWidth * GAP_PERCENT;
         Vector3 localTopLeft = new Vector3(-zoneWidth / 2f + iconWidth / 2f, zoneWidth / 2f - iconWidth / 2f, 0);
 
-        for(int i = 0; i < statusDurations.Count; i++) {
+        for(int i = 0; i < activeStatusIcons.Count; i++) {
             int x = i % statusDims;
             int y = i / statusDims;
-            GameObject statusIcon = Instantiate(StatusIconPrefab);
-            statusIcons.Add(statusIcon);
-            statusIcon.transform.SetParent(StatusZone.transform, false);
+
+            GameObject statusIcon = activeStatusIcons[i];
+            statusIcon.SetActive(true);
             statusIcon.transform.localPosition = localTopLeft + new Vector3(x * (iconWidth + gapWidth), y * -(iconWidth + gapWidth), 0);
             statusIcon.transform.localScale = new Vector3(iconWidth, iconWidth, 1);
-            statusIcon.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.statusToSprite[statusList[i]];
+        }
+    }
+
+    private void Update() {
+        Vector2 mousePos = InputManager.Instance.GetMousePosition();
+        foreach(GameObject statusIcon in activeStatusIcons) {
+            if(Global.GetObjectArea(statusIcon).Contains(mousePos)) {
+                return;
+            }
+        }
+    }
+
+    private void SetUpStatusIcons() {
+        Dictionary<StatusEffect, string> names = new Dictionary<StatusEffect, string>() {
+            { StatusEffect.Regeneration, "Regenerating" },
+            { StatusEffect.Strength, "Strenghtned" },
+            { StatusEffect.Swiftness, "Swift" },
+            { StatusEffect.Energy, "Energized" },
+            { StatusEffect.Poison, "Poisoned" },
+            { StatusEffect.Fear, "Fearful" },
+            { StatusEffect.Slowness, "Slowed" },
+            { StatusEffect.Drowsiness, "Drowsy" },
+            { StatusEffect.Haunted, "Haunted" }
+        };
+
+        Dictionary<StatusEffect, string> descriptions = new Dictionary<StatusEffect, string>() {
+            { StatusEffect.Regeneration, "Heal 2 health at the end of every turn." },
+            { StatusEffect.Strength, "Deal 1.5x damage." },
+            { StatusEffect.Swiftness, "Move up to one tile further" },
+            { StatusEffect.Energy, "Gain an additional action every turn." },
+            { StatusEffect.Poison, "Take 2 damage at the end of every turn." },
+            { StatusEffect.Fear, "Deal half the normal amount of damage." },
+            { StatusEffect.Slowness, "Movement is reduced by 1 tile." },
+            { StatusEffect.Drowsiness, "Lose 1 action every turn." },
+            { StatusEffect.Haunted, "Receive 1.5x damage." }
+        };
+
+        PrefabContainer prefabs = PrefabContainer.Instance;
+        normalIcons = new Dictionary<StatusEffect, StatusIcon>();
+        foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
+            normalIcons[effect] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>().SetData(names[effect], descriptions[effect], prefabs.statusToSprite[effect]);
+            normalIcons[effect].transform.SetParent(StatusZone.transform, false);
+            normalIcons[effect].gameObject.SetActive(false);
         }
     }
 }

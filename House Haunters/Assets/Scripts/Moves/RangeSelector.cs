@@ -5,6 +5,8 @@ using UnityEngine;
 // selects a single item within range
 public class RangeSelector : ISelector
 {
+    public static RangeSelector MeleeSelector { get; private set; } = new RangeSelector(1, false, true);
+
     public bool SelfSelectable { get; private set; }
     public bool NeedsLineOfSight { get; private set; }
     public int Range { get; private set; }

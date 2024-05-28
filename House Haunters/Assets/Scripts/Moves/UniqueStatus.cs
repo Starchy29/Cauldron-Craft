@@ -9,9 +9,15 @@ public class UniqueStatus
     protected Monster target;
     private int duration;
     private GameObject visual;
+    private Type type;
 
-    protected UniqueStatus(Monster target, int duration, GameObject visualPrefab) {
-        UniqueStatus existing = allStatuses.Find((UniqueStatus status) => { return status.target == target && status.GetType() == this.GetType(); });
+    public enum Type {
+        LeechSpore,
+        Wither
+    }
+
+    protected UniqueStatus(Monster target, int duration, GameObject visualPrefab, Type type) {
+        UniqueStatus existing = allStatuses.Find((UniqueStatus status) => { return status.target == target && status.type == type; });
         if(existing != null) {
             existing.Remove();
         }
@@ -23,7 +29,9 @@ public class UniqueStatus
         visual.transform.localPosition = Vector3.zero;
 
         this.target = target;
+        this.type = type;
         this.duration = duration;
+        target.ActiveUniqueStatuses[type] = true;
         target.OnTurnEnd += DecreaseDuration;
         target.OnDeath += Remove;
     }
@@ -31,6 +39,7 @@ public class UniqueStatus
     protected virtual void Remove() {
         allStatuses.Remove(this);
         GameObject.Destroy(visual);
+        target.ActiveUniqueStatuses[type] = false;
         target.OnDeath -= Remove;
         target.OnTurnEnd -= DecreaseDuration;
     }

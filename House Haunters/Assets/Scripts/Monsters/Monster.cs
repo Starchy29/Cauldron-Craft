@@ -12,6 +12,7 @@ public class Monster : GridEntity
     public int Health { get; private set; }
 
     public List<StatusAilment> Statuses { get; private set; } = new List<StatusAilment>();
+    public Dictionary<UniqueStatus.Type, bool> ActiveUniqueStatuses { get; private set; }
 
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
@@ -22,7 +23,7 @@ public class Monster : GridEntity
     public int MovesLeft { get; private set; }
 
     public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Drowsiness) ? -1 : 0); } }
-    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Haste) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -StatusAilment.SPEED_BOOST : 0); } }
+    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swiftness) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -StatusAilment.SPEED_BOOST : 0); } }
     public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
@@ -34,6 +35,11 @@ public class Monster : GridEntity
         spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         MoveCounter.Setup(this);
+
+        ActiveUniqueStatuses = new Dictionary<UniqueStatus.Type, bool>();
+        foreach(UniqueStatus.Type status in Enum.GetValues(typeof(UniqueStatus.Type))) {
+            ActiveUniqueStatuses[status] = false;
+        }
 
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];

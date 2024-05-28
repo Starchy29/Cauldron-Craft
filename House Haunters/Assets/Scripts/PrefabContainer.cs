@@ -46,7 +46,7 @@ public class PrefabContainer : MonoBehaviour
         statusToSprite = new Dictionary<StatusEffect, Sprite>() {
             { StatusEffect.Regeneration, regenIcon },
             { StatusEffect.Strength, strengthIcon },
-            { StatusEffect.Haste, hasteIcon },
+            { StatusEffect.Swiftness, hasteIcon },
             { StatusEffect.Energy, energyIcon },
             { StatusEffect.Poison, poisonIcon },
             { StatusEffect.Fear, fearIcon },

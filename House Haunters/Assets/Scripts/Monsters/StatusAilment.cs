@@ -9,7 +9,7 @@ public enum StatusEffect
 {
     Regeneration,
     Strength,
-    Haste,
+    Swiftness,
     Energy,
 
     Poison,

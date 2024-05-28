@@ -24,9 +24,19 @@ public class MoveCounter : MonoBehaviour
 
     public void Open() {
         gameObject.SetActive(true);
+        int movesLeft = 0;
+
+        // check if the monster has at least one usable move
+        for(int i = 0; i < attachTarget.Stats.Moves.Length; i++) {
+            if(attachTarget.CanUse(i)) {
+                movesLeft = attachTarget.MovesLeft;
+                break;
+            }
+        }
+
         for(int i = 0; i < tickMarks.Length; i++) {
             tickMarks[i].SetActive(i < attachTarget.MaxMoves);
-            tickMarks[i].GetComponent<SpriteRenderer>().color = (i < attachTarget.MovesLeft ? Color.white : new Color(1f, 1f, 1f, 0.15f));
+            tickMarks[i].GetComponent<SpriteRenderer>().color = (i < movesLeft ? Color.white : new Color(1f, 1f, 1f, 0.15f));
         }
     }
 

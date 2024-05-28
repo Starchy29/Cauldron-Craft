@@ -20,7 +20,6 @@ public class GameManager : MonoBehaviour
     public event TurnEndEvent OnTurnEnd;
 
     private int currentTurnIndex;
-    private AnimationsManager animator;
 
     void Awake() {
         Instance = this;
@@ -34,7 +33,6 @@ public class GameManager : MonoBehaviour
 
     // runs after everything else because of script execution order
     void Start() {
-        animator = AnimationsManager.Instance;
         CurrentTurn.StartTurn();
         GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
     }

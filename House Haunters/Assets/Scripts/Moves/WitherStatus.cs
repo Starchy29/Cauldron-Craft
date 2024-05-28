@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class WitherStatus : UniqueStatus
 {
-    private WitherStatus(Monster target) : base(target, 3, PrefabContainer.Instance.demonCurse) { }
+    private WitherStatus(Monster target) : base(target, 3, PrefabContainer.Instance.demonCurse, Type.Wither) { }
 
     public static void Apply(Monster user, Vector2Int tile) {
         WitherStatus wither = new WitherStatus(LevelGrid.Instance.GetMonster(tile));

@@ -14,7 +14,7 @@ public class AutoButton : MonoBehaviour
 
     [SerializeField] private ClickFunction clickFunction;
     [SerializeField] private SpriteRenderer sprite;
-    [SerializeField] private GameObject tooltip;
+    [SerializeField] public GameObject tooltip;
     private bool hovered;
 
     private bool disabled;

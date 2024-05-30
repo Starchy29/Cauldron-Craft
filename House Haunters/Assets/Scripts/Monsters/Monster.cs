@@ -12,7 +12,7 @@ public class Monster : GridEntity
     public int Health { get; private set; }
 
     public List<StatusAilment> Statuses { get; private set; } = new List<StatusAilment>();
-    public Dictionary<UniqueStatus.Type, bool> ActiveUniqueStatuses { get; private set; }
+    public List<UniqueStatus> UniqueStatuses { get; private set; } = new List<UniqueStatus>();
 
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
@@ -35,11 +35,6 @@ public class Monster : GridEntity
         spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         MoveCounter.Setup(this);
-
-        ActiveUniqueStatuses = new Dictionary<UniqueStatus.Type, bool>();
-        foreach(UniqueStatus.Type status in Enum.GetValues(typeof(UniqueStatus.Type))) {
-            ActiveUniqueStatuses[status] = false;
-        }
 
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];

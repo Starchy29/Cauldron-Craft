@@ -7,7 +7,7 @@ public class LeechStatus : UniqueStatus
 {
     private Monster user;
 
-    private LeechStatus(Monster user, Monster target) : base(target, 3, PrefabContainer.Instance.leechSeed, Type.LeechSpore) {
+    private LeechStatus(Monster user, Monster target) : base(target, 3, PrefabContainer.Instance.leechSeed, UniqueStatuses.LeechSpore) {
         user.OnDeath += Remove;
         this.user = user;
     }

@@ -16,7 +16,7 @@ public class MenuManager : MonoBehaviour
 
     public bool UseKBMouse { get; set; }
 
-    private enum SelectionTarget { Animations, Monster, Move, Targets, CraftChoice }
+    private enum SelectionTarget { None, Monster, Move, Targets, CraftChoice }
     private SelectionTarget state;
     
     private LevelGrid level;
@@ -39,6 +39,7 @@ public class MenuManager : MonoBehaviour
         UseKBMouse = true;
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
+        SetState(SelectionTarget.None);
         AnimationsManager.Instance.OnAnimationsEnd += (Team currentTurn) => { if(currentTurn == controller) SetState(SelectionTarget.Monster); };
     }
 
@@ -62,7 +63,7 @@ public class MenuManager : MonoBehaviour
 
             if(input.SelectPressed()) {
                 // use the move on the hovered target
-                SetState(SelectionTarget.Animations);
+                SetState(SelectionTarget.None);
                 selected.UseMove(selectedMoveSlot, tileGroups[hoveredTargetIndex]);   
             }
             return;
@@ -185,7 +186,7 @@ public class MenuManager : MonoBehaviour
             case SelectionTarget.CraftChoice:
                 buyMenu.Open(controller);
                 break;
-            case SelectionTarget.Animations:
+            case SelectionTarget.None:
                 gameObject.SetActive(false);
                 break;
         }
@@ -205,7 +206,7 @@ public class MenuManager : MonoBehaviour
 
     // function of the end turn button
     public void EndTurn() {
-        SetState(SelectionTarget.Animations);
+        SetState(SelectionTarget.None);
         controller.EndTurn();
     }
 
@@ -242,6 +243,6 @@ public class MenuManager : MonoBehaviour
 
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
-        SetState(SelectionTarget.Animations);
+        SetState(SelectionTarget.None);
     }
 }

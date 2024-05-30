@@ -21,7 +21,8 @@ public class MoveMenu : MonoBehaviour
     private const float BUTTON_GAP = 0.2f;
 
     private List<StatusIcon> activeStatusIcons = new List<StatusIcon>();
-    private Dictionary<StatusEffect, StatusIcon> normalIcons;
+    private Dictionary<StatusEffect, StatusIcon> normalStatusIcons;
+    private Dictionary<UniqueStatuses, StatusIcon> uniqueStatusIcons;
 
     public GameObject Background { get; private set; }
 
@@ -43,8 +44,16 @@ public class MoveMenu : MonoBehaviour
 
     public void Open(Monster monster, Team opener) {
         gameObject.SetActive(true);
-        transform.localPosition = new Vector3((monster.Controller.OnLeft ? -1 : 1) * Mathf.Abs(transform.localPosition.x), transform.localPosition.y, transform.localPosition.z); // assumes this is a child of the camera
         Move[] moves = monster.Stats.Moves;
+
+        // place on the correct side of the screen
+        transform.localPosition = new Vector3((monster.Controller.OnLeft ? -1 : 1) * Mathf.Abs(transform.localPosition.x), transform.localPosition.y, transform.localPosition.z); // assumes this is a child of the camera
+        foreach(MoveButton button in buttons) {
+            Vector3 pos = button.tooltip.transform.localPosition;
+            pos.x = (monster.Controller.OnLeft ? 1 : -1) * Mathf.Abs(pos.x);
+            button.tooltip.transform.localPosition = pos;
+        }
+        statusTooltip.transform.localPosition = new Vector3((monster.Controller.OnLeft ? 1 : -1) * Mathf.Abs(statusTooltip.transform.localPosition.x), statusTooltip.transform.localPosition.y, statusTooltip.transform.localPosition.z);
 
         // set up move buttoms
         numButtons = moves.Length;
@@ -89,17 +98,22 @@ public class MoveMenu : MonoBehaviour
         }
         activeStatusIcons.Clear();
 
+        foreach(UniqueStatus status in monster.UniqueStatuses) {
+            activeStatusIcons.Add(uniqueStatusIcons[status.Type]);
+            uniqueStatusIcons[status.Type].duration = status.Duration;
+        }
+
         foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
             if(monster.HasStatus(effect)) {
-                activeStatusIcons.Add(normalIcons[effect]);
-                normalIcons[effect].duration = 0; // 0 indicates the status is a result of the terrain the monster is standing on
+                activeStatusIcons.Add(normalStatusIcons[effect]);
+                normalStatusIcons[effect].duration = 0; // 0 indicates the status is a result of the terrain the monster is standing on
             }
         }
 
         foreach(StatusAilment ailment in monster.Statuses) {
             foreach(StatusEffect effect in ailment.effects) {
-                if(ailment.duration > normalIcons[effect].duration) {
-                    normalIcons[effect].duration = ailment.duration;
+                if(ailment.duration > normalStatusIcons[effect].duration) {
+                    normalStatusIcons[effect].duration = ailment.duration;
                 }
             }
         }
@@ -168,11 +182,22 @@ public class MoveMenu : MonoBehaviour
         };
 
         PrefabContainer prefabs = PrefabContainer.Instance;
-        normalIcons = new Dictionary<StatusEffect, StatusIcon>();
+        normalStatusIcons = new Dictionary<StatusEffect, StatusIcon>();
         foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
-            normalIcons[effect] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>().SetData(names[effect], descriptions[effect], prefabs.statusToSprite[effect]);
-            normalIcons[effect].transform.SetParent(StatusZone.transform, false);
-            normalIcons[effect].gameObject.SetActive(false);
+            normalStatusIcons[effect] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>().SetData(names[effect], descriptions[effect], prefabs.statusToSprite[effect]);
+            normalStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
+            normalStatusIcons[effect].gameObject.SetActive(false);
+        }
+
+        uniqueStatusIcons = new Dictionary<UniqueStatuses, StatusIcon>();
+        uniqueStatusIcons[UniqueStatuses.LeechSpore] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
+            .SetData("Infected", "Drained for 2 life every turn.", prefabs.infectedIcon);
+        uniqueStatusIcons[UniqueStatuses.Wither] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
+            .SetData("Withering", "Take 4 damage at the end of every turn.", prefabs.witherIcon);
+
+        foreach(UniqueStatuses effect in Enum.GetValues(typeof(UniqueStatuses))) {
+            uniqueStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
+            uniqueStatusIcons[effect].gameObject.SetActive(false);
         }
     }
 }

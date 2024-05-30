@@ -90,6 +90,10 @@ public class PrefabContainer : MonoBehaviour
     public Sprite slowIcon;
     public Sprite drowsinessIcon;
     public Sprite hauntedIcon;
+
+    public Sprite infectedIcon;
+    public Sprite witherIcon;
+    public Sprite thornsIcon;
     #endregion
 
     [Header("Lost Soul")]

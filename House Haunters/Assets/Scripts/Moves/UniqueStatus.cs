@@ -5,7 +5,8 @@ using UnityEngine;
 public enum UniqueStatuses
 {
     LeechSpore,
-    Wither
+    Wither,
+    Thorns
 }
 
 public class UniqueStatus

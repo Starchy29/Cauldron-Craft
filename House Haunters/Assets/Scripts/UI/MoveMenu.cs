@@ -194,8 +194,10 @@ public class MoveMenu : MonoBehaviour
             .SetData("Infected", "Drained for 2 life every turn.", prefabs.infectedIcon);
         uniqueStatusIcons[UniqueStatuses.Wither] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
             .SetData("Withering", "Take 4 damage at the end of every turn.", prefabs.witherIcon);
+        uniqueStatusIcons[UniqueStatuses.Thorns] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
+            .SetData("Thorny", "Deal 6 damage to enemies that melee attack this.", prefabs.thornsIcon);
 
-        foreach(UniqueStatuses effect in Enum.GetValues(typeof(UniqueStatuses))) {
+        foreach (UniqueStatuses effect in Enum.GetValues(typeof(UniqueStatuses))) {
             uniqueStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
             uniqueStatusIcons[effect].gameObject.SetActive(false);
         }

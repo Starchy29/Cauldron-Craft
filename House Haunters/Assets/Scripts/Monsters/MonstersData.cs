@@ -51,7 +51,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Cactus] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             21, 3,
             new List<Move>() {
-                new ShieldMove("Needle Guard", 2, SelfSelector.Instance, new Shield(Shield.Strength.Weak, 2, false, false, prefabs.spikeShieldPrefab, DamageMeleeAttacker), null, "Blocks 25% damage and deals 6 damage to enemies that attack this within melee range"),
+                new Move("Thorns", 2, MoveType.Boost, Move.Targets.Allies, new RangeSelector(4, true, true), ThornStatus.ApplyThorns, null, "For 3 turns, deal 6 damage to any enemy that strikes the target with a melee attack."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 3, null, 0, (lander) => { lander.TakeDamage(4, null); }, true, true), null, "Places a trap that blocks enemies and deals 4 damage when they land in it."),
                 new Attack("Barb Bullet", 1, 5, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Deals 5 damage and pierces through enemies")
             }

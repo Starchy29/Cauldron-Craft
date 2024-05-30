@@ -21,6 +21,7 @@ public class Attack : Move
         Monster hitMonster = LevelGrid.Instance.GetMonster(tile);
         int startHealth = hitMonster.Health;
         hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier), user, this);
+        hitMonster.TriggerAttackEffects(this, user);
 
         if(OnHit != null) {
             OnHit(user, hitMonster, hitMonster.Health < startHealth ? startHealth - hitMonster.Health : 0);

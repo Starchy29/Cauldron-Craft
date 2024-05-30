@@ -17,6 +17,8 @@ public class Monster : GridEntity
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
     public event Trigger OnDeath;
+    public delegate void AttackTrigger(Attack attack, Monster attacker);
+    public event AttackTrigger OnAttacked;
 
     public int[] Cooldowns {  get; private set; }
     public Shield CurrentShield { get; private set; }
@@ -55,6 +57,10 @@ public class Monster : GridEntity
         OnTurnEnd();
     }
 
+    public void TriggerAttackEffects(Attack attack, Monster attacker) {
+        OnAttacked?.Invoke(attack, attacker);
+    }
+
     public void Heal(int amount) {
         Health += amount;
         if(Health > Stats.Health) {
@@ -64,7 +70,6 @@ public class Monster : GridEntity
     }
 
     public void TakeDamage(int amount, Monster source = null, Move attack = null) {
-        Shield.BlockEffect QueuedBlockEffect = null; // make sure the block effect animations play after the damage animation
         if(source != null) {
             float multiplier = 1f;
             if(HasStatus(StatusEffect.Haunted)) {
@@ -72,10 +77,7 @@ public class Monster : GridEntity
             }
             if(CurrentShield != null) {
                 multiplier *= CurrentShield.DamageMultiplier;
-                if(CurrentShield.OnBlock != null) {
-                    QueuedBlockEffect = CurrentShield.OnBlock;
-                }
-                if(CurrentShield.BlocksOnce && multiplier < 1.0f) { // only remove the shield if this shield is meant to block damage
+                if(CurrentShield.BlocksOnce) {
                     RemoveShield();
                 }
             }
@@ -89,10 +91,6 @@ public class Monster : GridEntity
             Health = 0;
         }
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
-
-        if(QueuedBlockEffect != null) {
-            QueuedBlockEffect(source, this, attack);
-        }
 
         if(Health == 0) {
             GameManager.Instance.DefeatMonster(this);
@@ -111,13 +109,6 @@ public class Monster : GridEntity
     }
 
     public void ApplyStatus(StatusAilment blueprint, Monster user) {
-        if(user != null && user.Controller != this.Controller && CurrentShield != null && CurrentShield.BlocksStatus) {
-            if(CurrentShield.BlocksOnce) {
-                RemoveShield();
-            }
-            return;
-        }
-
         StatusAilment duplicate = Statuses.Find((StatusAilment existing) => { return existing == blueprint; });
         if(duplicate != null) {
             duplicate.duration = blueprint.duration; // reset duration;
@@ -157,7 +148,7 @@ public class Monster : GridEntity
     }
 
     public void ApplyShield(Shield shield) {
-        CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksStatus, shield.BlocksOnce, Instantiate(shield.Visual), shield.OnBlock);
+        CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksOnce, Instantiate(shield.Visual));
         CurrentShield.Visual.transform.SetParent(transform, false);
         CurrentShield.Visual.transform.localPosition = Vector3.zero;
     }

@@ -13,13 +13,14 @@ public class MoveMenu : MonoBehaviour
     [SerializeField] private SpriteRenderer Heart;
     [SerializeField] private GameObject StatusZone;
     [SerializeField] private GameObject StatusIconPrefab;
+    [SerializeField] private StatusTooltip statusTooltip;
 
     private MoveButton[] buttons;
     private int numButtons;
     private float buttonHeight;
     private const float BUTTON_GAP = 0.2f;
 
-    private List<GameObject> activeStatusIcons = new List<GameObject>();
+    private List<StatusIcon> activeStatusIcons = new List<StatusIcon>();
     private Dictionary<StatusEffect, StatusIcon> normalIcons;
 
     public GameObject Background { get; private set; }
@@ -83,14 +84,14 @@ public class MoveMenu : MonoBehaviour
         // set up shield
 
         // find which status icons to show
-        foreach(GameObject oldStatus in activeStatusIcons) {
-            oldStatus.SetActive(false);
+        foreach(StatusIcon oldStatus in activeStatusIcons) {
+            oldStatus.gameObject.SetActive(false);
         }
         activeStatusIcons.Clear();
 
         foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
             if(monster.HasStatus(effect)) {
-                activeStatusIcons.Add(normalIcons[effect].gameObject);
+                activeStatusIcons.Add(normalIcons[effect]);
                 normalIcons[effect].duration = 0; // 0 indicates the status is a result of the terrain the monster is standing on
             }
         }
@@ -119,7 +120,7 @@ public class MoveMenu : MonoBehaviour
             int x = i % statusDims;
             int y = i / statusDims;
 
-            GameObject statusIcon = activeStatusIcons[i];
+            GameObject statusIcon = activeStatusIcons[i].gameObject;
             statusIcon.SetActive(true);
             statusIcon.transform.localPosition = localTopLeft + new Vector3(x * (iconWidth + gapWidth), y * -(iconWidth + gapWidth), 0);
             statusIcon.transform.localScale = new Vector3(iconWidth, iconWidth, 1);
@@ -128,17 +129,23 @@ public class MoveMenu : MonoBehaviour
 
     private void Update() {
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
-        foreach(GameObject statusIcon in activeStatusIcons) {
-            if(Global.GetObjectArea(statusIcon).Contains(mousePos)) {
+        foreach(StatusIcon statusIcon in activeStatusIcons) {
+            if(Global.GetObjectArea(statusIcon.gameObject).Contains(mousePos)) {
+                statusTooltip.gameObject.SetActive(true);
+                statusTooltip.NameLabel.text = statusIcon.statusName;
+                statusTooltip.DescriptionLabel.text = statusIcon.description;
+                statusTooltip.DurationLabel.text = statusIcon.duration == 0 ? "-" : "" + statusIcon.duration;
                 return;
             }
         }
+
+        statusTooltip.gameObject.SetActive(false);
     }
 
     private void SetUpStatusIcons() {
         Dictionary<StatusEffect, string> names = new Dictionary<StatusEffect, string>() {
             { StatusEffect.Regeneration, "Regenerating" },
-            { StatusEffect.Strength, "Strenghtned" },
+            { StatusEffect.Strength, "Strengthened" },
             { StatusEffect.Swiftness, "Swift" },
             { StatusEffect.Energy, "Energized" },
             { StatusEffect.Poison, "Poisoned" },
@@ -151,7 +158,7 @@ public class MoveMenu : MonoBehaviour
         Dictionary<StatusEffect, string> descriptions = new Dictionary<StatusEffect, string>() {
             { StatusEffect.Regeneration, "Heal 2 health at the end of every turn." },
             { StatusEffect.Strength, "Deal 1.5x damage." },
-            { StatusEffect.Swiftness, "Move up to one tile further" },
+            { StatusEffect.Swiftness, "Move up to one tile further." },
             { StatusEffect.Energy, "Gain an additional action every turn." },
             { StatusEffect.Poison, "Take 2 damage at the end of every turn." },
             { StatusEffect.Fear, "Deal half the normal amount of damage." },

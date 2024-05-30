@@ -1764,6 +1764,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 439307310}
     m_Modifications:
+    - target: {fileID: 5160301044401736589, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6758876197317274112, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
       propertyPath: m_RootOrder
       value: 3
@@ -1817,6 +1821,15 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5666763659974496217, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 1209360344427411407, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 2444484745776282512, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 1999708255882367079, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: e9e78cf5c51685d47bcff34a9cd88984, type: 3}

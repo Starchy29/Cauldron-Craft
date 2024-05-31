@@ -20,7 +20,7 @@ public class Attack : Move
     private void DealDamage(Monster user, Vector2Int tile) {
         Monster hitMonster = LevelGrid.Instance.GetMonster(tile);
         int startHealth = hitMonster.Health;
-        hitMonster.TakeDamage(Mathf.FloorToInt(Damage * user.DamageMultiplier), user, this);
+        hitMonster.TakeDamage(Damage, user);
         hitMonster.TriggerAttackEffects(this, user);
 
         if(OnHit != null) {

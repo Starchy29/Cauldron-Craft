@@ -10,6 +10,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private MoveMenu moveMenu;
     [SerializeField] private AutoButton endTurnButton;
     [SerializeField] private BuyMenu buyMenu;
+    [SerializeField] private TerrainDisplay terrainInfo;
 
     private HealthBarScript hoveredHealthbar;
     private List<HealthBarScript> targetedHealthBars;
@@ -70,6 +71,7 @@ public class MenuManager : MonoBehaviour
         }
 
         TileSelector.SetActive(false);
+        terrainInfo.gameObject.SetActive(false);
         if(hoveredHealthbar != null) {
             hoveredHealthbar.gameObject.SetActive(false);
             hoveredHealthbar = null;
@@ -95,6 +97,16 @@ public class MenuManager : MonoBehaviour
         TileSelector.SetActive(true);
         TileSelector.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)tile);
 
+        // check hovered terrain
+        WorldTile terrain = level.GetTile(tile);
+        if(terrain.CurrentEffect != null) {
+            terrainInfo.gameObject.SetActive(true);
+            terrainInfo.gameObject.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)tile) + new Vector3(0, 1.5f, 0);
+            terrainInfo.ColorBack.color = terrain.CurrentEffect.Controller.TeamColor;
+            terrainInfo.DurationLabel.text = "" + terrain.CurrentEffect.Duration;
+        }
+
+        // check hovered entity
         GridEntity hoveredEntity = level.GetEntity(tile);
 
         if(hoveredEntity is Monster) {

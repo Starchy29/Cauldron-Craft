@@ -142,7 +142,7 @@ public class MonstersData
 
         foreach(Monster target in targets) {
             if(target.Tile != center) {
-                target.TakeDamage(Mathf.FloorToInt(damage * attacker.DamageMultiplier), attacker);
+                target.TakeDamage(Mathf.FloorToInt(damage), attacker);
             }
         }
     }

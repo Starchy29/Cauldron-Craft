@@ -26,7 +26,6 @@ public class Monster : GridEntity
 
     public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Drowsiness) ? -1 : 0); } }
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swiftness) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -StatusAilment.SPEED_BOOST : 0); } }
-    public float DamageMultiplier { get { return 1f + (HasStatus(StatusEffect.Strength)? 0.5f : 0f) + (HasStatus(StatusEffect.Fear)? -0.5f : 0f); } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
 
@@ -69,9 +68,9 @@ public class Monster : GridEntity
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
-    public void TakeDamage(int amount, Monster source = null, Move attack = null) {
+    public void TakeDamage(int amount, Monster source = null) {
         if(source != null) {
-            float multiplier = 1f;
+            float multiplier = 1f + (source.HasStatus(StatusEffect.Strength) ? 0.5f : 0f) + (source.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
             if(HasStatus(StatusEffect.Haunted)) {
                 multiplier *= 1.5f;
             }

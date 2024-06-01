@@ -8,14 +8,6 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuScript : MonoBehaviour
 {
-    [SerializeField] private GameObject instructions;
-    [SerializeField] private AutoButton instroButton;
-
-    private void Start()
-    {
-        instroButton.OnClick = ToggleInstructions;
-    }
-
     public static void StartPVP() {
         GameManager.Mode = GameMode.PVP;
         SceneManager.LoadScene(1);
@@ -24,10 +16,6 @@ public class MainMenuScript : MonoBehaviour
     public static void StartVAI() {
         GameManager.Mode = GameMode.VSAI;
         SceneManager.LoadScene(1);
-    }
-
-    private void ToggleInstructions() {
-        instructions.SetActive(!instructions.activeSelf);
     }
 }
 

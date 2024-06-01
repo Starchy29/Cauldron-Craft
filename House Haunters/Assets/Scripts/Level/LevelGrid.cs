@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -45,6 +46,10 @@ public class LevelGrid : MonoBehaviour
                 tileHighlights[y, x].transform.SetParent(transform);
                 tileHighlights[y, x].transform.position = Tiles.GetCellCenterWorld(new Vector3Int(x, y, 0));
             }
+        }
+
+        foreach(TileHighlighter.State highlightType in Enum.GetValues(typeof(TileHighlighter.State))) {
+            TileHighlighter.InstructionCache[highlightType] = null;
         }
     }
 
@@ -104,8 +109,14 @@ public class LevelGrid : MonoBehaviour
         entityGrid[tile.y, tile.x] = null;
     }
 
-    // lights up notable tiles for the player. can overlap with selected tiles
+    // lights up notable tiles for the player
     public void ColorTiles(List<Vector2Int> tiles, TileHighlighter.State colorType) {
+        List<Vector2Int> lastInstruction = TileHighlighter.InstructionCache[colorType];
+        if(lastInstruction == null && tiles == null || lastInstruction != null && lastInstruction.Equals(tiles)) {
+            return;
+        }
+        TileHighlighter.InstructionCache[colorType] = tiles;
+
         for(int y = 0; y < Height; y++) {
             for(int x = 0; x < Width; x++) {
                 tileHighlights[y, x].SetState(colorType, false);

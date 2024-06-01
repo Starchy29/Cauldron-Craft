@@ -74,16 +74,7 @@ public class Cauldron : GridEntity
     }
 
     private void NotifyCookable() {
-        if(CookState != State.Ready) {
-            return;
-        }
-
-        int totalIngredients = 0;
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            totalIngredients += Controller.Resources[ingredient];
-        }
-
-        if(totalIngredients >= 3) {
+        if(Controller.CanCraft()) {
             cookIndicator.SetActive(true);
             cookIndicator.GetComponent<SpriteRenderer>().sprite = null;
         }

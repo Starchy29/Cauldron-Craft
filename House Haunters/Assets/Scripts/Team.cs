@@ -38,6 +38,19 @@ public class Team
         ResourceDisplay.UpdateDisplay();
     }
 
+    public bool CanCraft() {
+        if(Spawnpoint.CookState != Cauldron.State.Ready) {
+            return false;
+        }
+
+        int totalIngredients = 0;
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            totalIngredients += Resources[ingredient];
+        }
+
+        return totalIngredients >= 3;
+    }
+
     public bool CanBuy(MonsterName monsterType) {
         MonsterType monster = MonstersData.Instance.GetMonsterData(monsterType);
 

@@ -72,6 +72,7 @@ public class MenuManager : MonoBehaviour
 
         TileSelector.SetActive(false);
         terrainInfo.gameObject.SetActive(false);
+        level.ColorTiles(null, TileHighlighter.State.Hovered);
         if(hoveredHealthbar != null) {
             hoveredHealthbar.gameObject.SetActive(false);
             hoveredHealthbar = null;
@@ -112,6 +113,12 @@ public class MenuManager : MonoBehaviour
         if(hoveredEntity is Monster) {
             hoveredHealthbar = ((Monster)hoveredEntity).healthBar;
             hoveredHealthbar.gameObject.SetActive(true);
+            if(hoveredEntity.Controller == controller && HasUsableMove((Monster)hoveredEntity)) {
+                level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
+            }
+        }
+        else if(hoveredEntity == controller.Spawnpoint && controller.CanCraft()) {
+            level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
         }
 
         if(input.SelectPressed()) {
@@ -179,9 +186,19 @@ public class MenuManager : MonoBehaviour
             case SelectionTarget.Monster:
                 endTurnButton.gameObject.SetActive(true);
                 if(controller != null) {
+                    List<Vector2Int> selectableTiles = new List<Vector2Int>();
                     foreach(Monster teammate in controller.Teammates) {
                         teammate.MoveCounter.Open();
+                        if(HasUsableMove(teammate)) {
+                            selectableTiles.Add(teammate.Tile);
+                        }
                     }
+
+                    if(controller.CanCraft()) {
+                        selectableTiles.Add(controller.Spawnpoint.Tile);
+                    }
+
+                    level.ColorTiles(selectableTiles, TileHighlighter.State.Selectable);
                 }
                 break;
             case SelectionTarget.Move:
@@ -256,5 +273,14 @@ public class MenuManager : MonoBehaviour
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
         SetState(SelectionTarget.None);
+    }
+
+    private bool HasUsableMove(Monster monster) {
+        for(int i = 0; i < monster.Stats.Moves.Length; i++) {
+            if(monster.CanUse(i)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

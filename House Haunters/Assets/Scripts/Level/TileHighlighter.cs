@@ -19,6 +19,8 @@ public class TileHighlighter : MonoBehaviour
     private bool selected;
     private SpriteRenderer sprite;
 
+    public static Dictionary<TileHighlighter.State, List<Vector2Int>> InstructionCache = new Dictionary<State, List<Vector2Int>>();
+
     void Start() {
         sprite = GetComponent<SpriteRenderer>();
         SetState(State.Selected, false);

@@ -7,7 +7,7 @@ public enum MoveType {
     RangedAttack,
     MeleeAttack,
     Heal,
-    Poison,
+    Decay,
     Shield,
     Boost,
     Disrupt,

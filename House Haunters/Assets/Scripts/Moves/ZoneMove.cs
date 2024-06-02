@@ -24,7 +24,7 @@ class ZoneMove : Move
             }
 
             if(effect.AppliedStatus.Value == StatusEffect.Poison) {
-                return MoveType.Poison;
+                return MoveType.Decay;
             }
 
             return StatusAilment.negativeStatuses.Contains(effect.AppliedStatus.Value) ? MoveType.Disrupt : MoveType.Boost;

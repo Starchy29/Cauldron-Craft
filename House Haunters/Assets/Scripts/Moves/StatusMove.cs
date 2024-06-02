@@ -29,7 +29,7 @@ public class StatusMove : Move
         }
 
         if(condition.effects.Contains(StatusEffect.Poison)) {
-            return MoveType.Poison;
+            return MoveType.Decay;
         }
 
         return forAllies ? MoveType.Boost : MoveType.Disrupt;

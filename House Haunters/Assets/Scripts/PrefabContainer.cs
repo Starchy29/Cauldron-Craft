@@ -31,16 +31,16 @@ public class PrefabContainer : MonoBehaviour
         };
 
         moveTypeToSprite = new Dictionary<MoveType, Sprite>() {
-            { MoveType.RangedAttack, attackIcon },
-            { MoveType.MeleeAttack, attackIcon },
+            { MoveType.RangedAttack, rangedIcon },
+            { MoveType.MeleeAttack, meleeIcon },
             { MoveType.Shield, defendIcon },
             { MoveType.Movement, movementIcon },
-            { MoveType.Shift, movementIcon },
-            { MoveType.Terrain, zoneIcon },
+            { MoveType.Shift, shiftIcon },
+            { MoveType.Terrain, terrainIcon },
             { MoveType.Boost, supportIcon },
             { MoveType.Disrupt, disruptIcon },
-            { MoveType.Heal, supportIcon },
-            { MoveType.Poison, disruptIcon }
+            { MoveType.Heal, healIcon },
+            { MoveType.Decay, decayMoveIcon }
         };
 
         statusToSprite = new Dictionary<StatusEffect, Sprite>() {
@@ -63,13 +63,6 @@ public class PrefabContainer : MonoBehaviour
     public Sprite mineralLogo;
     public Sprite swarmLogo;
 
-    public Sprite attackIcon;
-    public Sprite defendIcon;
-    public Sprite movementIcon;
-    public Sprite zoneIcon;
-    public Sprite disruptIcon;
-    public Sprite supportIcon;
-
     public GameObject BaseMonsterPrefab;
     public GameObject TempMonsterProjectile;
     public GameObject ExampleZone;
@@ -77,6 +70,18 @@ public class PrefabContainer : MonoBehaviour
     public GameObject SpawnSpeedPrefab;
     public GameObject IngredientVFX;
     public GameObject HarvestParticle;
+
+    [Header("Move Type")]
+    public Sprite meleeIcon;
+    public Sprite rangedIcon;
+    public Sprite defendIcon;
+    public Sprite movementIcon;
+    public Sprite shiftIcon;
+    public Sprite terrainIcon;
+    public Sprite disruptIcon;
+    public Sprite supportIcon;
+    public Sprite decayMoveIcon;
+    public Sprite healIcon;
 
     [Header("Status Effect")]
     #region statuses

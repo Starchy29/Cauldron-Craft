@@ -17,8 +17,8 @@ public class ThornStatus : UniqueStatus
         base.Remove();
     }
 
-    private static void DamageMeleeAttacker(Attack attack, Monster attacker) {
-        if(attack.Type == MoveType.MeleeAttack) {
+    private static void DamageMeleeAttacker(Monster attacker, bool isMelee) {
+        if(isMelee) {
             attacker.TakeDamage(6);
         }
     }

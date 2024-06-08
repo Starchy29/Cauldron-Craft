@@ -17,7 +17,7 @@ public class Monster : GridEntity
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
     public event Trigger OnDeath;
-    public delegate void AttackTrigger(Attack attack, Monster attacker);
+    public delegate void AttackTrigger(Monster attacker, bool isMelee);
     public event AttackTrigger OnAttacked;
 
     public int[] Cooldowns {  get; private set; }
@@ -56,10 +56,6 @@ public class Monster : GridEntity
         OnTurnEnd();
     }
 
-    public void TriggerAttackEffects(Attack attack, Monster attacker) {
-        OnAttacked?.Invoke(attack, attacker);
-    }
-
     public void Heal(int amount) {
         Health += amount;
         if(Health > Stats.Health) {
@@ -68,23 +64,26 @@ public class Monster : GridEntity
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
-    public void TakeDamage(int amount, Monster source = null) {
-        if(source != null) {
-            float multiplier = 1f + (source.HasStatus(StatusEffect.Strength) ? 0.5f : 0f) + (source.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
-            if(HasStatus(StatusEffect.Haunted)) {
-                multiplier *= 1.5f;
-            }
-            if(CurrentShield != null) {
-                multiplier *= CurrentShield.DamageMultiplier;
-                if(CurrentShield.BlocksOnce) {
-                    RemoveShield();
-                }
-            }
-            if(multiplier != 1f) {
-                amount = Mathf.CeilToInt(amount * multiplier);
+    public void ReceiveAttack(int damage, Monster attacker, bool isMelee = false) {
+        float multiplier = 1f + (attacker.HasStatus(StatusEffect.Strength) ? 0.5f : 0f) + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
+        if(HasStatus(StatusEffect.Haunted)) {
+            multiplier *= 1.5f;
+        }
+        if(CurrentShield != null) {
+            multiplier *= CurrentShield.DamageMultiplier;
+            if(CurrentShield.BlocksOnce) {
+                RemoveShield();
             }
         }
+        if(multiplier != 1f) {
+            damage = Mathf.CeilToInt(damage * multiplier);
+        }
 
+        TakeDamage(damage);
+        OnAttacked?.Invoke(attacker, isMelee);
+    }
+
+    public void TakeDamage(int amount) {
         Health -= amount;
         if(Health < 0) {
             Health = 0;
@@ -277,7 +276,7 @@ public class Monster : GridEntity
             Heal(2);
         }
         if(HasStatus(StatusEffect.Poison)) {
-            TakeDamage(2, null);
+            TakeDamage(2);
         }
 
         for(int i = Statuses.Count - 1; i >= 0; i--) {

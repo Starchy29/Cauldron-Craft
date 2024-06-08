@@ -52,7 +52,7 @@ public class MonstersData
             21, 3,
             new List<Move>() {
                 new Move("Thorns", 2, MoveType.Boost, Move.Targets.Allies, new RangeSelector(4, true, true), ThornStatus.ApplyThorns, null, "For 3 turns, deal 6 damage to any enemy that strikes the target with a melee attack."),
-                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 3, null, 0, (lander) => { lander.TakeDamage(4, null); }, true, true), null, "Places a trap that blocks enemies and deals 4 damage when they land in it."),
+                new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 3, null, 0, (lander) => { lander.TakeDamage(4); }, true, true), null, "Places a trap that blocks enemies and deals 4 damage when they land in it."),
                 new Attack("Barb Bullet", 1, 5, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Deals 5 damage and pierces through enemies")
             }
         );
@@ -142,14 +142,8 @@ public class MonstersData
 
         foreach(Monster target in targets) {
             if(target.Tile != center) {
-                target.TakeDamage(Mathf.FloorToInt(damage), attacker);
+                target.ReceiveAttack(Mathf.FloorToInt(damage), attacker);
             }
-        }
-    }
-
-    private static void DamageMeleeAttacker(Monster attacker, Monster defender, Move attack) {
-        if(attack != null && attack.Type == MoveType.MeleeAttack) {
-            attacker.TakeDamage(6, null);
         }
     }
 

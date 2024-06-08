@@ -22,7 +22,7 @@ public class LeechStatus : UniqueStatus
     }
 
     protected override void DecreaseDuration() {
-        target.TakeDamage(2, null);
+        target.TakeDamage(2);
         user.Heal(2);
         base.DecreaseDuration();
     }

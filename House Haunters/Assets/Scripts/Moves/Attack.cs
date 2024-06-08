@@ -20,8 +20,7 @@ public class Attack : Move
     private void DealDamage(Monster user, Vector2Int tile) {
         Monster hitMonster = LevelGrid.Instance.GetMonster(tile);
         int startHealth = hitMonster.Health;
-        hitMonster.TakeDamage(Damage, user);
-        hitMonster.TriggerAttackEffects(this, user);
+        hitMonster.ReceiveAttack(Damage, user, Type == MoveType.MeleeAttack);
 
         if(OnHit != null) {
             OnHit(user, hitMonster, hitMonster.Health < startHealth ? startHealth - hitMonster.Health : 0);

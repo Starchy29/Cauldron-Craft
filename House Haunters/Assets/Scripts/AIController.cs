@@ -4,11 +4,27 @@ using UnityEngine;
 
 public class AIController
 {
+    public enum Playstyle {
+        Offensive,
+        Defensive
+    }
+
     private Team team;
+    private int difficulty;
+
 
     public AIController(Team team) {
         this.team = team;
+        team.OnTurnStart += PlanTurn;
         AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
+    }
+
+    public void PlanTurn() {
+        // determine priorities
+
+        // order monsters
+
+        // assign tasks
     }
 
     // chooses 1 move at a time
@@ -63,6 +79,17 @@ public class AIController
             }
         }
         return moveOptions;
+    }
+
+    private void CheckResources() {
+        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
+            if(resource.Controller == team) {
+                // check if an enemy is close to capturing this
+            }
+            else if(resource.Controller != null) {
+                // check if attacking
+            }
+        }
     }
 
     private Vector2Int FindTargetPosition() {

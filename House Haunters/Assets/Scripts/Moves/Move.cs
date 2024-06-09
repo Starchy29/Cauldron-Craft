@@ -126,7 +126,7 @@ public class Move {
     }
 
     public static bool IsTraversable(Monster user, Vector2Int tile) {
-        return user.FindPath(tile) != null;
+        return user.FindPath(tile, true) != null;
     }
     #endregion
 }

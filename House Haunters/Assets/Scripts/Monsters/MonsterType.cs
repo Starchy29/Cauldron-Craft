@@ -8,7 +8,6 @@ public class MonsterType
     public int Health { get; private set; }
     public int Speed { get; private set; }
     public Move[] Moves { get; private set; }
-    public bool Flying { get; private set; }
 
     public MonsterType(List<Ingredient> recipe, int health, int speed, List<Move> specialMoves) {
         Recipe = recipe;

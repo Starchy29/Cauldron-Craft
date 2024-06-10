@@ -4,14 +4,15 @@ using UnityEngine;
 
 public class AIController
 {
-    public enum Playstyle {
+    public enum Playstyle { // could be aggression value
         Offensive,
         Defensive
     }
 
     private Team team;
-    private int difficulty;
 
+    private static Dictionary<ResourcePile, ResourceData> resourceData;
+    private static Dictionary<Monster, MonsterTasks> tasks;
 
     public AIController(Team team) {
         this.team = team;
@@ -20,7 +21,27 @@ public class AIController
     }
 
     public void PlanTurn() {
-        // determine priorities
+        // determine which resources to focus on
+        resourceData = EvaluateResources();
+        List<ResourcePile> pointsOfInterest = new List<ResourcePile>();
+        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
+            if(resourceData[resource].controlValue > 0.5f) {
+                pointsOfInterest.Add(resource);
+                ResourceData data = resourceData[resource];
+                data.idealAllocation = resourceData[resource].threatValue + resourceData[resource].Intensity / 4f;
+                resourceData[resource] = data;
+            }
+        }
+
+        // make sure there is always an attack target
+
+        // assign monsters to resources
+        //int monstersLeft = team.Teammates.Count;
+        //for(int i = 0; i < monstersLeft / pointsOfInterest.Count)
+
+
+
+        // when attacking, evaluate whether this should retreat or invest more
 
         // order monsters
 
@@ -80,16 +101,51 @@ public class AIController
         }
         return moveOptions;
     }
+    
+    private Dictionary<ResourcePile, ResourceData> EvaluateResources() {
+        Dictionary<ResourcePile, ResourceData> resourceData = new Dictionary<ResourcePile, ResourceData>();
 
-    private void CheckResources() {
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            if(resource.Controller == team) {
-                // check if an enemy is close to capturing this
+            ResourceData data = new ResourceData();
+
+            foreach(Monster ally in team.Teammates) {
+                data.controlValue += CalculateInfluence(ally, resource);
             }
-            else if(resource.Controller != null) {
-                // check if attacking
+
+            foreach(Team opponent in GameManager.Instance.AllTeams) {
+                if(opponent == team) {
+                    continue;
+                }
+
+                foreach(Monster enemy in opponent.Teammates) {
+                    data.threatValue += CalculateInfluence(enemy, resource);
+                }
             }
+
+            resourceData[resource] = data;
         }
+
+        return resourceData;
+    }
+
+    private float CalculateInfluence(Monster monster, ResourcePile resource) {
+        const int MAX_INFLUENCE_RANGE = 5;
+        
+        if(Global.CalcTileDistance(monster.Tile, resource.Tile) > MAX_INFLUENCE_RANGE + 2) {
+            return 0;
+        }
+
+        int distance = monster.FindPath(resource.Tile, false).Count - 1; // distance to capture area
+        if(monster.Tile.x != resource.Tile.x && monster.Tile.y != resource.Tile.y) {
+            // make corners worth the same as orthogonally adjacent
+            distance--;
+        }
+
+        if(distance > MAX_INFLUENCE_RANGE) {
+            return 0f;
+        }
+
+        return (MAX_INFLUENCE_RANGE + 1 - distance) / (MAX_INFLUENCE_RANGE + 1f);
     }
 
     private Vector2Int FindTargetPosition() {
@@ -121,5 +177,19 @@ public class AIController
         if(buyOptions.Count > 0) {
             team.BuyMonster(buyOptions[Random.Range(0, buyOptions.Count)]);
         }
+    }
+
+    private struct ResourceData {
+        public float threatValue; // opponent's influence
+        public float controlValue; // controller's influence
+
+        public float idealAllocation; // the amount of influenec the AI would like to have with unlimited resources
+
+        public float Intensity { get { return threatValue + controlValue; } } // amount of action at a control point
+        public float Advantage { get { return controlValue - threatValue; } } // positive: winning, negative: losing
+    }
+
+    private struct MonsterTasks {
+        public ResourcePile assignment;
     }
 }

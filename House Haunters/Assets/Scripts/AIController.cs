@@ -33,19 +33,12 @@ public class AIController
             }
         }
 
-        // make sure there is always an attack target
-
-        // assign monsters to resources
-        //int monstersLeft = team.Teammates.Count;
-        //for(int i = 0; i < monstersLeft / pointsOfInterest.Count)
-
-
 
         // when attacking, evaluate whether this should retreat or invest more
 
-        // order monsters
+            // order monsters
 
-        // assign tasks
+            // assign tasks
     }
 
     // chooses 1 move at a time
@@ -183,7 +176,7 @@ public class AIController
         public float threatValue; // opponent's influence
         public float controlValue; // controller's influence
 
-        public float idealAllocation; // the amount of influenec the AI would like to have with unlimited resources
+        public float idealAllocation; // the amount of influenece the AI would like to have with unlimited resources
 
         public float Intensity { get { return threatValue + controlValue; } } // amount of action at a control point
         public float Advantage { get { return controlValue - threatValue; } } // positive: winning, negative: losing

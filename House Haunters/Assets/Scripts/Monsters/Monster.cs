@@ -145,6 +145,16 @@ public class Monster : GridEntity
         return Stats.Moves[moveSlot] != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && GetMoveOptions(moveSlot).Count > 0;
     }
 
+    public List<int> GetUsableMoveSlots() {
+        List<int> moveOptions = new List<int>();
+        for(int i = 0; i < Stats.Moves.Length; i++) {
+            if(CanUse(i)) {
+                moveOptions.Add(i);
+            }
+        }
+        return moveOptions;
+    }
+
     public void ApplyShield(Shield shield) {
         CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksOnce, Instantiate(shield.Visual));
         CurrentShield.Visual.transform.SetParent(transform, false);

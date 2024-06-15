@@ -10,9 +10,10 @@ public class AIController
     }
 
     private Team team;
+    //private float aggression; // how much this AI favors offense over defense
+    //private float persistence; // how much this AI commits to its strategy
 
     private static Dictionary<ResourcePile, ResourceData> resourceData;
-    private static Dictionary<Monster, MonsterTasks> tasks;
 
     public AIController(Team team) {
         this.team = team;
@@ -23,15 +24,6 @@ public class AIController
     public void PlanTurn() {
         // determine which resources to focus on
         resourceData = EvaluateResources();
-        List<ResourcePile> pointsOfInterest = new List<ResourcePile>();
-        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            if(resourceData[resource].controlValue > 0.5f) {
-                pointsOfInterest.Add(resource);
-                ResourceData data = resourceData[resource];
-                data.idealAllocation = resourceData[resource].threatValue + resourceData[resource].Intensity / 4f;
-                resourceData[resource] = data;
-            }
-        }
 
 
         // when attacking, evaluate whether this should retreat or invest more
@@ -49,7 +41,7 @@ public class AIController
 
         Vector2Int targetPosition = FindTargetPosition();
         foreach(Monster monster in team.Teammates) {
-            List<int> moveOptions = GetUsableMoveSlots(monster);
+            List<int> moveOptions = monster.GetUsableMoveSlots();
             if(moveOptions.Count == 0) {
                 continue;
             }
@@ -84,16 +76,6 @@ public class AIController
 
         team.EndTurn();
     }
-
-    private List<int> GetUsableMoveSlots(Monster monster) {
-        List<int> moveOptions = new List<int>();
-        for(int i = 0; i < monster.Stats.Moves.Length; i++) {
-            if(monster.CanUse(i)) {
-                moveOptions.Add(i);
-            }
-        }
-        return moveOptions;
-    }
     
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {
         Dictionary<ResourcePile, ResourceData> resourceData = new Dictionary<ResourcePile, ResourceData>();
@@ -101,8 +83,11 @@ public class AIController
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
             ResourceData data = new ResourceData();
 
+            // determine how much influence each team has on this resource
+            data.allyPaths = new Dictionary<Monster, List<Vector2Int>>();
             foreach(Monster ally in team.Teammates) {
-                data.controlValue += CalculateInfluence(ally, resource);
+                data.allyPaths[ally] = ally.FindPath(resource.Tile, false);
+                data.controlValue += CalculateInfluence(ally, resource, data.allyPaths[ally]);
             }
 
             foreach(Team opponent in GameManager.Instance.AllTeams) {
@@ -115,20 +100,27 @@ public class AIController
                 }
             }
 
+            // choose a force value for this resource
+            if(resource.Controller == team) {
+                data.forceValue = data.Advantage;
+            } else {
+                data.forceValue = -0.8f - data.Advantage; // invest more if winning more
+            }
+
             resourceData[resource] = data;
         }
 
         return resourceData;
     }
 
-    private float CalculateInfluence(Monster monster, ResourcePile resource) {
+    private float CalculateInfluence(Monster monster, ResourcePile resource, List<Vector2Int> existingPath = null) {
         const int MAX_INFLUENCE_RANGE = 5;
         
-        if(Global.CalcTileDistance(monster.Tile, resource.Tile) > MAX_INFLUENCE_RANGE + 2) {
+        if(Global.CalcTileDistance(monster.Tile, resource.Tile) > MAX_INFLUENCE_RANGE + 2) { // influence range may be 2 greater than the actual distance
             return 0;
         }
 
-        int distance = monster.FindPath(resource.Tile, false).Count - 1; // distance to capture area
+        int distance = (existingPath == null ? monster.FindPath(resource.Tile, false) : existingPath).Count - 1; // distance to capture area
         if(monster.Tile.x != resource.Tile.x && monster.Tile.y != resource.Tile.y) {
             // make corners worth the same as orthogonally adjacent
             distance--;
@@ -173,16 +165,12 @@ public class AIController
     }
 
     private struct ResourceData {
+        public Dictionary<Monster, List<Vector2Int>> allyPaths;
         public float threatValue; // opponent's influence
         public float controlValue; // controller's influence
-
-        public float idealAllocation; // the amount of influenece the AI would like to have with unlimited resources
+        public float forceValue; // positive: push away, negative: pull in
 
         public float Intensity { get { return threatValue + controlValue; } } // amount of action at a control point
         public float Advantage { get { return controlValue - threatValue; } } // positive: winning, negative: losing
-    }
-
-    private struct MonsterTasks {
-        public ResourcePile assignment;
     }
 }

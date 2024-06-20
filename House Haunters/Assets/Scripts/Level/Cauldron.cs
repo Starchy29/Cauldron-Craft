@@ -21,10 +21,13 @@ public class Cauldron : GridEntity
 
     protected override void Start() {
         base.Start();
-        Controller.OnTurnStart += UpdateCook;
-        Controller.OnTurnStart += NotifyCookable;
         Controller.OnTurnEnd += HideCookable;
         Controller.Spawnpoint = this;
+    }
+
+    public void StartTurn() {
+        UpdateCook();
+        NotifyCookable();
     }
 
     public void StartCook(MonsterName monsterType) {

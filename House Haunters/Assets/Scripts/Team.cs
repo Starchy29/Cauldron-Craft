@@ -102,10 +102,13 @@ public class Team
             teammate.StartTurn();
         }
 
+        Spawnpoint.StartTurn();
         OnTurnStart?.Invoke();
 
         if(AI == null) {
             MenuManager.Instance.StartPlayerTurn(this);
+        } else {
+            AI.PlanTurn();
         }
     }
 

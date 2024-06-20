@@ -17,7 +17,6 @@ public class AIController
 
     public AIController(Team team) {
         this.team = team;
-        team.OnTurnStart += PlanTurn;
         AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
     }
 
@@ -60,14 +59,19 @@ public class AIController
 
             List<List<Vector2Int>> targetOptions = monster.GetMoveOptions(chosenMoveSlot);
 
-            int chosenTargets = Random.Range(0, targetOptions.Count);
+            
 
             // when moving, bias towards the current objective
             if(chosenMove is MovementAbility) {
-                targetOptions.Sort((List<Vector2Int> tile1, List<Vector2Int> tile2) => { return Global.CalcTileDistance(tile1[0], targetPosition) - Global.CalcTileDistance(tile2[0], targetPosition); });
-                chosenTargets /= 4; // only choose from the better portion of options
+                //targetOptions.Sort((List<Vector2Int> tile1, List<Vector2Int> tile2) => { return Global.CalcTileDistance(tile1[0], targetPosition) - Global.CalcTileDistance(tile2[0], targetPosition); });
+                //chosenTargets /= 4; // only choose from the better portion of options
+
+                List<Vector2Int> moveSpot = targetOptions.Max((List<Vector2Int> tileGroup) => { return DetermineTileForce(monster, tileGroup[0]); } );
+                monster.UseMove(chosenMoveSlot, moveSpot);
+                return;
             }
 
+            int chosenTargets = Random.Range(0, targetOptions.Count);
             monster.UseMove(chosenMoveSlot, targetOptions[chosenTargets]);
             return;
         }
@@ -133,6 +137,38 @@ public class AIController
         return (MAX_INFLUENCE_RANGE + 1 - distance) / (MAX_INFLUENCE_RANGE + 1f);
     }
 
+    // determines how much this monster is encouraged to move to this tile
+    private float DetermineTileForce(Monster mover, Vector2Int tile) {
+        const float MAX_FORCE_RANGE = 15f;
+        float force = 0f;
+        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
+            // add influence based on how far away it is
+            float distanceScale = 1f - Global.CalcTileDistance(tile, resource.Tile) / MAX_FORCE_RANGE;
+            if(distanceScale < 0f) {
+                distanceScale = 0f;
+            }
+            force += -resourceData[resource].forceValue * distanceScale;
+
+            // add bonus if the tile is on the path to this resource
+            if(resourceData[resource].forceValue >= 0) {
+                continue; // don't care about paths to resources that are pushing away
+            }
+
+            int pathIndex = resourceData[resource].allyPaths[mover].IndexOf(tile);
+            if(pathIndex >= 0) {
+                int pathDistance = resourceData[resource].allyPaths[mover].Count - pathIndex;
+                distanceScale = 1f - pathDistance / MAX_FORCE_RANGE;
+                if(distanceScale < 0f) {
+                    continue;
+                }
+                force += -resourceData[resource].forceValue * distanceScale;
+            }
+        }
+
+        return force;
+    }
+
+    // REMOVE THIS LATER
     private Vector2Int FindTargetPosition() {
         ResourcePile closestUnclaimed = null;
         int closestDistance = 0;

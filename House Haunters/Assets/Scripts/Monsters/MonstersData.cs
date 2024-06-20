@@ -185,9 +185,5 @@ public class MonstersData
         user.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
         target.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)target.Tile);
     }
-
-    private static void EliminateShield(Monster user, Vector2Int tile) {
-        LevelGrid.Instance.GetMonster(tile).RemoveShield();
-    }
     #endregion
 }

@@ -58,7 +58,7 @@ public class Team
         return totalIngredients >= 3;
     }
 
-    public bool CanBuy(MonsterName monsterType) {
+    public bool CanAfford(MonsterName monsterType) {
         MonsterType monster = MonstersData.Instance.GetMonsterData(monsterType);
 
         Dictionary<Ingredient, int> requirements = new Dictionary<Ingredient, int>();
@@ -79,7 +79,7 @@ public class Team
     }
 
     public void BuyMonster(MonsterName type) {
-        if(!CanBuy(type)) {
+        if(!CanAfford(type)) {
             return;
         }
 

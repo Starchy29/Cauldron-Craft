@@ -62,6 +62,28 @@ public class MenuManager : MonoBehaviour
             int hoveredTargetIndex = tileGroupCenters.IndexOf(closestMidpoint);
             level.ColorTiles(tileGroups[hoveredTargetIndex], TileHighlighter.State.Hovered);
 
+            // if moving into a capture point, highlight the capture point
+            if(selected.Stats.Moves[selectedMoveSlot] is MovementAbility) {
+                bool highlighted = false;
+                foreach(ResourcePile resource in gameManager.AllResources) {
+                    // make sure not already on the capture point
+                    if(Mathf.Abs(selected.Tile.x - resource.Tile.x) <= 1 && Mathf.Abs(selected.Tile.y - resource.Tile.y) <= 1) {
+                        continue;
+                    }
+
+                    Vector2Int hoveredTile = tileGroups[hoveredTargetIndex][0];
+                    if(Mathf.Abs(hoveredTile.x - resource.Tile.x) <= 1 && Mathf.Abs(hoveredTile.y - resource.Tile.y) <= 1) {
+                        level.ColorTiles(level.GetTilesInRange(resource.Tile, 1, true), TileHighlighter.State.Highlighted);
+                        highlighted = true;
+                    }
+                }
+
+                if(!highlighted) {
+                    level.ColorTiles(null, TileHighlighter.State.Highlighted);
+                }
+            }
+
+            // select the target group
             if(input.SelectPressed()) {
                 // use the move on the hovered target
                 SetState(SelectionTarget.None);
@@ -122,8 +144,9 @@ public class MenuManager : MonoBehaviour
         }
 
         if(input.SelectPressed()) {
-            if(hoveredEntity == controller.Spawnpoint && controller.Spawnpoint.CookState == Cauldron.State.Ready) {
+            if(hoveredEntity is Cauldron/*hoveredEntity == controller.Spawnpoint && controller.Spawnpoint.CookState == Cauldron.State.Ready*/) {
                 SetState(SelectionTarget.CraftChoice);
+                buyMenu.Open(hoveredEntity.Controller);
             }
             else if(hoveredEntity is Monster) {
                 moveMenu.GetComponent<MoveMenu>().Open((Monster)hoveredEntity, controller);
@@ -144,10 +167,6 @@ public class MenuManager : MonoBehaviour
         Vector3 endPos = endTurnButton.transform.localPosition;
         endPos.x = (player.OnLeft ? -1 : 1) * Mathf.Abs(endPos.x);
         endTurnButton.transform.localPosition = endPos;
-
-        Vector3 craftPos = buyMenu.transform.localPosition;
-        craftPos.x = (player.OnLeft ? -1 : 1) * Mathf.Abs(craftPos.x);
-        buyMenu.transform.localPosition = craftPos;
     }
 
     private void SetState(SelectionTarget state) {
@@ -213,7 +232,6 @@ public class MenuManager : MonoBehaviour
             case SelectionTarget.Targets:
                 break;
             case SelectionTarget.CraftChoice:
-                buyMenu.Open(controller);
                 break;
             case SelectionTarget.None:
                 gameObject.SetActive(false);

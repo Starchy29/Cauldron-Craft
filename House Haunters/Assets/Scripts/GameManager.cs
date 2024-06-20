@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
     public Team[] AllTeams { get; private set; }
 
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
-    public event TurnEndEvent OnTurnEnd;
+    public event TurnEndEvent OnTurnChange;
 
     private int currentTurnIndex;
 
@@ -45,7 +45,7 @@ public class GameManager : MonoBehaviour
         }
         CurrentTurn = AllTeams[currentTurnIndex];
 
-        OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
+        OnTurnChange?.Invoke(turnEnder, CurrentTurn);
 
         // check for victory
 

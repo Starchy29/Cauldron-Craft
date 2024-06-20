@@ -190,7 +190,7 @@ public class AIController
 
         List<MonsterName> buyOptions = new List<MonsterName>();
         foreach(MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
-            if(team.CanBuy(monsterType)) {
+            if(team.CanAfford(monsterType)) {
                 buyOptions.Add(monsterType);
             }
         }

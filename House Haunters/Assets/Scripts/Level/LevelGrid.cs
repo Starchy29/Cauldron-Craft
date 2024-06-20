@@ -20,6 +20,8 @@ public class LevelGrid : MonoBehaviour
     public int Width { get; private set; }
     public int Height { get; private set; }
 
+    public event MonsterTrigger OnMonsterMove;
+
     void Awake() {
         Instance = this;
         Tiles = GetComponent<Tilemap>();
@@ -93,6 +95,10 @@ public class LevelGrid : MonoBehaviour
     public void PlaceEntity(GridEntity entity, Vector2Int tile) {
         entityGrid[tile.y, tile.x] = entity;
         entity.Tile = tile;
+
+        if(entity is Monster) {
+            OnMonsterMove?.Invoke((Monster)entity);
+        }
 
         TileAffector effect = environmentGrid[tile.y, tile.x].CurrentEffect;
         if(entity is Monster && effect != null && effect.Controller != entity.Controller) {

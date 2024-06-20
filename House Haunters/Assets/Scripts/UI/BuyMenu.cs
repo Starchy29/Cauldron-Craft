@@ -29,6 +29,7 @@ public class BuyMenu : MonoBehaviour
         gameObject.SetActive(true);
         foreach(BuyMonsterButton button in buttons) {
             button.Disabled = !team.CanBuy(button.MonsterOption);
+            button.checkmark.SetActive(team.CraftedMonsters[button.MonsterOption]);
         }
     }
 }

@@ -7,6 +7,7 @@ public class BuyMonsterButton : AutoButton
 {
     [SerializeField] private SpriteRenderer monsterImage;
     [SerializeField] private SpriteRenderer[] ingredientLogos;
+    [SerializeField] public GameObject checkmark;
 
     public MonsterName MonsterOption { get; private set; }
 

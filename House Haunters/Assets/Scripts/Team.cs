@@ -12,12 +12,19 @@ public class Team
     public AIController AI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
     public ResourceTracker ResourceDisplay { get; set; }
+    public Dictionary<MonsterName, bool> CraftedMonsters { get; private set; }
     public bool OnLeft { get { return Spawnpoint != null && Spawnpoint.Tile.x < LevelGrid.Instance.Width / 2; } }
 
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
     public Team(Color color, bool isAI, Ingredient? startBatch = null) {
+        Array monsterTypes = Enum.GetValues(typeof(MonsterName));
+        CraftedMonsters = new Dictionary<MonsterName, bool>(monsterTypes.Length);
+        foreach(MonsterName monster in monsterTypes) {
+            CraftedMonsters[monster] = false;
+        }
+
         TeamColor = color;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
@@ -85,6 +92,16 @@ public class Team
         ResourceDisplay.UpdateDisplay();
 
         Spawnpoint.StartCook(type);
+        CraftedMonsters[type] = true;
+
+        // check for victory
+        foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
+            if(!CraftedMonsters[monster]) {
+                return;
+            }
+        }
+        GameOverviewDisplayer.Instance.ShowWinner(this);
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(99999f));
     }
     
     public void Join(Monster monster) {

@@ -48,17 +48,6 @@ public class GameManager : MonoBehaviour
         OnTurnEnd?.Invoke(turnEnder, CurrentTurn);
 
         // check for victory
-        Team winner = AllResources[0].Controller;
-        foreach(ResourcePile dispenser in AllResources) {
-            if(dispenser.Controller == null || dispenser.Controller != winner) {
-                winner = null;
-                break;
-            }
-        }
-        if(winner != null) {
-            GameOverviewDisplayer.Instance.ShowWinner(winner);
-            return;
-        }
 
         // start next turn
         CurrentTurn.StartTurn();

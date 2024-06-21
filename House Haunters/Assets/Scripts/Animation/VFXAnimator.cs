@@ -1,40 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.U2D;
-using Unity.Collections;
 
-public class VFXAnimator : MonoBehaviour
+public class VFXAnimator : IMoveAnimator
 {
-    private SpriteRenderer spriteRenderer;
-    private float t;
+    public bool Completed { get { return time > 1f; } }
 
-    void Start() {
-        Texture2D texture = new Texture2D(1, 1);
-        texture.SetPixel(0, 0, Color.white);
-        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1);
+    private CaptureVFX visual;
+    private float time;
 
-        spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = sprite;
-        spriteRenderer.sortingLayerName = "VFX";
-        spriteRenderer.sharedMaterial = new Material(Shader.Find("Unlit/WaveParticleShader"));
-        spriteRenderer.color = Color.cyan;
+    public VFXAnimator(CaptureVFX visual, Color color) {
+        this.visual = visual;
+        visual.SetColor(color);
     }
 
-    void Update() {
-        t += 3.0f * Time.deltaTime;
-        SetRadius((Mathf.Sin(t) + 1.0f) / 2.0f);
+    public void Start() {
+        visual.SetRadius(0f);
     }
 
-    private void SetRadius(float radius) {
-        // See WaveParticleShader, uses TEXCOORD1 for the radius value
-        Vector2[] fakeUVs = new Vector2[4] {
-            new Vector2(radius, 0f),
-            new Vector2(radius, 0f),
-            new Vector2(radius, 0f),
-            new Vector2(radius, 0f)
-        };
-        SpriteDataAccessExtensions.SetVertexAttribute(spriteRenderer.sprite, UnityEngine.Rendering.VertexAttribute.TexCoord1,
-            new NativeArray<Vector2>(fakeUVs, Allocator.Temp));
+    public void Update(float deltaTime) {
+        time += 1.0f * Time.deltaTime;
+        float endT = time;
+        if(time <= 0.5f) {
+            // exponential while radius is expanding
+            endT *= 2f; // become domain 0-1
+            endT = endT - 1.0f;
+            endT = 1f + endT * endT * endT * endT * endT; // must be an odd exponent
+            endT /= 2f; // become range 0-0.5
+        }
+        visual.SetRadius(endT);
     }
 }

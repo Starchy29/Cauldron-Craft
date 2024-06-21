@@ -15,6 +15,7 @@ public class ResourcePile : GridEntity
     [SerializeField] private Ingredient type;
     [SerializeField] private GameObject floorCoverPrefab;
     [SerializeField] private GameObject productionIndicator;
+    [SerializeField] private CaptureVFX captureVisual;
     public Ingredient Type { get { return type; } }
 
     protected override void Start() {
@@ -63,6 +64,15 @@ public class ResourcePile : GridEntity
             }
         }
 
-        Controller = capturer;
+        if(Controller != capturer) {
+            Controller = capturer;
+            if(capturer != null) {
+                AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, capturer.TeamColor));
+            }
+            else if(adjacentMonsters.Count > 0) {
+                // show white visual when point is contested
+                AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, Color.white));
+            }
+        }
     }
 }

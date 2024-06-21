@@ -3,7 +3,6 @@ Shader "Unlit/WaveParticleShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        //_Radius ("Radius", float) = 0.25
     }
     SubShader
     {
@@ -47,7 +46,6 @@ Shader "Unlit/WaveParticleShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            //float _Radius;
 
             v2f vert (appdata v)
             {

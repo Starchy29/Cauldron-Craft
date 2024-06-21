@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Diameter: 1.89
-    - _Radius: 0.33
+    - _Radius: 0.39
     m_Colors:
     - _Color: {r: 0.78867924, g: 0.40379733, b: 0.07589176, a: 1}
     - _MainColor: {r: 0.645283, g: 0.43708792, b: 0.43708792, a: 1}

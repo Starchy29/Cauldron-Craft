@@ -3,7 +3,7 @@ Shader "Unlit/WaveParticleShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Radius ("Radius", float) = 0.25
+        //_Radius ("Radius", float) = 0.25
     }
     SubShader
     {
@@ -34,6 +34,7 @@ Shader "Unlit/WaveParticleShader"
                 float4 vertex : POSITION;
                 float4 color : COLOR;
                 float2 uv : TEXCOORD0;
+                float2 radius : TEXCOORD1;
             };
 
             struct v2f
@@ -41,15 +42,17 @@ Shader "Unlit/WaveParticleShader"
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
                 float2 uv : TEXCOORD0;
+                float radius : TEXCOORD1;
             };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float _Radius;
+            //float _Radius;
 
             v2f vert (appdata v)
             {
                 v2f o;
+                o.radius = v.radius.x;
                 o.color = v.color;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
@@ -59,7 +62,7 @@ Shader "Unlit/WaveParticleShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                if(_Radius == 0.0f) {
+                if(i.radius == 0.0f) {
                     discard;
                 }
 
@@ -67,11 +70,11 @@ Shader "Unlit/WaveParticleShader"
                 float dy = i.uv.y - 0.5f;
                 float dist = sqrt(dx * dx + dy * dy);
 
-                float edgeDelta = dist - _Radius;
-                float inCircle = clamp(min(_Radius, 0.5f) - dist, 0.0f, 1.0f);
+                float edgeDelta = dist - i.radius;
+                float inCircle = clamp(min(i.radius, 0.5f) - dist, 0.0f, 1.0f);
                 inCircle = ceil(inCircle); // 1 or 0
 
-                float halfRad = _Radius / 2.0f;
+                float halfRad = i.radius / 2.0f;
                 float alpha = clamp(edgeDelta, -halfRad, 0);
                 alpha = (alpha + halfRad) / halfRad;
                 alpha = alpha * alpha;

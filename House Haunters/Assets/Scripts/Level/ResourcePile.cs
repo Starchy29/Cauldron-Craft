@@ -34,6 +34,9 @@ public class ResourcePile : GridEntity
             floorCover.transform.localScale = new Vector3(Random.value < 0.5f ? 1f : 1f, Random.value < 0.5f ? 1f : 1f, 1f);
             floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);
         }
+
+        productionIndicator.SetActive(true);
+        StartCoroutine(HideResourceType());
     }
 
     private void GrantResource(Team turnEnder, Team nextTurn) {
@@ -74,5 +77,10 @@ public class ResourcePile : GridEntity
                 AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, Color.white));
             }
         }
+    }
+
+    private IEnumerator HideResourceType() {
+        yield return new WaitForSeconds(4.0f);
+        productionIndicator.SetActive(false);
     }
 }

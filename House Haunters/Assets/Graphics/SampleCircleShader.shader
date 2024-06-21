@@ -1,9 +1,8 @@
-Shader "Unlit/WaveParticleShader"
+Shader "Unlit/SampleCircleShader"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Radius ("Radius", float) = 0.25
     }
     SubShader
     {
@@ -45,7 +44,6 @@ Shader "Unlit/WaveParticleShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float _Radius;
 
             v2f vert (appdata v)
             {
@@ -59,23 +57,15 @@ Shader "Unlit/WaveParticleShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                if(_Radius == 0.0f) {
-                    discard;
-                }
+                float radius = 0.4f;
 
                 float dx = i.uv.x - 0.5f;
                 float dy = i.uv.y - 0.5f;
-                float dist = sqrt(dx * dx + dy * dy);
-
-                float edgeDelta = dist - _Radius;
-                float inCircle = clamp(min(_Radius, 0.5f) - dist, 0.0f, 1.0f);
-                inCircle = ceil(inCircle); // 1 or 0
-
-                float halfRad = _Radius / 2.0f;
-                float alpha = clamp(edgeDelta, -halfRad, 0);
-                alpha = (alpha + halfRad) / halfRad;
-                alpha = alpha * alpha;
-                return fixed4(i.color.r, i.color.g, i.color.b, inCircle * alpha);
+                float sqrDist = dx * dx + dy * dy;
+                float inCircle = sqrDist - radius * radius;
+                inCircle = clamp(inCircle, 0.0f, 1.0f);
+                inCircle = 1.0f - ceil(inCircle);
+                return inCircle * i.color;
             }
             ENDCG
         }

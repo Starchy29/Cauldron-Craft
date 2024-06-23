@@ -135,11 +135,9 @@ public class MenuManager : MonoBehaviour
         if(hoveredEntity is Monster) {
             hoveredHealthbar = ((Monster)hoveredEntity).healthBar;
             hoveredHealthbar.gameObject.SetActive(true);
-            if(hoveredEntity.Controller == controller && HasUsableMove((Monster)hoveredEntity)) {
-                level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
-            }
+            level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
         }
-        else if(hoveredEntity == controller.Spawnpoint && controller.CanCraft()) {
+        else if(hoveredEntity is Cauldron) {
             level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
         }
 

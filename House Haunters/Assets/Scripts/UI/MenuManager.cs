@@ -9,6 +9,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private GameObject TileSelector;
     [SerializeField] private MoveMenu moveMenu;
     [SerializeField] private AutoButton endTurnButton;
+    [SerializeField] private AutoButton backButton;
     [SerializeField] private BuyMenu buyMenu;
     [SerializeField] private TerrainDisplay terrainInfo;
 
@@ -57,6 +58,11 @@ public class MenuManager : MonoBehaviour
         }
 
         if(state == SelectionTarget.Targets) {
+            if(backButton.isActiveAndEnabled && Global.GetObjectArea(backButton.gameObject).Contains(mousePos)) {
+                level.ColorTiles(null, TileHighlighter.State.Hovered);
+                return;
+            }
+
             // find the target group that the mouse is closest to
             Vector2 closestMidpoint = tileGroupCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
             int hoveredTargetIndex = tileGroupCenters.IndexOf(closestMidpoint);
@@ -175,6 +181,7 @@ public class MenuManager : MonoBehaviour
         moveMenu.gameObject.SetActive(false);
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);
+        backButton.gameObject.SetActive(false);
 
         if(hoveredHealthbar != null) {
             hoveredHealthbar.gameObject.SetActive(false);
@@ -228,6 +235,7 @@ public class MenuManager : MonoBehaviour
                 level.ColorTiles(new List<Vector2Int>() { selected.Tile }, TileHighlighter.State.Selected);
                 break;
             case SelectionTarget.Targets:
+                backButton.gameObject.SetActive(true);
                 break;
             case SelectionTarget.CraftChoice:
                 break;
@@ -237,7 +245,7 @@ public class MenuManager : MonoBehaviour
         }
     }
 
-    private void BackMenu() {
+    public void BackMenu() {
         switch(state) {
             case SelectionTarget.Move:
             case SelectionTarget.CraftChoice:

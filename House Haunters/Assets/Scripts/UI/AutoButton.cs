@@ -9,7 +9,8 @@ public class AutoButton : MonoBehaviour
         None,
         EndTurn,
         StartGamePVP,
-        StartGameVAI
+        StartGameVAI,
+        BackTargetSelect
     }
 
     [SerializeField] private ClickFunction clickFunction;
@@ -46,6 +47,9 @@ public class AutoButton : MonoBehaviour
                 break;
             case ClickFunction.StartGameVAI:
                 OnClick = MainMenuScript.StartVAI;
+                break;
+            case ClickFunction.BackTargetSelect:
+                OnClick = MenuManager.Instance.BackMenu;
                 break;
         }
     }

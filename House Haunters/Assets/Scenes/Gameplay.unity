@@ -963,7 +963,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 6.328125
+  orthographic size: 5.625
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1397,6 +1397,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
+--- !u!1001 &966836689
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 10.534811
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5.535477
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5165667124434727793, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
+      propertyPath: m_Name
+      value: Mineral Dispenser Variant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
 --- !u!1001 &986693828
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2377,71 +2434,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 32a501b985b04f6469903ed700417307, type: 3}
---- !u!1001 &6400418577977896148
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 9.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 7.45
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457141313971616825, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5165667124434727793, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_Name
-      value: Mineral Dispenser
-      objectReference: {fileID: 0}
-    - target: {fileID: 8109312325297450834, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 1.06
-      objectReference: {fileID: 0}
-    - target: {fileID: 8109312325297450834, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -2.05
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 2eb3042569d57c946b70216bb921ab51, type: 3}
 --- !u!1001 &6529777820429757750
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2682,8 +2674,8 @@ SceneRoots:
   - {fileID: 1579122979}
   - {fileID: 3018282469823998831}
   - {fileID: 922871346461308577}
-  - {fileID: 6400418577977896148}
   - {fileID: 1944196749}
   - {fileID: 745189249}
   - {fileID: 986693828}
   - {fileID: 1557647810}
+  - {fileID: 966836689}

@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4284e229e0fba9f45bb537cf4e6fdae8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugger: {fileID: 1743635386874130840, guid: 053e80019c2fba74a9fe8b476799794e, type: 3}
   tempMonsterSprite: {fileID: 21300000, guid: 14ab788be10e8f342804642edf2e325b, type: 3}
   decayLogo: {fileID: 21300000, guid: da2b981931036834a9f50dd660c30dae, type: 3}
   floraLogo: {fileID: 21300000, guid: ca32c64207d021f47bb321810237b682, type: 3}

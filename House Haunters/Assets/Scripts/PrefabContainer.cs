@@ -55,7 +55,8 @@ public class PrefabContainer : MonoBehaviour
             { StatusEffect.Haunted, hauntedIcon },
         };
     }
-    
+
+    public GameObject debugger;
     public Sprite tempMonsterSprite;
 
     public Sprite decayLogo;

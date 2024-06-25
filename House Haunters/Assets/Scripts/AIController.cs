@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class AIController
 {
@@ -45,11 +46,11 @@ public class AIController
                 continue;
             }
 
-            int chosenMoveSlot = moveOptions[Random.Range(0, moveOptions.Count)];
+            int chosenMoveSlot = moveOptions[UnityEngine.Random.Range(0, moveOptions.Count)];
 
             // extra chance to choose an attack
             foreach(int moveSlot in moveOptions) {
-                if(monster.Stats.Moves[moveSlot] is Attack && Random.value < 0.3f) {
+                if(monster.Stats.Moves[moveSlot] is Attack && UnityEngine.Random.value < 0.3f) {
                     chosenMoveSlot = moveSlot;
                     break;
                 }
@@ -59,24 +60,22 @@ public class AIController
 
             List<List<Vector2Int>> targetOptions = monster.GetMoveOptions(chosenMoveSlot);
 
-            
-
             // when moving, bias towards the current objective
             if(chosenMove is MovementAbility) {
                 //targetOptions.Sort((List<Vector2Int> tile1, List<Vector2Int> tile2) => { return Global.CalcTileDistance(tile1[0], targetPosition) - Global.CalcTileDistance(tile2[0], targetPosition); });
                 //chosenTargets /= 4; // only choose from the better portion of options
-
+                DebugHelp.Instance.ClearNumbers();
                 List<Vector2Int> moveSpot = targetOptions.Max((List<Vector2Int> tileGroup) => { return DetermineTileForce(monster, tileGroup[0]); } );
                 monster.UseMove(chosenMoveSlot, moveSpot);
                 return;
             }
 
-            int chosenTargets = Random.Range(0, targetOptions.Count);
+            int chosenTargets = UnityEngine.Random.Range(0, targetOptions.Count);
             monster.UseMove(chosenMoveSlot, targetOptions[chosenTargets]);
             return;
         }
 
-        AttemptCraft();
+        //AttemptCraft();
 
         team.EndTurn();
     }
@@ -105,11 +104,7 @@ public class AIController
             }
 
             // choose a force value for this resource
-            if(resource.Controller == team) {
-                data.forceValue = data.Advantage;
-            } else {
-                data.forceValue = -0.8f - data.Advantage; // invest more if winning more
-            }
+            data.forceValue = -1f;
 
             resourceData[resource] = data;
         }
@@ -142,13 +137,6 @@ public class AIController
         const float MAX_FORCE_RANGE = 15f;
         float force = 0f;
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            // add influence based on how far away it is
-            float distanceScale = 1f - Global.CalcTileDistance(tile, resource.Tile) / MAX_FORCE_RANGE;
-            if(distanceScale < 0f) {
-                distanceScale = 0f;
-            }
-            force += -resourceData[resource].forceValue * distanceScale;
-
             // add bonus if the tile is on the path to this resource
             if(resourceData[resource].forceValue >= 0) {
                 continue; // don't care about paths to resources that are pushing away
@@ -157,14 +145,14 @@ public class AIController
             int pathIndex = resourceData[resource].allyPaths[mover].IndexOf(tile);
             if(pathIndex >= 0) {
                 int pathDistance = resourceData[resource].allyPaths[mover].Count - pathIndex;
-                distanceScale = 1f - pathDistance / MAX_FORCE_RANGE;
+                float distanceScale = 1f - pathDistance / MAX_FORCE_RANGE;
                 if(distanceScale < 0f) {
                     continue;
                 }
                 force += -resourceData[resource].forceValue * distanceScale;
             }
         }
-
+        DebugHelp.Instance.MarkTile(tile, force.ToString("F2"));
         return force;
     }
 
@@ -196,8 +184,27 @@ public class AIController
         }
 
         if(buyOptions.Count > 0) {
-            team.BuyMonster(buyOptions[Random.Range(0, buyOptions.Count)]);
+            team.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);
         }
+    }
+
+    // finds the amount of each resource this team needs to win the game
+    private Dictionary<Ingredient, int> DetermineNeededIngredients(Team team) {
+        Dictionary<Ingredient, int> result = new Dictionary<Ingredient, int>();
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            result[ingredient] = 0;
+        }
+
+        Dictionary<MonsterName, bool> crafted = team.CraftedMonsters;
+        foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
+            if(!crafted[monster]) {
+                MonsterType data = MonstersData.Instance.GetMonsterData(monster);
+                foreach(Ingredient ingredient in data.Recipe) {
+                    result[ingredient]++;
+                }
+            }
+        }
+        return result;
     }
 
     private struct ResourceData {

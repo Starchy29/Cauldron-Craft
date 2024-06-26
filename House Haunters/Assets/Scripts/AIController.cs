@@ -17,23 +17,16 @@ public class AIController
 
     public AIController(Team team) {
         this.controlTarget = team;
-        AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
+        //AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
     }
 
     public void PlanTurn() {
         // determine which resources to focus on
         resourceData = EvaluateResources();
 
-        float captureDesirability; // how much this AI wants to capture a new resource from 0-1
-
-        // each monster must weight the desiriability of each resource against how far it is.
-        // even if another resource is more desirable, if it's too far away it is not yet worth persuing.
-
-        // when attacking, evaluate whether this should retreat or invest more
-
-            // order monsters
-
-            // assign tasks
+        while(GameManager.Instance.CurrentTurn == controlTarget) {
+            ChooseMove(controlTarget);
+        }
     }
 
     // chooses 1 move at a time

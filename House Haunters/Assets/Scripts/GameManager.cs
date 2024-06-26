@@ -47,11 +47,9 @@ public class GameManager : MonoBehaviour
 
         OnTurnChange?.Invoke(turnEnder, CurrentTurn);
 
-        // check for victory
-
         // start next turn
-        CurrentTurn.StartTurn();
         GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
+        CurrentTurn.StartTurn();
     }
 
     public Monster SpawnMonster(MonsterName monsterType, Vector2Int startTile, Team controller) {

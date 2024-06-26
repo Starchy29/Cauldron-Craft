@@ -159,6 +159,8 @@ public class Monster : GridEntity
         CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksOnce, Instantiate(shield.Visual));
         CurrentShield.Visual.transform.SetParent(transform, false);
         CurrentShield.Visual.transform.localPosition = Vector3.zero;
+        CurrentShield.Visual.SetActive(false);
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(CurrentShield.Visual, true));
     }
 
     public bool CanMoveTo(Vector2Int tile) {

@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class MonsterType
 {
+    public const int WALK_INDEX = 0;
+    public int PrimaryAttackIndex { get { return Moves.Length - 1; } }
+
     public List<Ingredient> Recipe { get; private set; }
     public int Health { get; private set; }
     public int Speed { get; private set; }

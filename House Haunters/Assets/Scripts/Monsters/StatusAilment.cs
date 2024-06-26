@@ -46,6 +46,6 @@ public class StatusAilment : IEquatable<StatusAilment>
     }
 
     public void Terminate() {
-        GameObject.Destroy(visual);
+        AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(visual));
     }
 }

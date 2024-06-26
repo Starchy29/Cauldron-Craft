@@ -24,6 +24,8 @@ public class TileAffector
 
         GameObject visual = GameObject.Instantiate(blueprint.visual);
         visual.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
+        visual.SetActive(false);
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
 
         TileAffector createdEffect = new TileAffector(visual, blueprint.Duration, blueprint.AppliedStatus, blueprint.MovementTax, blueprint.landEffect, blueprint.destroyOnUse, blueprint.StopsMovement);
         createdEffect.tile = tile;

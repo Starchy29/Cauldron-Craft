@@ -39,6 +39,10 @@ public class ResourcePile : GridEntity
         StartCoroutine(HideResourceType());
     }
 
+    public bool IsInCaptureRange(Vector2Int tile) {
+        return Mathf.Abs(tile.x - Tile.x) <= 1 && Mathf.Abs(tile.y - Tile.y) <= 1;
+    }
+
     private void GrantResource(Team turnEnder, Team nextTurn) {
         if(nextTurn == Controller) {
             Controller.AddResource(type);

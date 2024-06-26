@@ -77,6 +77,14 @@ public static class Global
         return result;
     }
 
+    public static List<EndType> Map<StartType, EndType>(this StartType[] arr, MapValue<StartType, EndType> mapFunction) {
+        List<EndType> result = new List<EndType>();
+        foreach(StartType element in arr) {
+            result.Add(mapFunction(element));
+        }
+        return result;
+    }
+
     public static T Collapse<T>(this T[] array, ValueCombiner<T> valueCombiner) {
         if(array.Length == 0) {
             return default(T);

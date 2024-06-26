@@ -5,19 +5,18 @@ using System;
 
 public class AIController
 {
-    public enum Playstyle { // could be aggression value
-        Offensive,
-        Defensive
-    }
+    // playstyle values, 0-1
+    private float greed = 0.5f; // how much this player likes to control multiple resources at once
+    private float aggression; // how much this player prioritizes eliminating enemy monsters
 
-    private Team team;
+    private Team controlTarget;
     //private float aggression; // how much this AI favors offense over defense
     //private float persistence; // how much this AI commits to its strategy
 
     private static Dictionary<ResourcePile, ResourceData> resourceData;
 
     public AIController(Team team) {
-        this.team = team;
+        this.controlTarget = team;
         AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
     }
 
@@ -25,6 +24,10 @@ public class AIController
         // determine which resources to focus on
         resourceData = EvaluateResources();
 
+        float captureDesirability; // how much this AI wants to capture a new resource from 0-1
+
+        // each monster must weight the desiriability of each resource against how far it is.
+        // even if another resource is more desirable, if it's too far away it is not yet worth persuing.
 
         // when attacking, evaluate whether this should retreat or invest more
 
@@ -35,12 +38,11 @@ public class AIController
 
     // chooses 1 move at a time
     public void ChooseMove(Team currentTurn) {
-        if(currentTurn != team) {
+        if(currentTurn != controlTarget) {
             return;
         }
 
-        Vector2Int targetPosition = FindTargetPosition();
-        foreach(Monster monster in team.Teammates) {
+        foreach(Monster monster in controlTarget.Teammates) {
             List<int> moveOptions = monster.GetUsableMoveSlots();
             if(moveOptions.Count == 0) {
                 continue;
@@ -64,8 +66,24 @@ public class AIController
             if(chosenMove is MovementAbility) {
                 //targetOptions.Sort((List<Vector2Int> tile1, List<Vector2Int> tile2) => { return Global.CalcTileDistance(tile1[0], targetPosition) - Global.CalcTileDistance(tile2[0], targetPosition); });
                 //chosenTargets /= 4; // only choose from the better portion of options
-                DebugHelp.Instance.ClearNumbers();
-                List<Vector2Int> moveSpot = targetOptions.Max((List<Vector2Int> tileGroup) => { return DetermineTileForce(monster, tileGroup[0]); } );
+
+                // choose which resource to move towards
+                ResourcePile targetResource = GameManager.Instance.AllResources.Max(
+                    (ResourcePile resource) => {
+                        float distanceWeight = (20f - resourceData[resource].allyPaths[monster].Count) / 20f;
+                        return resourceData[resource].desirability * distanceWeight; 
+                    }
+                );
+
+                // if within range of the point, only move onto tiles that are in capture range
+                List<Vector2Int> moveSpot;
+                List<List<Vector2Int>> onCapture = targetOptions.FindAll((List<Vector2Int> tileCont) => { return targetResource.IsInCaptureRange(tileCont[0]);});
+                if(onCapture.Count > 0) {
+                    moveSpot = onCapture[UnityEngine.Random.Range(0, onCapture.Count)];
+                } else {
+                    // follow the path to the desired resource
+                    moveSpot = targetOptions.Max((List<Vector2Int> tileGroup) => { return resourceData[targetResource].allyPaths[monster].IndexOf(tileGroup[0]); });
+                }
                 monster.UseMove(chosenMoveSlot, moveSpot);
                 return;
             }
@@ -75,26 +93,31 @@ public class AIController
             return;
         }
 
-        //AttemptCraft();
+        AttemptCraft();
 
-        team.EndTurn();
+        controlTarget.EndTurn();
     }
     
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {
         Dictionary<ResourcePile, ResourceData> resourceData = new Dictionary<ResourcePile, ResourceData>();
+
+        Dictionary<Team, Dictionary<Ingredient, float>> teamNeededResources = new Dictionary<Team, Dictionary<Ingredient, float>>();
+        foreach(Team team in GameManager.Instance.AllTeams) {
+            teamNeededResources[team] = DetermineIngredientImportance(team);
+        }
 
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
             ResourceData data = new ResourceData();
 
             // determine how much influence each team has on this resource
             data.allyPaths = new Dictionary<Monster, List<Vector2Int>>();
-            foreach(Monster ally in team.Teammates) {
+            foreach(Monster ally in controlTarget.Teammates) {
                 data.allyPaths[ally] = ally.FindPath(resource.Tile, false);
                 data.controlValue += CalculateInfluence(ally, resource, data.allyPaths[ally]);
             }
 
             foreach(Team opponent in GameManager.Instance.AllTeams) {
-                if(opponent == team) {
+                if(opponent == controlTarget) {
                     continue;
                 }
 
@@ -103,8 +126,10 @@ public class AIController
                 }
             }
 
-            // choose a force value for this resource
-            data.forceValue = -1f;
+            // determine how much each team needs this resource
+            foreach(Team team in GameManager.Instance.AllTeams) {
+                data.desirability += teamNeededResources[team][resource.Type] * (team == controlTarget ? 1f : 0.5f);
+            }
 
             resourceData[resource] = data;
         }
@@ -119,7 +144,8 @@ public class AIController
             return 0;
         }
 
-        int distance = (existingPath == null ? monster.FindPath(resource.Tile, false) : existingPath).Count - 1; // distance to capture area
+        // find the distance to the capture zone
+        int distance = (existingPath == null ? monster.FindPath(resource.Tile, false) : existingPath).Count - 1;
         if(monster.Tile.x != resource.Tile.x && monster.Tile.y != resource.Tile.y) {
             // make corners worth the same as orthogonally adjacent
             distance--;
@@ -137,11 +163,6 @@ public class AIController
         const float MAX_FORCE_RANGE = 15f;
         float force = 0f;
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            // add bonus if the tile is on the path to this resource
-            if(resourceData[resource].forceValue >= 0) {
-                continue; // don't care about paths to resources that are pushing away
-            }
-
             int pathIndex = resourceData[resource].allyPaths[mover].IndexOf(tile);
             if(pathIndex >= 0) {
                 int pathDistance = resourceData[resource].allyPaths[mover].Count - pathIndex;
@@ -149,52 +170,46 @@ public class AIController
                 if(distanceScale < 0f) {
                     continue;
                 }
-                force += -resourceData[resource].forceValue * distanceScale;
             }
         }
         DebugHelp.Instance.MarkTile(tile, force.ToString("F2"));
         return force;
     }
 
-    // REMOVE THIS LATER
-    private Vector2Int FindTargetPosition() {
-        ResourcePile closestUnclaimed = null;
-        int closestDistance = 0;
-        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            int distance = Global.CalcTileDistance(resource.Tile, team.Spawnpoint.Tile);
-            if(resource.Controller != team && (closestUnclaimed == null || distance < closestDistance)) {
-                closestUnclaimed = resource;
-                closestDistance = distance;
-            }
-        }
-
-        return closestUnclaimed == null ? Vector2Int.zero : closestUnclaimed.Tile;
-    }
-
     private void AttemptCraft() {
-        if(team.Spawnpoint.CookState != Cauldron.State.Ready) {
+        if(controlTarget.Spawnpoint.CookState != Cauldron.State.Ready) {
             return;
         }
 
         List<MonsterName> buyOptions = new List<MonsterName>();
-        foreach(MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
-            if(team.CanAfford(monsterType)) {
+        List<MonsterName> newOptions = new List<MonsterName>();
+        foreach (MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
+            if(controlTarget.CanAfford(monsterType)) {
                 buyOptions.Add(monsterType);
+                if(!controlTarget.CraftedMonsters[monsterType]) {
+                    newOptions.Add(monsterType);
+                }
             }
         }
 
-        if(buyOptions.Count > 0) {
-            team.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);
+        if(newOptions.Count > 0) {
+            controlTarget.BuyMonster(newOptions[UnityEngine.Random.Range(0, newOptions.Count)]);
+        }
+        else if(buyOptions.Count > 0) {
+            controlTarget.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);
         }
     }
 
-    // finds the amount of each resource this team needs to win the game
-    private Dictionary<Ingredient, int> DetermineNeededIngredients(Team team) {
-        Dictionary<Ingredient, int> result = new Dictionary<Ingredient, int>();
+    // returns a dictionary where each ingredient has an entry from 0-1 which indicates the ratio of how many are needed relative to the others
+    private Dictionary<Ingredient, float> DetermineIngredientImportance(Team team) {
+        Dictionary<Ingredient, float> result = new Dictionary<Ingredient, float>();
+        
+        // reduce by the amount if ingredients in the inventory
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            result[ingredient] = 0;
+            result[ingredient] = -team.Resources[ingredient];
         }
 
+        // add up the recipes of all monster types
         Dictionary<MonsterName, bool> crafted = team.CraftedMonsters;
         foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
             if(!crafted[monster]) {
@@ -204,6 +219,23 @@ public class AIController
                 }
             }
         }
+
+        // remove neagtive amounts and find total
+        float total = 0;
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            result[ingredient] = Mathf.Max(result[ingredient], 0f);
+            total += result[ingredient];
+        }
+
+        if(total == 0) {
+            return result;
+        }
+
+        // change counts to weights
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            result[ingredient] = result[ingredient] / total;
+        }
+
         return result;
     }
 
@@ -211,7 +243,7 @@ public class AIController
         public Dictionary<Monster, List<Vector2Int>> allyPaths;
         public float threatValue; // opponent's influence
         public float controlValue; // controller's influence
-        public float forceValue; // positive: push away, negative: pull in
+        public float desirability;
 
         public float Intensity { get { return threatValue + controlValue; } } // amount of action at a control point
         public float Advantage { get { return controlValue - threatValue; } } // positive: winning, negative: losing

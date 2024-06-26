@@ -73,12 +73,12 @@ public class MenuManager : MonoBehaviour
                 bool highlighted = false;
                 foreach(ResourcePile resource in gameManager.AllResources) {
                     // make sure not already on the capture point
-                    if(Mathf.Abs(selected.Tile.x - resource.Tile.x) <= 1 && Mathf.Abs(selected.Tile.y - resource.Tile.y) <= 1) {
+                    if(resource.IsInCaptureRange(selected.Tile)) {
                         continue;
                     }
 
                     Vector2Int hoveredTile = tileGroups[hoveredTargetIndex][0];
-                    if(Mathf.Abs(hoveredTile.x - resource.Tile.x) <= 1 && Mathf.Abs(hoveredTile.y - resource.Tile.y) <= 1) {
+                    if(resource.IsInCaptureRange(hoveredTile)) {
                         level.ColorTiles(level.GetTilesInRange(resource.Tile, 1, true), TileHighlighter.State.Highlighted);
                         highlighted = true;
                     }

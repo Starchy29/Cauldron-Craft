@@ -37,7 +37,7 @@ public class DebugHelp : MonoBehaviour
 
         foreach(TMPro.TextMeshPro tileMarker in tileMarkers) {
             if(tileMarker != null) {
-                Destroy(tileMarker.gameObject);
+                tileMarker.text = "";
             }
         }
     }

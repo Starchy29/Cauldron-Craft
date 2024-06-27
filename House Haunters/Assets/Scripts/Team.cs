@@ -125,7 +125,7 @@ public class Team
         if(AI == null) {
             MenuManager.Instance.StartPlayerTurn(this);
         } else {
-            AI.PlanTurn();
+            AI.TakeTurn();
         }
     }
 

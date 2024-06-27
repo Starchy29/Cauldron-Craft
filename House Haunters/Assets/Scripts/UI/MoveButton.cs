@@ -25,7 +25,7 @@ public class MoveButton : AutoButton
         Move move = user.Stats.Moves[moveSlot];
         
         CoveredArea = new List<Vector2Int>();
-        bool showFiltered = move.TargetType == Move.Targets.Traversable || move.TargetType == Move.Targets.StandableSpot;
+        bool showFiltered = move.TargetType == Move.Targets.StandableSpot;
         List<List<Vector2Int>> groups = move.GetOptions(user, showFiltered, false);
         foreach(List<Vector2Int> group in groups) {
             CoveredArea.AddRange(group);

@@ -21,7 +21,7 @@ public class Move {
         Enemies,
         ZonePlaceable,
         StandableSpot,
-        Traversable
+        Prefiltered
     }
 
     private ISelector selection;
@@ -44,7 +44,7 @@ public class Move {
         { Targets.Enemies, IsEnemyOn },
         { Targets.ZonePlaceable, CanPlaceZoneAt },
         { Targets.StandableSpot, IsStandable },
-        { Targets.Traversable, IsTraversable }
+        { Targets.Prefiltered, IsFiltered }
     };
 
     public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, EffectFunction effect, AnimationQueuer effectAnimation, string description = "") {
@@ -79,9 +79,7 @@ public class Move {
 
     public void Use(Monster user, List<Vector2Int> tiles) {
         List<Vector2Int> filteredTiles = tiles;
-        if(TargetType != Targets.Traversable) { // avoid pathfinding extra times
-            filteredTiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
-        }
+        filteredTiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
 
         if(effectAnimation != null) {
             effectAnimation.QueueAnimation(user, effectAnimation.UseFilteredSelection ? filteredTiles : tiles);
@@ -125,8 +123,8 @@ public class Move {
         return user.CanMoveTo(tile);
     }
 
-    public static bool IsTraversable(Monster user, Vector2Int tile) {
-        return user.FindPath(tile, true) != null;
+    public static bool IsFiltered(Monster user, Vector2Int tile) {
+        return true; // some moves, specifically movement, can use the selector to filter beforehand for better performance
     }
     #endregion
 }

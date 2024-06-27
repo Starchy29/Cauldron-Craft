@@ -20,21 +20,18 @@ public class AIController
         //AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
     }
 
-    public void PlanTurn() {
+    // enacts every move in the turn immediately. The animation queuer makes the visuals play out in the correct order
+    public void TakeTurn() {
         // determine which resources to focus on
         resourceData = EvaluateResources();
 
         while(GameManager.Instance.CurrentTurn == controlTarget) {
-            ChooseMove(controlTarget);
+            ChooseMove();
         }
     }
 
     // chooses 1 move at a time
-    public void ChooseMove(Team currentTurn) {
-        if(currentTurn != controlTarget) {
-            return;
-        }
-
+    public void ChooseMove() {
         foreach(Monster monster in controlTarget.Teammates) {
             List<int> moveOptions = monster.GetUsableMoveSlots();
             if(moveOptions.Count == 0) {

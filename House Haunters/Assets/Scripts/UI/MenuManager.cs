@@ -195,6 +195,7 @@ public class MenuManager : MonoBehaviour
             targetedHealthBars = null;
         }
 
+        level.ColorTiles(null, TileHighlighter.State.WeakHighlight);
         level.ColorTiles(null, TileHighlighter.State.Highlighted);
         level.ColorTiles(null, TileHighlighter.State.Hovered);
         level.ColorTiles(null, TileHighlighter.State.Selectable);
@@ -233,6 +234,17 @@ public class MenuManager : MonoBehaviour
                 }
                 moveMenu.Open(selected, controller);
                 level.ColorTiles(new List<Vector2Int>() { selected.Tile }, TileHighlighter.State.Selected);
+
+                // show which tiles this monster can attack after moving
+                //Dictionary<Vector2Int, List<List<Vector2Int>>> options = selected.GetMoveOptionsAfterWalk(3, true);
+                //List<Vector2Int> movable = new List<Vector2Int>();
+                //List<Vector2Int> attackable = new List<Vector2Int>();
+                //foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> option in options) {
+                //    movable.Add(option.Key);
+                //    attackable.AddRange(option.Value.Collapse((List<Vector2Int> cur, List<Vector2Int> next) => { cur.AddRange(next); return cur; }));
+                //}
+                //level.ColorTiles(movable, TileHighlighter.State.Highlighted);
+                //level.ColorTiles(attackable, TileHighlighter.State.WeakHighlight);
                 break;
             case SelectionTarget.Targets:
                 backButton.gameObject.SetActive(true);

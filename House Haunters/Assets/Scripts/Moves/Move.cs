@@ -25,6 +25,7 @@ public class Move {
     }
 
     private ISelector selection;
+    public int Range { get { return selection.Range; } }
 
     public Targets TargetType { get; private set; }
     public MoveType Type { get; private set; }

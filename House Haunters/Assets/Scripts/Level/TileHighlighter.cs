@@ -5,6 +5,7 @@ using UnityEngine;
 public class TileHighlighter : MonoBehaviour
 {
     public enum State {
+        WeakHighlight, // less important than normal highlight
         Highlighted, // just for informatiom
         Selectable, // shows what can be selected
         Hovered, // shows that something will be selected if the mouse is clicked
@@ -15,6 +16,7 @@ public class TileHighlighter : MonoBehaviour
 
     private bool hovered;
     private bool highlighted;
+    private bool weakHighlighted;
     private bool selectable;
     private bool selected;
     private SpriteRenderer sprite;
@@ -37,6 +39,9 @@ public class TileHighlighter : MonoBehaviour
             case State.Highlighted:
                 highlighted = activated;
                 break;
+            case State.WeakHighlight:
+                weakHighlighted = activated;
+                break;
             case State.Hovered:
                 hovered = activated;
                 break;
@@ -54,6 +59,9 @@ public class TileHighlighter : MonoBehaviour
         }
         else if(highlighted) {
             sprite.color = new Color(0.8f, 0.8f, 0.2f, ALPHA); // yellow
+        }
+        else if(weakHighlighted) {
+            sprite.color = new Color(0.4f, 0.4f, 0.4f, ALPHA); // gray
         }
         else {
             sprite.color = new Color(0f, 0f, 0f, 0f);

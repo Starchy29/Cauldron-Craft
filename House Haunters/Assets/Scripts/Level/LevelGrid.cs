@@ -106,6 +106,18 @@ public class LevelGrid : MonoBehaviour
         }
     }
 
+    // allows simulation of entities at new positions without triggering any effects.
+    // Entities are expected to be placed back to their original position at the end
+    public void TestEntity(GridEntity entity, Vector2Int tempPosition) {
+        if(entityGrid[tempPosition.y, tempPosition.x] != null) {
+            throw new ArgumentException($"Error: Cannot test a tile that is currently occupied (tried to test {tempPosition}).");
+        }
+
+        entityGrid[entity.Tile.y, entity.Tile.x] = null;
+        entityGrid[tempPosition.y, tempPosition.x] = entity;
+        entity.Tile = tempPosition;
+    }
+
     public void MoveEntity(GridEntity entity, Vector2Int tile) {
         ClearEntity(entity.Tile);
         PlaceEntity(entity, tile);

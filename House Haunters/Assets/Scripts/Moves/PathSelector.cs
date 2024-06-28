@@ -32,7 +32,9 @@ public class PathSelector : ISelector
                         break;
                     }
 
-                    navigableTiles.Add(path[i]);
+                    if(user.CanMoveTo(path[i])) {
+                        navigableTiles.Add(path[i]);
+                    }
                 }
             }
         }

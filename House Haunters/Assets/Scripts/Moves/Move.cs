@@ -58,7 +58,7 @@ public class Move {
         this.effectAnimation = effectAnimation;
     }
 
-    // filters down the selection groups to be only tiles that pass the filter
+    // has options to filter down to options with at least one target as well as filter out useless tiles
     public List<List<Vector2Int>> GetOptions(Monster user, bool filtered = true, bool ignoreUseless = true) {
         List<List<Vector2Int>> group = selection.GetSelectionGroups(user);
 

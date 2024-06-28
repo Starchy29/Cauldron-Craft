@@ -30,7 +30,7 @@ public class DebugHelp : MonoBehaviour
         tileMarkers[tile.y, tile.x].text = label;
     }
 
-    public void ClearNumbers() {
+    public void ClearMarks() {
         if(tileMarkers == null) {
             return;
         }

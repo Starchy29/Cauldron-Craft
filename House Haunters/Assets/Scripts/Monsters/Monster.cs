@@ -127,6 +127,21 @@ public class Monster : GridEntity
         return Stats.Moves[moveSlot].GetOptions(this, filtered);
     }
 
+    // returns all target groups from each tile this monster can move to. Does not include options from stayinf on the current tile
+    public Dictionary<Vector2Int, List<List<Vector2Int>>> GetMoveOptionsAfterWalk(int moveSlot, bool includeUselessTiles) {
+        LevelGrid level = LevelGrid.Instance;
+        List<List<Vector2Int>> standableSpots = GetMoveOptions(MonsterType.WALK_INDEX);
+        Dictionary<Vector2Int, List<List<Vector2Int>>> result = new Dictionary<Vector2Int, List<List<Vector2Int>>>();
+        Vector2Int startTile = Tile;
+        foreach(List<Vector2Int> standableSpot in standableSpots) {
+            level.TestEntity(this, standableSpot[0]);
+            result[standableSpot[0]] = Stats.Moves[moveSlot].GetOptions(this, !includeUselessTiles, !includeUselessTiles);
+        }
+        level.TestEntity(this, startTile);
+
+        return result;
+    }
+
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
         Stats.Moves[moveSlot].Use(this, tiles);
         Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;

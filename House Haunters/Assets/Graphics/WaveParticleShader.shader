@@ -23,8 +23,6 @@ Shader "Unlit/WaveParticleShader"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
 
@@ -46,7 +44,11 @@ Shader "Unlit/WaveParticleShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-
+            
+            CBUFFER_START(radius)
+                float4 _Radius;
+            CBUFFER_END
+                 
             v2f vert (appdata v)
             {
                 v2f o;
@@ -60,7 +62,9 @@ Shader "Unlit/WaveParticleShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                if(i.radius == 0.0f) {
+                float radius = i.radius;
+                //return fixed4(_Radius[0], _Radius[1], _Radius[2], 1);
+                if(radius == 0.0f) {
                     discard;
                 }
 
@@ -68,11 +72,11 @@ Shader "Unlit/WaveParticleShader"
                 float dy = i.uv.y - 0.5f;
                 float dist = sqrt(dx * dx + dy * dy);
 
-                float edgeDelta = dist - i.radius;
-                float inCircle = clamp(min(i.radius, 0.5f) - dist, 0.0f, 1.0f);
+                float edgeDelta = dist - radius;
+                float inCircle = clamp(min(radius, 0.5f) - dist, 0.0f, 1.0f);
                 inCircle = ceil(inCircle); // 1 or 0
 
-                float halfRad = i.radius / 2.0f;
+                float halfRad = radius / 2.0f;
                 float alpha = clamp(edgeDelta, -halfRad, 0);
                 alpha = (alpha + halfRad) / halfRad;
                 alpha = alpha * alpha;

@@ -8,6 +8,7 @@ using Unity.Collections;
 public class CaptureVFX : MonoBehaviour
 {
     private SpriteRenderer spriteRenderer;
+    //GraphicsBuffer constBuffer;
 
     void Start() {
         Texture2D texture = new Texture2D(1, 1);
@@ -18,6 +19,13 @@ public class CaptureVFX : MonoBehaviour
         spriteRenderer.sprite = sprite;
         spriteRenderer.sortingLayerName = "VFX";
         spriteRenderer.sharedMaterial = new Material(Shader.Find("Unlit/WaveParticleShader"));
+
+        //constBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Constant, 4, sizeof(float));
+        //constBuffer.SetData(new float[4] { 1f, 0f, 0f, 1f });
+        //spriteRenderer.sharedMaterial.SetConstantBuffer("radius", constBuffer, 0, 4*sizeof(float));
+        //constBuffer.Release();
+
+        //spriteRenderer.sharedMaterial.SetBuffer
         SetRadius(0f);
     }
 
@@ -26,6 +34,9 @@ public class CaptureVFX : MonoBehaviour
     }
 
     public void SetRadius(float radius) {
+        //constBuffer.SetData(new float[4] { 0.2f, 0.5f, 0.8f, 1.0f });
+        //spriteRenderer.sharedMaterial.SetConstantBuffer("test", constBuffer, 0, 4 * sizeof(float));
+        //return;
         // See WaveParticleShader, uses TEXCOORD1 for the radius value
         Vector2[] fakeUVs = new Vector2[4] {
             new Vector2(radius, 0f),

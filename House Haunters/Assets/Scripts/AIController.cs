@@ -25,13 +25,89 @@ public class AIController
         // determine which resources to focus on
         resourceData = EvaluateResources();
 
-        while(GameManager.Instance.CurrentTurn == controlTarget) {
-            ChooseMove();
+        controlTarget.EndTurn();
+        return;
+
+        foreach(Monster teammate in controlTarget.Teammates) {
+            ChooseMoves(teammate);
         }
+
+        //AttemptCraft();
+
+        controlTarget.EndTurn();
     }
 
-    // chooses 1 move at a time
-    public void ChooseMove() {
+    private void ChooseMoves(Monster monster) {
+        // find all tiles that this could move to this turn
+        List<List<Vector2Int>> standableSpots = monster.GetMoveOptions(MonsterType.WALK_INDEX);
+
+        List<TurnOption> allOptions = new List<TurnOption>();
+        while(monster.MovesLeft > 0) {
+            List<int> moveOptions = monster.GetUsableMoveSlots();
+            if(moveOptions.Count == 0) {
+                return;
+            }
+
+            allOptions.Clear();
+            bool canWalk = moveOptions.Contains(MonsterType.WALK_INDEX);
+
+            if(canWalk && monster.MovesLeft == 1) {
+                // consider moving to a good position
+            } 
+            else if(canWalk && monster.MovesLeft > 1) {
+                // consider moving then using an ability
+                foreach(int moveSlot in moveOptions) {
+                    if(moveSlot == MonsterType.WALK_INDEX) {
+                        continue;
+                    }
+
+                    foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> option in monster.GetMoveOptionsAfterWalk(moveSlot, false, standableSpots)) {
+                        allOptions.AddRange(option.Value.Map(
+                            (List<Vector2Int> tileGroup) => new TurnOption { 
+                                moveFirst = true, 
+                                endPosition = option.Key, 
+                                abilitySlot = moveSlot, 
+                                abilityTargets = tileGroup 
+                            }
+                        ));
+                    }
+                }
+            }
+
+            // consider staying still and using an ability
+            foreach(int moveSlot in moveOptions) {
+                if(moveSlot == MonsterType.WALK_INDEX) {
+                    continue;
+                }
+
+                allOptions.AddRange(monster.GetMoveOptions(moveSlot).Map(
+                    (List<Vector2Int> targetGroup) => new TurnOption {
+                        moveFirst = false,
+                        endPosition = monster.Tile,
+                        abilitySlot = moveSlot,
+                        abilityTargets = targetGroup
+                    }
+                ));
+            }
+
+            // evaluate the best option
+            
+            // if there woukd be leftover moves, consider the best possible move after this
+            // monster.UseMove();
+
+            // reevaluate movement options if the last move changed position
+        }
+
+        // ability then ability
+
+        // evaluate the value of each possibilty
+
+        // choose the best option
+
+        // discourage movement options that end in an enemy zone
+    }
+
+    private void DEPRECATEDChooseMove() {
         foreach(Monster monster in controlTarget.Teammates) {
             List<int> moveOptions = monster.GetUsableMoveSlots();
             if(moveOptions.Count == 0) {
@@ -93,7 +169,7 @@ public class AIController
 
         Dictionary<Team, Dictionary<Ingredient, float>> teamNeededResources = new Dictionary<Team, Dictionary<Ingredient, float>>();
         foreach(Team team in GameManager.Instance.AllTeams) {
-            teamNeededResources[team] = DetermineIngredientImportance(team);
+            teamNeededResources[team] = GetIngredientPriorities(team);
         }
 
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
@@ -191,10 +267,10 @@ public class AIController
     }
 
     // returns a dictionary where each ingredient has an entry from 0-1 which indicates the ratio of how many are needed relative to the others
-    private Dictionary<Ingredient, float> DetermineIngredientImportance(Team team) {
+    private Dictionary<Ingredient, float> GetIngredientPriorities(Team team) {
         Dictionary<Ingredient, float> result = new Dictionary<Ingredient, float>();
         
-        // reduce by the amount if ingredients in the inventory
+        // reduce by the amount of ingredients in the inventory
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
             result[ingredient] = -team.Resources[ingredient];
         }
@@ -237,5 +313,12 @@ public class AIController
 
         public float Intensity { get { return threatValue + controlValue; } } // amount of action at a control point
         public float Advantage { get { return controlValue - threatValue; } } // positive: winning, negative: losing
+    }
+
+    private struct TurnOption {
+        public bool moveFirst;
+        public Vector2Int endPosition;
+        public int abilitySlot;
+        public List<Vector2Int> abilityTargets;
     }
 }

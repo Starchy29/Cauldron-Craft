@@ -122,6 +122,20 @@ public static class Global
         return false;
     }
 
+    public static bool AreContentsEqual<T>(this List<T> list, List<T> other) {
+        if(list.Count != other.Count) {
+            return false;
+        }
+
+        for(int i = 0; i < list.Count; i++) {
+            if(!list[i].Equals(other[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static int CalcTileDistance(Vector2Int start, Vector2Int end) {
         return Mathf.Abs(start.x - end.x) + Mathf.Abs(start.y - end.y);
     }

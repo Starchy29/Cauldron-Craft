@@ -25,8 +25,8 @@ public class AIController
         // determine which resources to focus on
         resourceData = EvaluateResources();
 
-        controlTarget.EndTurn();
-        return;
+        //controlTarget.EndTurn();
+        //return;
 
         foreach(Monster teammate in controlTarget.Teammates) {
             ChooseMoves(teammate);
@@ -41,70 +41,110 @@ public class AIController
         // find all tiles that this could move to this turn
         List<List<Vector2Int>> standableSpots = monster.GetMoveOptions(MonsterType.WALK_INDEX);
 
+        // discourage movement options that end in an enemy zone
+
         List<TurnOption> allOptions = new List<TurnOption>();
         while(monster.MovesLeft > 0) {
-            List<int> moveOptions = monster.GetUsableMoveSlots();
-            if(moveOptions.Count == 0) {
+            List<int> usableMoves = monster.GetUsableMoveSlots();
+            if(usableMoves.Count == 0) {
                 return;
             }
 
             allOptions.Clear();
-            bool canWalk = moveOptions.Contains(MonsterType.WALK_INDEX);
 
-            if(canWalk && monster.MovesLeft == 1) {
-                // consider moving to a good position
-            } 
-            else if(canWalk && monster.MovesLeft > 1) {
-                // consider moving then using an ability
-                foreach(int moveSlot in moveOptions) {
-                    if(moveSlot == MonsterType.WALK_INDEX) {
-                        continue;
-                    }
-
-                    foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> option in monster.GetMoveOptionsAfterWalk(moveSlot, false, standableSpots)) {
-                        allOptions.AddRange(option.Value.Map(
-                            (List<Vector2Int> tileGroup) => new TurnOption { 
-                                moveFirst = true, 
-                                endPosition = option.Key, 
-                                abilitySlot = moveSlot, 
-                                abilityTargets = tileGroup 
-                            }
-                        ));
-                    }
-                }
-            }
-
-            // consider staying still and using an ability
-            foreach(int moveSlot in moveOptions) {
+            // find the best option for each move (without moving first)
+            foreach(int moveSlot in usableMoves) {
                 if(moveSlot == MonsterType.WALK_INDEX) {
                     continue;
                 }
 
-                allOptions.AddRange(monster.GetMoveOptions(moveSlot).Map(
-                    (List<Vector2Int> targetGroup) => new TurnOption {
-                        moveFirst = false,
-                        endPosition = monster.Tile,
-                        abilitySlot = moveSlot,
-                        abilityTargets = targetGroup
-                    }
-                ));
+                allOptions.Add(DetermineBestOption(monster, moveSlot));
             }
 
-            // evaluate the best option
+            bool canWalk = usableMoves.Contains(MonsterType.WALK_INDEX);
+
+            if(canWalk) {
+                // add best end position as an option
+                allOptions.Add(new TurnOption() { 
+                    walkDestination = standableSpots[UnityEngine.Random.Range(0, standableSpots.Count)][0],
+                    abilitySlot = null,
+                    abilityTargets = null,
+                    effectiveness = 0.2f
+                });
+            }
+
+            if(canWalk && monster.MovesLeft > 1) {
+                // consider moving then using an ability
+                foreach(int moveSlot in usableMoves) {
+                    if(moveSlot == MonsterType.WALK_INDEX) {
+                        continue;
+                    }
+
+                    allOptions.Add(DetermineBestWalkOption(monster, moveSlot, standableSpots));
+                }
+            }
+
+            // consider not using a move
+            allOptions.Add(new TurnOption {
+                walkDestination = null,
+                abilitySlot = null,
+                abilityTargets = null,
+                effectiveness = 0f
+            });
+
+            // execute the best option
+            TurnOption chosenOption = allOptions.Max((TurnOption option) => { return option.effectiveness; });
+
+            if(!chosenOption.walkDestination.HasValue && !chosenOption.abilitySlot.HasValue) {
+                return; // choose to end turn with abilities left over
+            }
+
+            if(chosenOption.walkDestination.HasValue) {
+                monster.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int>(){ chosenOption.walkDestination.Value });
+            }
+
+            if(chosenOption.abilitySlot.HasValue &&
+                monster.GetMoveOptions(chosenOption.abilitySlot.Value).Find((List<Vector2Int> match) => { return match.AreContentsEqual(chosenOption.abilityTargets); }) != null
+            ) {
+                monster.UseMove(chosenOption.abilitySlot.Value, chosenOption.abilityTargets);
+            }
             
-            // if there woukd be leftover moves, consider the best possible move after this
+            // if there would be leftover moves, consider the best possible move after this
             // monster.UseMove();
 
             // reevaluate movement options if the last move changed position
         }
+    }
 
-        // ability then ability
+    // returns the best way of using this moveslot without moving to another tile
+    private TurnOption DetermineBestOption(Monster monster, int moveSlot) {
+        List<List<Vector2Int>> targetGroups = monster.GetMoveOptions(moveSlot);
 
-        // evaluate the value of each possibilty
+        // TODO: add move heuristics
 
-        // choose the best option
+        // for now, random
+        return new TurnOption {
+            walkDestination = null,
+            abilitySlot = moveSlot,
+            abilityTargets = targetGroups[UnityEngine.Random.Range(0, targetGroups.Count)],
+            effectiveness = 0.5f
+        };
+    }
 
-        // discourage movement options that end in an enemy zone
+    // returns the best way of using this moveslot after moving to another tile
+    private TurnOption DetermineBestWalkOption(Monster monster, int moveSlot, List<List<Vector2Int>> walkableTiles) {
+        Dictionary<Vector2Int, List<List<Vector2Int>>> options = monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
+
+        // TODO: add move heuristics
+
+        // for now, random
+        Vector2Int moveTile = walkableTiles[UnityEngine.Random.Range(0, walkableTiles.Count)][0];
+        return new TurnOption {
+            walkDestination = moveTile,
+            abilitySlot = moveSlot,
+            abilityTargets = options[moveTile][UnityEngine.Random.Range(0, options[moveTile].Count)],
+            effectiveness = 0.8f
+        };
     }
 
     private void DEPRECATEDChooseMove() {
@@ -316,9 +356,9 @@ public class AIController
     }
 
     private struct TurnOption {
-        public bool moveFirst;
-        public Vector2Int endPosition;
-        public int abilitySlot;
+        public Vector2Int? walkDestination;
+        public int? abilitySlot;
         public List<Vector2Int> abilityTargets;
+        public float effectiveness;
     }
 }

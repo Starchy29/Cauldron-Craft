@@ -32,7 +32,7 @@ public class MoveButton : AutoButton
         
         CoveredAreaAfterWalk.Clear();
         if(moveSlot != MonsterType.WALK_INDEX && move.Range > 0 && 
-            (user.CanUse(MonsterType.WALK_INDEX) || user.Controller != GameManager.Instance.CurrentTurn)
+            (user.Controller != GameManager.Instance.CurrentTurn || user.CanUse(MonsterType.WALK_INDEX) && user.MovesLeft > 1)
         ) {
             foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> option in user.GetMoveOptionsAfterWalk(moveSlot, true)) {
                 CoveredAreaAfterWalk.AddRange(option.Value.Collapse((List<Vector2Int> cur, List<Vector2Int> next) => { cur.AddRange(next); return cur; }));

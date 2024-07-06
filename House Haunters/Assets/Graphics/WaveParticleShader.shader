@@ -44,10 +44,6 @@ Shader "Unlit/WaveParticleShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            
-            CBUFFER_START(radius)
-                float4 _Radius;
-            CBUFFER_END
                  
             v2f vert (appdata v)
             {
@@ -63,7 +59,6 @@ Shader "Unlit/WaveParticleShader"
             fixed4 frag(v2f i) : SV_Target
             {
                 float radius = i.radius;
-                //return fixed4(_Radius[0], _Radius[1], _Radius[2], 1);
                 if(radius == 0.0f) {
                     discard;
                 }

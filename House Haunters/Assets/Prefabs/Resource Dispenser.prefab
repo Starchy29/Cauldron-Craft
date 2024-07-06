@@ -220,7 +220,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 4545296055811704120}
-  startTeam: 0
+  startTeam: -1
   type: 0
   floorCoverPrefab: {fileID: 6389706594899059731, guid: 3a7480f9e5165be4fafe2bfb2459a097, type: 3}
   productionIndicator: {fileID: 3488717435660861953}

@@ -127,7 +127,7 @@ public class Monster : GridEntity
         return Stats.Moves[moveSlot].GetOptions(this, filtered);
     }
 
-    // returns all target groups from each tile this monster can move to. Does not include options from stayinf on the current tile
+    // returns all target groups from each tile this monster can move to. Does not include options from staying on the current tile
     public Dictionary<Vector2Int, List<List<Vector2Int>>> GetMoveOptionsAfterWalk(int moveSlot, bool includeUselessTiles, List<List<Vector2Int>> standableSpots = null) {
         if(standableSpots == null) {
             standableSpots = GetMoveOptions(MonsterType.WALK_INDEX);
@@ -146,17 +146,17 @@ public class Monster : GridEntity
     }
 
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
+        Vector2 selectionMid = Global.DetermineCenter(tiles);
+        if(selectionMid.x > transform.position.x) {
+            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetSpriteFlip(false); }));
+        }
+        else if(selectionMid.x < transform.position.x) {
+            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetSpriteFlip(true); }));
+        }
+
         Stats.Moves[moveSlot].Use(this, tiles);
         Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
         MovesLeft--;
-
-        Vector2 selectionMid = Global.DetermineCenter(tiles);
-        if(selectionMid.x > transform.position.x) {
-            SetSpriteFlip(false);
-        }
-        else if(selectionMid.x < transform.position.x) {
-            SetSpriteFlip(true);
-        }
     }
 
     public bool CanUse(int moveSlot) {
@@ -240,9 +240,10 @@ public class Monster : GridEntity
     }
 
     // finds the shortest path to the end tile. Returns null if there is no path. If validating a move, returns null if this cannot get to the end in one move this turn
-    public List<Vector2Int> FindPath(Vector2Int endTile, bool validateMove) {
+    public List<Vector2Int> FindPath(Vector2Int endTile, bool validateMove, Vector2Int? simulatedStartTile = null) {
         LevelGrid level = LevelGrid.Instance;
-        if(validateMove && (!CanMoveTo(endTile) || Global.CalcTileDistance(Tile, endTile) > CurrentSpeed)) {
+        Vector2Int startTile = simulatedStartTile.HasValue ? simulatedStartTile.Value : Tile;
+        if(validateMove && (!CanMoveTo(endTile) || Global.CalcTileDistance(startTile, endTile) > CurrentSpeed)) {
             return null;
         }
         if(!validateMove && !level.GetTile(endTile).Walkable) {
@@ -255,12 +256,12 @@ public class Monster : GridEntity
                 pathDistances[y, x] = new PathData();
             }
         }
-        pathDistances[Tile.y, Tile.x].travelDistance = 0;
-        pathDistances[Tile.y, Tile.x].distanceToEnd = Global.CalcTileDistance(Tile, endTile);
+        pathDistances[startTile.y, startTile.x].travelDistance = 0;
+        pathDistances[startTile.y, startTile.x].distanceToEnd = Global.CalcTileDistance(Tile, endTile);
 
         // find the shortest path using A*
         List<Vector2Int> closedList = new List<Vector2Int>();
-        List<Vector2Int> openList = new List<Vector2Int>() { Tile };
+        List<Vector2Int> openList = new List<Vector2Int>() { startTile };
         while(openList.Count > 0) {
             // find the best option in the open list
             Vector2Int nextTile = openList.Min((Vector2Int tile) => { return pathDistances[tile.y, tile.x].Estimate; });
@@ -286,7 +287,7 @@ public class Monster : GridEntity
 
             // prevent moving to a neighbor when the tile is trapped
             TileAffector nextEffect = level.GetTile(nextTile).CurrentEffect;
-            if(validateMove && nextTile != Tile && nextEffect != null && nextEffect.Controller != Controller && nextEffect.StopsMovement) {
+            if(validateMove && nextTile != startTile && nextEffect != null && nextEffect.Controller != Controller && nextEffect.StopsMovement) {
                 continue;
             }
 

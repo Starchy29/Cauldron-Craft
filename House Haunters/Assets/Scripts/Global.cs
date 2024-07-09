@@ -69,6 +69,25 @@ public static class Global
         return list.ToArray().Max(valueCalculator);
     }
 
+    public static List<T> AllTiedMax<T>(this List<T> list, GetValue<T> valueCalculator) {
+        List<T> result = new List<T>();
+        float max = float.MinValue;
+
+        foreach(T element in list) {
+            float value = valueCalculator(element);
+            if(value > max) {
+                max = value;
+                result.Clear();
+                result.Add(element);
+            }
+            else if(value == max) {
+                result.Add(element);
+            }
+        }
+
+        return result;
+    }
+
     public static List<EndType> Map<StartType, EndType>(this List<StartType> list, MapValue<StartType, EndType> mapFunction) {
         List<EndType> result = new List<EndType>();
         foreach(StartType element in list) {

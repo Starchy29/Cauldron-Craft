@@ -6,10 +6,17 @@ using UnityEngine;
 public enum MonsterName {
     LostSoul,
     Demon,
-    Cactus,
     Flytrap,
+    Cactus,
+    // Golem,
+    // Automaton,
     Fungus,
-    Jackolantern
+    Jackolantern,
+    // Sludge,
+    // Fossil,
+    // Beast,
+    // Smog,
+    // Celestial
 }
 
 public class MonstersData

@@ -45,12 +45,15 @@ public class ResourcePile : GridEntity
 
     private void GrantResource(Team turnEnder, Team nextTurn) {
         if(nextTurn == Controller) {
-            Controller.AddResource(type);
-
-            GameObject harvest = Instantiate(PrefabContainer.Instance.HarvestParticle);
-            harvest.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.ingredientToSprite[type];
-            harvest.transform.position = transform.position;
+            Controller.Resources[type]++;
+            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
         }
+    }
+
+    private void SpawnHarvestParticle() {
+        GameObject harvest = Instantiate(PrefabContainer.Instance.HarvestParticle);
+        harvest.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.ingredientToSprite[type];
+        harvest.transform.position = transform.position;
     }
 
     private void CheckCapture(Monster mover) {

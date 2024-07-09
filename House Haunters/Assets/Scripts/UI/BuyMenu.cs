@@ -6,20 +6,27 @@ using UnityEngine;
 public class BuyMenu : MonoBehaviour
 {
     [SerializeField] private GameObject MonsterButtonPrefab;
+    [SerializeField] private TMPro.TextMeshPro DecayAmount;
+    [SerializeField] private TMPro.TextMeshPro FloraAmount;
+    [SerializeField] private TMPro.TextMeshPro MineralAmount;
     [SerializeField] public GameObject Background;
     private BuyMonsterButton[] buttons;
 
     void Awake() {
-        float spacing = 1.2f;
+        float ySpacing = 1.2f;
+        float xSpacing = MonsterButtonPrefab.transform.localScale.x + 0.2f;
 
         MonsterName[] monsters = (MonsterName[])Enum.GetValues(typeof(MonsterName));
-        float startY = (monsters.Length - 1) / 2f * spacing;
+        float startY = (monsters.Length - 1) / 2f * ySpacing;
         buttons = new BuyMonsterButton[monsters.Length];
         for(int i = 0; i < monsters.Length; i++) {
             buttons[i] = Instantiate(MonsterButtonPrefab).GetComponent<BuyMonsterButton>();
             buttons[i].SetMonster(monsters[i]);
             buttons[i].transform.SetParent(transform);
-            buttons[i].transform.localPosition = new Vector3(0, startY - i * spacing, 0);
+
+            int ySpot = i / 2;
+            int xSpot = i % 2;
+            buttons[i].transform.localPosition = new Vector3(-xSpacing / 2f + xSpot * xSpacing, startY - ySpot * ySpacing, 0);
         }
 
         gameObject.SetActive(false);
@@ -40,5 +47,10 @@ public class BuyMenu : MonoBehaviour
             button.Disabled = !team.CanAfford(button.MonsterOption) || !cauldronReady || !currentTurn;
             button.checkmark.SetActive(team.CraftedMonsters[button.MonsterOption]);
         }
+
+        // display ingredient amounts
+        DecayAmount.text = "x" + team.Resources[Ingredient.Decay];
+        FloraAmount.text = "x" + team.Resources[Ingredient.Flora];
+        MineralAmount.text = "x" + team.Resources[Ingredient.Mineral];
     }
 }

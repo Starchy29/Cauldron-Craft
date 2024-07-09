@@ -11,7 +11,6 @@ public class Team
     public Dictionary<Ingredient, int> Resources { get; private set; }
     public AIController AI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
-    public ResourceTracker ResourceDisplay { get; set; }
     public Dictionary<MonsterName, bool> CraftedMonsters { get; private set; }
     public bool OnLeft { get { return Spawnpoint != null && Spawnpoint.Tile.x < LevelGrid.Instance.Width / 2; } }
 
@@ -38,11 +37,6 @@ public class Team
         if(isAI) {
             AI = new AIController(this);
         }
-    }
-
-    public void AddResource(Ingredient type) {
-        Resources[type]++;
-        ResourceDisplay.UpdateDisplay();
     }
 
     public bool CanCraft() {
@@ -89,7 +83,6 @@ public class Team
             Resources[ingredient]--;
         }
         animator.QueueAnimation(new IngredientAnimator(Spawnpoint, data.Recipe));
-        ResourceDisplay.UpdateDisplay();
 
         Spawnpoint.StartCook(type);
         CraftedMonsters[type] = true;

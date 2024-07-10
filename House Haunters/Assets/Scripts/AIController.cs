@@ -24,9 +24,6 @@ public class AIController
         // determine which resources to focus on
         resourceData = EvaluateResources();
 
-        //controlTarget.EndTurn();
-        //return;
-
         foreach(Monster teammate in controlTarget.Teammates) {
             ChooseMoves(teammate);
         }
@@ -111,6 +108,7 @@ public class AIController
             }
 
             // TODO: if there would be leftover moves, consider the best possible move after this
+            // TODO: weight spaces on the capture point a decent amount more than the path to it
 
             // consider not using a move and staying still
             allOptions.Add(new TurnOption {

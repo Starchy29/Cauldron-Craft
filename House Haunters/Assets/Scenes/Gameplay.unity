@@ -2001,11 +2001,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1141986332775692181, guid: 02e68a6e1d572dc47951665dd9888a8a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 12.53
+      value: 10.43
       objectReference: {fileID: 0}
     - target: {fileID: 1141986332775692181, guid: 02e68a6e1d572dc47951665dd9888a8a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.43
+      value: 2.41
       objectReference: {fileID: 0}
     - target: {fileID: 1141986332775692181, guid: 02e68a6e1d572dc47951665dd9888a8a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2062,11 +2062,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5996476819212450646, guid: c47695440252f1e4f814c67e961321c0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.57
+      value: 10.48
       objectReference: {fileID: 0}
     - target: {fileID: 5996476819212450646, guid: c47695440252f1e4f814c67e961321c0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.61
+      value: 8.51
       objectReference: {fileID: 0}
     - target: {fileID: 5996476819212450646, guid: c47695440252f1e4f814c67e961321c0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2390,10 +2390,23 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8649928373580810950, guid: 4f9ffc6eca75c494c86477f68ac59f1c, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8955851197248601784, guid: 4f9ffc6eca75c494c86477f68ac59f1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 624009466972385626, guid: 4f9ffc6eca75c494c86477f68ac59f1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 4978157260843793809, guid: 4f9ffc6eca75c494c86477f68ac59f1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 4f9ffc6eca75c494c86477f68ac59f1c, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

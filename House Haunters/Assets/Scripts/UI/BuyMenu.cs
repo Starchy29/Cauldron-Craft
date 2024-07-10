@@ -17,7 +17,7 @@ public class BuyMenu : MonoBehaviour
         float xSpacing = MonsterButtonPrefab.transform.localScale.x + 0.2f;
 
         MonsterName[] monsters = (MonsterName[])Enum.GetValues(typeof(MonsterName));
-        float startY = (monsters.Length - 1) / 2f * ySpacing;
+        float startY = (monsters.Length - 1) / 4f * ySpacing;
         buttons = new BuyMonsterButton[monsters.Length];
         for(int i = 0; i < monsters.Length; i++) {
             buttons[i] = Instantiate(MonsterButtonPrefab).GetComponent<BuyMonsterButton>();

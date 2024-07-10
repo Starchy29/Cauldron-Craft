@@ -20,7 +20,11 @@ public class PrefabContainer : MonoBehaviour
             { MonsterName.Cactus, cactusSprite },
             { MonsterName.Flytrap, flytrapSprite },
             { MonsterName.Fungus, fungusSprite },
-            { MonsterName.Jackolantern, jackolanternSprite }
+            { MonsterName.Jackolantern, jackolanternSprite },
+            { MonsterName.Golem, golemSprite },
+            { MonsterName.Automaton, automatonSprite },
+            { MonsterName.Sludge, sludgeSprite },
+            { MonsterName.Fossil, fossilSprite }
         };
 
         ingredientToSprite = new Dictionary<Ingredient, Sprite>() {
@@ -67,7 +71,6 @@ public class PrefabContainer : MonoBehaviour
     public GameObject BaseMonsterPrefab;
     public GameObject TempMonsterProjectile;
     public GameObject ExampleZone;
-    public GameObject ExampleShield;
     public GameObject SpawnSpeedPrefab;
     public GameObject IngredientVFX;
     public GameObject HarvestParticle;
@@ -103,14 +106,14 @@ public class PrefabContainer : MonoBehaviour
     #endregion
 
     [Header("Lost Soul")]
-    #region soul
+    #region
     public Sprite soulSprite;
     public GameObject spookHaunt;
     public GameObject soulDrop;
     #endregion
 
     [Header("Demon")]
-    #region demon
+    #region
     public Sprite demonSprite;
     public GameObject demonStrength;
     public GameObject fireballBlast;
@@ -118,7 +121,7 @@ public class PrefabContainer : MonoBehaviour
     #endregion
 
     [Header("Cactus")]
-    #region cactus
+    #region
     public Sprite cactusSprite;
     public GameObject spikeTrapPrefab;
     public GameObject spikeShieldPrefab;
@@ -126,7 +129,7 @@ public class PrefabContainer : MonoBehaviour
     #endregion
 
     [Header("Fly Trap")]
-    #region fly trap
+    #region
     public Sprite flytrapSprite;
     public GameObject tangleVines;
     public GameObject nectarRegen;
@@ -134,7 +137,7 @@ public class PrefabContainer : MonoBehaviour
     #endregion
 
     [Header("Fungus")]
-    #region fungus
+    #region
     public Sprite fungusSprite;
     public GameObject leechSeed;
     public GameObject drowsySpores;
@@ -146,5 +149,35 @@ public class PrefabContainer : MonoBehaviour
     #region Jackolantern
     public Sprite jackolanternSprite;
     public GameObject hexBlast;
+    #endregion
+
+    [Header("Golem")]
+    #region
+    public Sprite golemSprite;
+    public GameObject crystalShield;
+    public GameObject auraStatus;
+    #endregion
+
+    [Header("Automaton")]
+    #region
+    public Sprite automatonSprite;
+    public GameObject bastionShield;
+    public GameObject overdriveStatus;
+    #endregion
+
+    [Header("Sludge")]
+    #region 
+    public Sprite sludgeSprite;
+    public GameObject sludgeZone;
+    public GameObject sludgeLob;
+    public GameObject sludgeBubble;
+    #endregion
+
+    [Header("Fossil")]
+    #region 
+    public Sprite fossilSprite;
+    public GameObject boneShot;
+    public GameObject boneShield;
+    public GameObject quicksand;
     #endregion
 }

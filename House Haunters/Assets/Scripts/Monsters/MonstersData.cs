@@ -8,12 +8,12 @@ public enum MonsterName {
     Demon,
     Flytrap,
     Cactus,
-    // Golem,
-    // Automaton,
+    Golem,
+    Automaton,
     Fungus,
     Jackolantern,
-    // Sludge,
-    // Fossil,
+    Sludge,
+    Fossil,
     // Beast,
     // Smog,
     // Celestial
@@ -73,8 +73,26 @@ public class MonstersData
             }
         );
 
+        monsterTypes[(int)MonsterName.Golem] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
+            20, 4,
+            new List<Move>() {
+                new ShieldMove("Crystal Casing", 2, new RangeSelector(3, true, true), new Shield(Shield.Strength.Medium, 1, false, prefabs.crystalShield), null, ""),
+                new StatusMove("Aura Boost", 1, true, new StatusAilment(StatusEffect.Strength, 2, prefabs.auraStatus), new RangeSelector(2, false, true), null, ""),
+                new Attack("Gem Bash", 1, 6, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 6 damage.")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Automaton] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
+            22, 2,
+            new List<Move>() {
+                new StatusMove("Overdrive", 6, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Swiftness, StatusEffect.Energy }, 3, prefabs.overdriveStatus), SelfSelector.Instance, null, ""),
+                new ShieldMove("Bastion", 1, ZoneSelector.AOESelector, new Shield(Shield.Strength.Weak, 1, false, prefabs.bastionShield), null, ""),
+                new Attack("Flame Cannon", 1, 6, new RangeSelector(5, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 15f), "", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); })
+            }
+        );
+
         monsterTypes[(int)MonsterName.Fungus] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
-            21, 3,
+            22, 3,
             new List<Move>() {
                 new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), RangeSelector.MeleeSelector, null, "The target is reduced to one action for 2 turns"),
                 new StatusMove("Psychic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), AnimateParticle(prefabs.psychicBurst), "Halves the targets' damage for 1 turn"),
@@ -88,6 +106,24 @@ public class MonstersData
                 new Move("Portal", 2, MoveType.Shift, Move.Targets.Allies, new RangeSelector(4, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
                 new ZoneMove("Will o' Wisps", 4, new ZoneSelector(2, 3), TileAffector.CreateBlueprint(prefabs.ExampleZone, 3, StatusEffect.Haunted, 0, null), null, "Creates a zone for three turns in which enemies take 1.5x damage"),
                 new Attack("Hex", 1, 5, new RangeSelector(4, false, true), AnimateParticle(prefabs.hexBlast), "Deals 5 damage")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Sludge] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
+            20, 4,
+            new List<Move>() {
+                new ZoneMove("Toxic Coating", 3, ZoneSelector.AOESelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, StatusEffect.Poison, 0, null), null, ""),
+                new ShieldMove("Bubble", 1, new RangeSelector(3, true, true), new Shield(Shield.Strength.Weak, 3, true, prefabs.sludgeBubble), null, ""),
+                new Attack("Blob Lob", 1, 5, new ZoneSelector(3, 2), null, "")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Fossil] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Mineral, Ingredient.Mineral },
+            22, 3,
+            new List<Move>() {
+                new ShieldMove("Rib Cage", 2, SelfSelector.Instance, new Shield(Shield.Strength.Strong, 1, true, prefabs.boneShield), null, ""),
+                new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, null, 2, null), null, ""),
+                new Attack("Bone Shot", 1, 6, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 10f, 5), "")
             }
         );
     }

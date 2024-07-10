@@ -53,7 +53,6 @@ MonoBehaviour:
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
   TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
   ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}
-  ExampleShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
   SpawnSpeedPrefab: {fileID: 6302334804222086484, guid: efc22b2cd0ce75f4ca1d6cbb064b22ec, type: 3}
   IngredientVFX: {fileID: 7712678480373355417, guid: 6da443e11232dbd4ba60f4a252a5ae90, type: 3}
   HarvestParticle: {fileID: 4660850984691057048, guid: b15f3e81518625b4d9311ff090bd564f, type: 3}
@@ -101,3 +100,17 @@ MonoBehaviour:
   psychicBurst: {fileID: 692373174144819729, guid: dc44b39a221c8b94f8c5e69fa7ac68b0, type: 3}
   jackolanternSprite: {fileID: 21300000, guid: 69016b95560370e48b769880b801ce4f, type: 3}
   hexBlast: {fileID: 1957257125145424289, guid: e5212601687663c48bf7f9e289dffd0a, type: 3}
+  golemSprite: {fileID: 21300000, guid: 83d32868ced4456408251b721a984570, type: 3}
+  crystalShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
+  auraStatus: {fileID: 4680809331482075624, guid: 5c8f4601f530b7c4a94c34454fa814a9, type: 3}
+  automatonSprite: {fileID: 21300000, guid: acea7add14d9ab143b86c730338e7277, type: 3}
+  bastionShield: {fileID: 7690297186571397032, guid: 99491c9aa1b295a4196bf6597ea909a2, type: 3}
+  overdriveStatus: {fileID: 6910954531195394623, guid: e165e810c8601304189c939f0614cc45, type: 3}
+  sludgeSprite: {fileID: 21300000, guid: 5531dcf25e8c5e443b80d4211827b02a, type: 3}
+  sludgeZone: {fileID: 8682491145182721602, guid: 37b395ce17ce39e4b8a5c5ab4c9cf358, type: 3}
+  sludgeLob: {fileID: 0}
+  sludgeBubble: {fileID: 3062908169156878489, guid: e175f83d00e70664f9ab4aa3216a0bbe, type: 3}
+  fossilSprite: {fileID: 21300000, guid: e1b3f818633c0444e9d6c6bf9f971905, type: 3}
+  boneShot: {fileID: 7739928640664878823, guid: b3ebdeeabdcca2643ae7ae5910cad4c4, type: 3}
+  boneShield: {fileID: 4265488659706721328, guid: ea64b4314f79b0a488ba4cb247c7cc74, type: 3}
+  quicksand: {fileID: 8796343949080538550, guid: e91278a3633471d4d941af105f44ed61, type: 3}

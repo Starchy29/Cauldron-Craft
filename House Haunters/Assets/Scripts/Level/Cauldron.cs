@@ -23,6 +23,7 @@ public class Cauldron : GridEntity
         base.Start();
         Controller.OnTurnEnd += HideCookable;
         Controller.Spawnpoint = this;
+        SetOutlineColor(Controller.TeamColor);
     }
 
     public void StartTurn() {

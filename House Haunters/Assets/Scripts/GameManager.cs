@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
     public event TurnEndEvent OnTurnChange;
 
+    public MonsterTrigger OnMonsterDefeated;
+
     private int currentTurnIndex;
 
     void Awake() {
@@ -45,10 +47,9 @@ public class GameManager : MonoBehaviour
         }
         CurrentTurn = AllTeams[currentTurnIndex];
 
+        GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
         OnTurnChange?.Invoke(turnEnder, CurrentTurn);
 
-        // start next turn
-        GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
         CurrentTurn.StartTurn();
     }
 
@@ -65,6 +66,7 @@ public class GameManager : MonoBehaviour
     // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator
     public void DefeatMonster(Monster defeated) {
         LevelGrid.Instance.ClearEntity(defeated.Tile);
+        OnMonsterDefeated?.Invoke(defeated); // during event, has no tile but retains team
         defeated.Controller.Remove(defeated);
     }
 }

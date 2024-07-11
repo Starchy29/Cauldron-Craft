@@ -33,6 +33,7 @@ public class Monster : GridEntity
 
     public void Setup(MonsterName monsterType, Team controller) {
         controller.Join(this);
+        SetOutlineColor(controller.TeamColor);
         spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
         MoveCounter.Setup(this);
@@ -92,7 +93,7 @@ public class Monster : GridEntity
 
         if(Health == 0) {
             GameManager.Instance.DefeatMonster(this);
-            AnimationsManager.Instance.QueueAnimation(new DeathAnimator(this));
+            AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(this.gameObject));
             OnDeath?.Invoke();
             foreach(StatusAilment status in Statuses) {
                 status.Terminate();

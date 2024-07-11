@@ -8,14 +8,7 @@ public class GridEntity : MonoBehaviour
     [SerializeField] private int startTeam;
     public Vector2Int Tile { get; set; }
 
-    private Team controller;
-    public Team Controller { 
-        get { return controller; }
-        set {
-            controller = value;
-            spriteRenderer.material.color = Controller == null ? Color.clear : Controller.TeamColor;
-        }
-    }
+    public Team Controller;
 
     protected virtual void Start() {
         Tile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(transform.position);
@@ -27,6 +20,7 @@ public class GridEntity : MonoBehaviour
         }
     }
 
+    // make it so entities lower on screen are drawn above higher ones
     public void UpdateSortingOrder() {
         spriteRenderer.sortingOrder = (int)(-100 * transform.position.y);
     }
@@ -35,5 +29,9 @@ public class GridEntity : MonoBehaviour
         Vector3 scale = spriteRenderer.gameObject.transform.localScale;
         scale.x = (flipped ? -1 : 1) * Mathf.Abs(scale.x);
         spriteRenderer.gameObject.transform.localScale = scale;
+    }
+
+    public void SetOutlineColor(Color color) {
+        spriteRenderer.material.color = color;
     }
 }

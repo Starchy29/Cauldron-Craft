@@ -60,7 +60,7 @@ public class MonstersData
             new List<Move>() {
                 new Move("Thorns", 2, MoveType.Boost, Move.Targets.Allies, new RangeSelector(4, true, true), ThornStatus.ApplyThorns, null, "For 3 turns, deal 6 damage to any enemy that strikes the target with a melee attack."),
                 new ZoneMove("Spike Trap", 0, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 3, null, 0, (lander) => { lander.TakeDamage(4); }, true, true), null, "Places a trap that blocks enemies and deals 4 damage when they land in it."),
-                new Attack("Barb Bullet", 1, 5, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f, 6), "Deals 5 damage and pierces through enemies")
+                new Attack("Barb Bullet", 1, 5, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f), "Deals 5 damage and pierces through enemies")
             }
         );
 
@@ -123,7 +123,7 @@ public class MonstersData
             new List<Move>() {
                 new ShieldMove("Rib Cage", 2, SelfSelector.Instance, new Shield(Shield.Strength.Strong, 1, true, prefabs.boneShield), null, ""),
                 new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, null, 2, null), null, ""),
-                new Attack("Bone Shot", 1, 6, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 10f, 5), "")
+                new Attack("Bone Shot", 1, 6, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 16f), "")
             }
         );
     }
@@ -150,12 +150,13 @@ public class MonstersData
         });
     }
 
-    private static AnimationQueuer AnimateLinearShot(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, int tileRange) {
-        return new AnimationQueuer(true, (Monster user, List<Vector2Int> tiles) => {
+    private static AnimationQueuer AnimateLinearShot(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed) {
+        return new AnimationQueuer(false, (Monster user, List<Vector2Int> tiles) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 direction = ((Vector2)(tiles[0] - user.Tile)).normalized;
-            Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile) + tileRange * direction;
+            Vector2Int furthestTile = tiles.Max((Vector2Int tile) => { return Global.CalcTileDistance(tile, user.Tile); });
+            Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)furthestTile);
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
         });
     }

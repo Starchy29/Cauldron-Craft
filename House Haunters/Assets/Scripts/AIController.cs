@@ -53,6 +53,7 @@ public class AIController
                 return;
             }
             bool canWalk = usableMoves.Contains(MonsterType.WALK_INDEX);
+            float currentTileWeight = canWalk ? DeterminePositionWeight(monster, monster.Tile, targetResource.Tile) : 0f;
 
             // update walk end position weights when necessary
             if(canWalk && (walkableSpots == null || monster.Tile != lastPositon)) {
@@ -72,15 +73,6 @@ public class AIController
 
             allOptions.Clear();
 
-            // find the best option for each move
-            foreach(int moveSlot in usableMoves) {
-                if(moveSlot == MonsterType.WALK_INDEX) {
-                    continue;
-                }
-
-                allOptions.Add(DetermineBestOption(monster, moveSlot));
-            }
-
             if(canWalk) {
                 // add best end position as an option
                 List<List<Vector2Int>> bestTiles = walkableSpots.AllTiedMax((List<Vector2Int> tile) => { return positionWeights[tile[0]]; });
@@ -93,7 +85,40 @@ public class AIController
                 });
             }
 
+            // find the best option for each move
+            foreach(int moveSlot in usableMoves) {
+                if(moveSlot == MonsterType.WALK_INDEX) {
+                    continue;
+                }
+
+                allOptions.Add(DetermineBestOption(monster, moveSlot));
+            }
+
             if(canWalk && monster.MovesLeft > 1) {
+                // consider using an ability then doing something else
+                if(usableMoves.Count > 1) {
+                    int bestOptionIndex = 0;
+                    int secondBestOptionIndex = 0;
+                    for(int i = 1; i < allOptions.Count; i++) {
+                        if(allOptions[i].effectiveness > allOptions[bestOptionIndex].effectiveness) {
+                            secondBestOptionIndex = bestOptionIndex;
+                            bestOptionIndex = i;
+                        }
+                        else if(allOptions[i].effectiveness > allOptions[secondBestOptionIndex].effectiveness) {
+                            secondBestOptionIndex = i;
+                        }
+                    }
+
+                    float bestOptionWeight = allOptions[bestOptionIndex].effectiveness;
+                    float secondBestWeight = allOptions[secondBestOptionIndex].effectiveness;
+
+                    for(int i = 1; i < allOptions.Count; i++) {
+                        TurnOption option = allOptions[i];
+                        option.effectiveness += i == bestOptionIndex ? secondBestWeight : bestOptionWeight;
+                        allOptions[i] = option;
+                    }
+                }
+
                 // consider moving then using an ability
                 for(int i = 0; i < monster.Stats.Moves.Length; i++) {
                     if(i == MonsterType.WALK_INDEX || monster.Cooldowns[i] > 0) {
@@ -105,16 +130,19 @@ public class AIController
                         allOptions.Add(option.Value);
                     }
                 }
+            } else {
+                // add the value of the current tile to each option
+                for(int i = 1; i < allOptions.Count; i++) {
+                    TurnOption option = allOptions[i];
+                    option.effectiveness += currentTileWeight;
+                }
             }
-
-            // TODO: if there would be leftover moves, consider the best possible move after this
-            // TODO: weight spaces on the capture point a decent amount more than the path to it
 
             // consider not using a move and staying still
             allOptions.Add(new TurnOption {
                 walkDestination = null,
                 abilitySlot = null,
-                effectiveness = DeterminePositionWeight(monster, monster.Tile, targetResource.Tile)
+                effectiveness = currentTileWeight
             });
 
             // execute the best option
@@ -139,6 +167,8 @@ public class AIController
 
     // returns a value 0-1 that represents how far this starting position is from the end goal
     private float DeterminePositionWeight(Monster monster, Vector2Int startPosition, Vector2Int goal) {
+        // TODO: weight spaces on the capture point a decent amount more than the path to it
+
         float tileDistance = monster.FindPath(goal, false, startPosition).Count - 1f; // distance to an orthog/diag adjacent tile
         if(startPosition.x != goal.x && startPosition.y != goal.y) {
             tileDistance--; // make diagonal corners worth the same as orthogonally adjacent

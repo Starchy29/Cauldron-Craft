@@ -17,7 +17,6 @@ public class ResourcePile : GridEntity
     [SerializeField] private GameObject productionIndicator;
     [SerializeField] private CaptureVFX captureVisual;
     
-    private Dictionary<Team, bool> presentTeams;
     public Ingredient Type { get { return type; } }
 
     protected override void Start() {
@@ -26,11 +25,6 @@ public class ResourcePile : GridEntity
         GameManager.Instance.OnMonsterDefeated += CheckCapture;
         GameManager.Instance.OnTurnChange += GrantResource;
         GameManager.Instance.AllResources.Add(this);
-
-        presentTeams = new Dictionary<Team, bool>();
-        foreach(Team team in GameManager.Instance.AllTeams) {
-            presentTeams[team] = false;
-        }
 
         // place particles on the ground around this tile
         List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
@@ -51,9 +45,9 @@ public class ResourcePile : GridEntity
         return Mathf.Abs(tile.x - Tile.x) <= 1 && Mathf.Abs(tile.y - Tile.y) <= 1;
     }
 
-    private void GrantResource(Team turnEnder, Team nextTurn) {
-        if(presentTeams[nextTurn]) {
-            nextTurn.Resources[type]++;
+    private void GrantResource(Team turnEnder, Team turnStarter) {
+        if(turnStarter == Controller) {
+            turnStarter.Resources[type]++;
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
         }
     }
@@ -66,37 +60,25 @@ public class ResourcePile : GridEntity
 
     private void CheckCapture(Monster mover) {
         LevelGrid level = LevelGrid.Instance;
-        List<Team> adjacentTeams = level.GetTilesInRange(Tile, 1, true)
+        List<Monster> adjacents = level.GetTilesInRange(Tile, 1, true)
             .Map((Vector2Int tile) => { return level.GetMonster(tile); })
-            .Filter((Monster monster) => { return monster != null; })
-            .Map((Monster monster) => { return monster.Controller; });
+            .Filter((Monster monster) => { return monster != null; });
 
-        bool changedCaptures = false;
-        int teamCount = 0;
-        Color avgColor = Color.black;
-        foreach(Team team in GameManager.Instance.AllTeams) {
-            bool capturing = adjacentTeams.Contains(team);
-            if(presentTeams[team] != capturing) {
-                changedCaptures = true;
-                presentTeams[team] = capturing;
+        Team startController = Controller;
+        foreach(Monster adjacent in adjacents) {
+            if(Controller == null) {
+                Controller = adjacent.Controller;
             }
-
-            if(capturing) {
-                teamCount++;
-                avgColor += team.TeamColor;
+            else if(Controller != null && adjacent.Controller != Controller) {
+                // no one gets control when contested
+                Controller = null;
+                break;
             }
         }
 
-        if(!changedCaptures) {
-            return;
-        }
-
-        if(teamCount > 0) {
-            avgColor /= teamCount;
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(avgColor); }));
-            AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, avgColor));
-        } else {
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(Color.clear); }));
+        if(Controller != startController) {
+            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(Controller == null ? Color.clear : Controller.TeamColor); }));
+            AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, Controller == null ? Color.white : Controller.TeamColor));
         }
     }
 

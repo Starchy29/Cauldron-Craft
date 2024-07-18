@@ -300,7 +300,7 @@ public class Monster : GridEntity
                     continue;
                 }
                 GridEntity occupant = level.GetEntity(neighbor);
-                if(validateMove && occupant != null && occupant.Controller != Controller) {
+                if(validateMove && occupant != null && (occupant.Controller != Controller || !(occupant is Monster))) {
                     continue;
                 }
 

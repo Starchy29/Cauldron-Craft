@@ -19,14 +19,14 @@ public class GameOverviewDisplayer : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void ShowTurnStart(int playerIndex) {
+    public void ShowTurnStart(Team turnStarter) {
         if(won) {
             return;
         }
         
         AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => {
-            textbox.text = "Player " + (playerIndex + 1) + "'s Turn";
-            textbox.color = GameManager.Instance.AllTeams[playerIndex].TeamColor;
+            textbox.text =  (turnStarter == GameManager.Instance.Attacker ? "Attacker's" : "Defender's") + " Turn";
+            textbox.color = turnStarter.TeamColor;
         }));
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(gameObject, true));
         AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
@@ -36,7 +36,7 @@ public class GameOverviewDisplayer : MonoBehaviour
     public void ShowWinner(Team winner) {
         won = true;
         gameObject.SetActive(true);
-        textbox.text = "Player " + (GameManager.Instance.AllTeams.IndexOf(winner) + 1) + " Wins";
+        textbox.text = (winner == GameManager.Instance.Attacker ? "Attacker" : "Defender") + " Wins";
         textbox.color = winner.TeamColor;
         StartCoroutine(ReturnToMenuSoon());
     }

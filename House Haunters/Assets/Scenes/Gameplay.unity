@@ -590,6 +590,10 @@ PrefabInstance:
       propertyPath: startTeam
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 147927823985395308, guid: 32a501b985b04f6469903ed700417307, type: 3}
+      propertyPath: controlledByAttacker
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3170911836268139994, guid: 32a501b985b04f6469903ed700417307, type: 3}
       propertyPath: m_Name
       value: Cauldron (1)
@@ -940,6 +944,10 @@ PrefabInstance:
       propertyPath: monsterType
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 8700894622069643309, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
+      propertyPath: controlledByAttacker
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1274,6 +1282,10 @@ PrefabInstance:
       propertyPath: monsterType
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8700894622069643309, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
+      propertyPath: controlledByAttacker
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1346,6 +1358,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8700894622069643309, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
       propertyPath: monsterType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8700894622069643309, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
+      propertyPath: controlledByAttacker
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

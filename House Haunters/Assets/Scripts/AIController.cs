@@ -228,9 +228,8 @@ public class AIController
         Dictionary<ResourcePile, ResourceData> resourceData = new Dictionary<ResourcePile, ResourceData>();
 
         Dictionary<Team, Dictionary<Ingredient, float>> teamNeededResources = new Dictionary<Team, Dictionary<Ingredient, float>>();
-        foreach(Team team in GameManager.Instance.AllTeams) {
-            teamNeededResources[team] = GetIngredientPriorities(team);
-        }
+        teamNeededResources[GameManager.Instance.Attacker] = GetIngredientPriorities(GameManager.Instance.Attacker);
+        teamNeededResources[GameManager.Instance.Defender] = GetIngredientPriorities(GameManager.Instance.Defender);
 
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
             ResourceData data = new ResourceData();
@@ -242,20 +241,13 @@ public class AIController
                 data.controlValue += CalculateInfluence(ally, resource, data.allyPaths[ally]);
             }
 
-            foreach(Team opponent in GameManager.Instance.AllTeams) {
-                if(opponent == controlTarget) {
-                    continue;
-                }
-
-                foreach(Monster enemy in opponent.Teammates) {
-                    data.threatValue += CalculateInfluence(enemy, resource);
-                }
+            foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
+                data.threatValue += CalculateInfluence(enemy, resource);
             }
 
             // determine how much each team needs this resource
-            foreach(Team team in GameManager.Instance.AllTeams) {
-                data.desirability += teamNeededResources[team][resource.Type] * (team == controlTarget ? 1f : 0.5f);
-            }
+            data.desirability += teamNeededResources[GameManager.Instance.Attacker][resource.Type] * (GameManager.Instance.Attacker == controlTarget ? 1f : 0.5f);
+            data.desirability += teamNeededResources[GameManager.Instance.Defender][resource.Type] * (GameManager.Instance.Defender == controlTarget ? 1f : 0.5f);
 
             resourceData[resource] = data;
         }

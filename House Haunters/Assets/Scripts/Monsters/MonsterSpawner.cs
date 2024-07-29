@@ -6,11 +6,11 @@ using UnityEngine;
 public class MonsterSpawner : MonoBehaviour
 {
     [SerializeField] private MonsterName monsterType;
-    [SerializeField] private int team;
+    [SerializeField] private bool controlledByAttacker;
 
     void Start() {
         Vector2Int tile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(transform.position);
-        GameManager.Instance.SpawnMonster(monsterType, tile, GameManager.Instance.AllTeams[team]);
+        GameManager.Instance.SpawnMonster(monsterType, tile, controlledByAttacker ? GameManager.Instance.Attacker : GameManager.Instance.Defender);
         Destroy(gameObject);
     }
 }

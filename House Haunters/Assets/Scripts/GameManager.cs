@@ -14,42 +14,37 @@ public class GameManager : MonoBehaviour
 
     public List<ResourcePile> AllResources { get; private set; }
     public Team CurrentTurn { get; private set; }
-    public Team[] AllTeams { get; private set; }
+
+    public Team Attacker { get; private set; }
+    public Team Defender { get; private set; }
 
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
     public event TurnEndEvent OnTurnChange;
-
     public MonsterTrigger OnMonsterDefeated;
-
-    private int currentTurnIndex;
 
     void Awake() {
         Instance = this;
-        AllTeams = new Team[2];
-        AllTeams[0] = new Team(Color.blue, true);
-        AllTeams[1] = new Team(Color.red, Mode == GameMode.VSAI);
+        Defender = new Team(Color.blue, true);
+        Attacker = new Team(Color.red, Mode == GameMode.VSAI);
         AllResources = new List<ResourcePile>();
 
-        CurrentTurn = AllTeams[currentTurnIndex];
+        CurrentTurn = Defender;
     }
 
     // runs after everything else because of script execution order
     void Start() {
         CurrentTurn.StartTurn();
-        GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
+        GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
+    }
+
+    public Team OpponentOf(Team team) {
+        return team == Attacker ? Defender : Attacker;
     }
 
     public void PassTurn(Team turnEnder) {
-        // end the current turn
-        currentTurnIndex++;
-        if(currentTurnIndex >= AllTeams.Length) {
-            currentTurnIndex = 0;
-        }
-        CurrentTurn = AllTeams[currentTurnIndex];
-
-        GameOverviewDisplayer.Instance.ShowTurnStart(currentTurnIndex);
+        CurrentTurn = OpponentOf(CurrentTurn);
+        GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         OnTurnChange?.Invoke(turnEnder, CurrentTurn);
-
         CurrentTurn.StartTurn();
     }
 

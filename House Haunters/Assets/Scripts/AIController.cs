@@ -16,7 +16,7 @@ public class AIController
 
     public AIController(Team team) {
         this.controlTarget = team;
-        //AnimationsManager.Instance.OnAnimationsEnd += ChooseMove;
+        AnimationsManager.Instance.OnAnimationsEnd += EndTurn;
     }
 
     // enacts every move in the turn immediately. The animation queuer makes the visuals play out in the correct order
@@ -30,7 +30,13 @@ public class AIController
 
         AttemptCraft();
 
-        controlTarget.EndTurn();
+        // end turn after animations play out
+    }
+
+    private void EndTurn(Team currentTurn) {
+        if(currentTurn == controlTarget) {
+            controlTarget.EndTurn();
+        }
     }
 
     private void ChooseMoves(Monster monster) {

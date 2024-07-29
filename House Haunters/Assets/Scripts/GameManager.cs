@@ -9,7 +9,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.VSAI;
+    public static GameMode Mode = GameMode.PVP;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -26,8 +26,8 @@ public class GameManager : MonoBehaviour
     void Awake() {
         Instance = this;
         AllTeams = new Team[2];
-        AllTeams[0] = new Team(Color.blue, false, Ingredient.Mineral);
-        AllTeams[1] = new Team(Color.red, Mode == GameMode.VSAI, Ingredient.Flora);
+        AllTeams[0] = new Team(Color.blue, true);
+        AllTeams[1] = new Team(Color.red, Mode == GameMode.VSAI);
         AllResources = new List<ResourcePile>();
 
         CurrentTurn = AllTeams[currentTurnIndex];

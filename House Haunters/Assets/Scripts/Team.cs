@@ -17,7 +17,7 @@ public class Team
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(Color color, bool isAI, Ingredient? startBatch = null) {
+    public Team(Color color, bool isAI) {
         Array monsterTypes = Enum.GetValues(typeof(MonsterName));
         CraftedMonsters = new Dictionary<MonsterName, bool>(monsterTypes.Length);
         foreach(MonsterName monster in monsterTypes) {
@@ -29,9 +29,6 @@ public class Team
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
             Resources[type] = 0;
-        }
-        if(startBatch.HasValue) {
-            Resources[startBatch.Value] = 3;
         }
 
         if(isAI) {

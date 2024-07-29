@@ -65,10 +65,10 @@ public class MonstersData
         );
 
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
-            23, 3,
+            25, 3,
             new List<Move>() {
                 new StatusMove("Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null, "Applies regeneration for 3 turns"),
-                new Move("Vine Grab", 1, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user"),
+                new Move("Vine Grab", 1, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(5, false), PullTarget, null, "Pulls the target towards the user"),
                 new Attack("Chomp", 1, 8, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 8 damage to the target")
             }
         );
@@ -114,7 +114,7 @@ public class MonstersData
             new List<Move>() {
                 new ZoneMove("Toxic Coating", 3, ZoneSelector.AOESelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, StatusEffect.Poison, 0, null), null, ""),
                 new ShieldMove("Bubble", 1, new RangeSelector(3, true, true), new Shield(Shield.Strength.Weak, 3, true, prefabs.sludgeBubble), null, ""),
-                new Attack("Blob Lob", 1, 5, new ZoneSelector(3, 2), null, "")
+                new Attack("Blob Lob", 1, 4, new ZoneSelector(3, 2), null, "")
             }
         );
 

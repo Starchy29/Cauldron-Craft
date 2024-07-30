@@ -37,6 +37,7 @@ public class ResourcePile : GridEntity
             floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);
         }
 
+        SetOutlineColor(Controller.TeamColor);
         productionIndicator.SetActive(true);
         StartCoroutine(HideResourceType());
     }
@@ -46,7 +47,7 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
-        if(turnStarter == Controller) {
+        if(Controller == GameManager.Instance.Defender && turnStarter == Controller) {
             turnStarter.Resources[type]++;
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
         }
@@ -59,24 +60,19 @@ public class ResourcePile : GridEntity
     }
 
     private void CheckCapture(Monster mover) {
-        LevelGrid level = LevelGrid.Instance;
-        List<Monster> adjacents = level.GetTilesInRange(Tile, 1, true)
-            .Map((Vector2Int tile) => { return level.GetMonster(tile); })
-            .Filter((Monster monster) => { return monster != null; });
-
-        Team startController = Controller;
-        foreach(Monster adjacent in adjacents) {
-            if(Controller == null) {
-                Controller = adjacent.Controller;
-            }
-            else if(Controller != null && adjacent.Controller != Controller) {
-                // no one gets control when contested
-                Controller = null;
-                break;
-            }
+        if(Controller == GameManager.Instance.Attacker) {
+            return;
         }
 
-        if(Controller != startController) {
+        LevelGrid level = LevelGrid.Instance;
+        List<Team> adjacentTeams = level.GetTilesInRange(Tile, 1, true)
+            .Map((Vector2Int tile) => { 
+                Monster monster = level.GetMonster(tile);
+                return monster == null ? null : monster.Controller; 
+            });
+
+        if(adjacentTeams.Contains(GameManager.Instance.Attacker) && !adjacentTeams.Contains(GameManager.Instance.Defender)) {
+            Controller = GameManager.Instance.Attacker;
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(Controller == null ? Color.clear : Controller.TeamColor); }));
             AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, Controller == null ? Color.white : Controller.TeamColor));
         }

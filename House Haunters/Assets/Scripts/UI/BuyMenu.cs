@@ -45,7 +45,6 @@ public class BuyMenu : MonoBehaviour
         bool currentTurn = GameManager.Instance.CurrentTurn == team;
         foreach(BuyMonsterButton button in buttons) {
             button.Disabled = !team.CanAfford(button.MonsterOption) || !cauldronReady || !currentTurn;
-            button.checkmark.SetActive(team.CraftedMonsters[button.MonsterOption]);
         }
 
         // display ingredient amounts

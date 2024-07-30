@@ -34,6 +34,7 @@ public class GameOverviewDisplayer : MonoBehaviour
     }
 
     public void ShowWinner(Team winner) {
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(99999f));
         won = true;
         gameObject.SetActive(true);
         textbox.text = (winner == GameManager.Instance.Attacker ? "Attacker" : "Defender") + " Wins";

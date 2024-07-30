@@ -282,20 +282,12 @@ public class AIController
         }
 
         List<MonsterName> buyOptions = new List<MonsterName>();
-        List<MonsterName> newOptions = new List<MonsterName>();
         foreach (MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
             if(controlTarget.CanAfford(monsterType)) {
                 buyOptions.Add(monsterType);
-                if(!controlTarget.CraftedMonsters[monsterType]) {
-                    newOptions.Add(monsterType);
-                }
             }
         }
-
-        if(newOptions.Count > 0) {
-            controlTarget.BuyMonster(newOptions[UnityEngine.Random.Range(0, newOptions.Count)]);
-        }
-        else if(buyOptions.Count > 0) {
+        if(buyOptions.Count > 0) {
             controlTarget.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);
         }
     }
@@ -310,15 +302,15 @@ public class AIController
         }
 
         // add up the recipes of all monster types
-        Dictionary<MonsterName, bool> crafted = team.CraftedMonsters;
-        foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
-            if(!crafted[monster]) {
-                MonsterType data = MonstersData.Instance.GetMonsterData(monster);
-                foreach(Ingredient ingredient in data.Recipe) {
-                    result[ingredient]++;
-                }
-            }
-        }
+        //Dictionary<MonsterName, bool> crafted = team.CraftedMonsters;
+        //foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
+        //    if(!crafted[monster]) {
+        //        MonsterType data = MonstersData.Instance.GetMonsterData(monster);
+        //        foreach(Ingredient ingredient in data.Recipe) {
+        //            result[ingredient]++;
+        //        }
+        //    }
+        //}
 
         // remove neagtive amounts and find total
         float total = 0;

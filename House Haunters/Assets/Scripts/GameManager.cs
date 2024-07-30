@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public enum GameMode {
@@ -28,7 +29,11 @@ public class GameManager : MonoBehaviour
         Attacker = new Team(Color.red, Mode == GameMode.VSAI);
         AllResources = new List<ResourcePile>();
 
-        CurrentTurn = Defender;
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            Attacker.Resources[ingredient] = 9;
+        }
+
+        CurrentTurn = Attacker;
     }
 
     // runs after everything else because of script execution order
@@ -42,6 +47,12 @@ public class GameManager : MonoBehaviour
     }
 
     public void PassTurn(Team turnEnder) {
+        // check for offense victory
+        if(AllResources.Find((ResourcePile resource) => resource.Controller == Defender) == null) {
+            GameOverviewDisplayer.Instance.ShowWinner(Attacker);
+            return;
+        }
+
         CurrentTurn = OpponentOf(CurrentTurn);
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         OnTurnChange?.Invoke(turnEnder, CurrentTurn);
@@ -61,7 +72,13 @@ public class GameManager : MonoBehaviour
     // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator
     public void DefeatMonster(Monster defeated) {
         LevelGrid.Instance.ClearEntity(defeated.Tile);
+        defeated.Controller.Teammates.Remove(defeated);
         OnMonsterDefeated?.Invoke(defeated); // during event, has no tile but retains team
-        defeated.Controller.Remove(defeated);
+
+        // check for defense victory
+        if(Attacker.Teammates.Count == 0 && Attacker.TotalIngredients < 3) {
+            GameOverviewDisplayer.Instance.ShowWinner(Defender);
+        }
     }
+
 }

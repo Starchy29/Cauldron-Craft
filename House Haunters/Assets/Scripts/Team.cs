@@ -11,19 +11,19 @@ public class Team
     public Dictionary<Ingredient, int> Resources { get; private set; }
     public AIController AI { get; private set; }
     public Cauldron Spawnpoint { get; set; }
-    public Dictionary<MonsterName, bool> CraftedMonsters { get; private set; }
     public bool OnLeft { get { return Spawnpoint != null && Spawnpoint.Tile.x < LevelGrid.Instance.Width / 2; } }
+    public int TotalIngredients { get {
+        int totalIngredients = 0;
+        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
+            totalIngredients += Resources[ingredient];
+        }
+        return totalIngredients;
+    } }
 
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
     public Team(Color color, bool isAI) {
-        Array monsterTypes = Enum.GetValues(typeof(MonsterName));
-        CraftedMonsters = new Dictionary<MonsterName, bool>(monsterTypes.Length);
-        foreach(MonsterName monster in monsterTypes) {
-            CraftedMonsters[monster] = false;
-        }
-
         TeamColor = color;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
@@ -37,16 +37,7 @@ public class Team
     }
 
     public bool CanCraft() {
-        if(Spawnpoint.CookState != Cauldron.State.Ready) {
-            return false;
-        }
-
-        int totalIngredients = 0;
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            totalIngredients += Resources[ingredient];
-        }
-
-        return totalIngredients >= 3;
+        return Spawnpoint.CookState == Cauldron.State.Ready && TotalIngredients >= 3;
     }
 
     public bool CanAfford(MonsterName monsterType) {
@@ -82,26 +73,11 @@ public class Team
         animator.QueueAnimation(new IngredientAnimator(Spawnpoint, data.Recipe));
 
         Spawnpoint.StartCook(type);
-        CraftedMonsters[type] = true;
-
-        // check for victory
-        foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
-            if(!CraftedMonsters[monster]) {
-                return;
-            }
-        }
-        GameOverviewDisplayer.Instance.ShowWinner(this);
-        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(99999f));
     }
     
     public void Join(Monster monster) {
         Teammates.Add(monster);
         monster.Controller = this;
-    }
-
-    public void Remove(Monster monster) {
-        Teammates.Remove(monster);
-        monster.Controller = null;
     }
 
     public void StartTurn() {

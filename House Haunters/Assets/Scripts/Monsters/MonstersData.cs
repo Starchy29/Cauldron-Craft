@@ -16,7 +16,7 @@ public enum MonsterName {
     Fossil,
     // Beast,
     // Smog,
-    // Celestial
+    // Slasher
 }
 
 public class MonstersData
@@ -122,7 +122,7 @@ public class MonstersData
             22, 3,
             new List<Move>() {
                 new ShieldMove("Rib Cage", 2, SelfSelector.Instance, new Shield(Shield.Strength.Strong, 1, true, prefabs.boneShield), null, ""),
-                new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, null, 2, null), null, ""),
+                new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, null, 1, null), null, ""),
                 new Attack("Bone Shot", 1, 6, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 16f), "")
             }
         );

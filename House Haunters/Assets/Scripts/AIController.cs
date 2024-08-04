@@ -59,7 +59,7 @@ public class AIController
                 return;
             }
             bool canWalk = usableMoves.Contains(MonsterType.WALK_INDEX);
-            float currentTileWeight = canWalk ? DeterminePositionWeight(monster, monster.Tile, targetResource.Tile) : 0f;
+            float currentTileWeight = canWalk ? DeterminePositionWeight(monster.Tile, targetResource.Tile) : 0f;
 
             // update walk end position weights when necessary
             if(canWalk && (walkableSpots == null || monster.Tile != lastPositon)) {
@@ -68,7 +68,7 @@ public class AIController
                 walkableSpots = monster.GetMoveOptions(MonsterType.WALK_INDEX);
 
                 foreach(List<Vector2Int> spot in walkableSpots) {
-                    positionWeights[spot[0]] = DeterminePositionWeight(monster, spot[0], targetResource.Tile);
+                    positionWeights[spot[0]] = DeterminePositionWeight(spot[0], targetResource.Tile);
                     
                     TileAffector effect = level.GetTile(spot[0]).CurrentEffect;
                     if(effect != null && effect.Controller != monster.Controller) {
@@ -172,10 +172,10 @@ public class AIController
     }
 
     // returns a value 0-1 that represents how far this starting position is from the end goal
-    private float DeterminePositionWeight(Monster monster, Vector2Int startPosition, Vector2Int goal) {
+    private float DeterminePositionWeight(Vector2Int startPosition, Vector2Int goal) {
         // TODO: weight spaces on the capture point a decent amount more than the path to it
 
-        float tileDistance = monster.FindPath(goal, false, startPosition).Count - 1f; // distance to an orthog/diag adjacent tile
+        float tileDistance = Monster.FindPath(startPosition, goal).Count - 1f; // distance to an orthog/diag adjacent tile
         if(startPosition.x != goal.x && startPosition.y != goal.y) {
             tileDistance--; // make diagonal corners worth the same as orthogonally adjacent
         }
@@ -237,7 +237,7 @@ public class AIController
             // determine how much influence each team has on this resource
             data.allyPaths = new Dictionary<Monster, List<Vector2Int>>();
             foreach(Monster ally in controlTarget.Teammates) {
-                data.allyPaths[ally] = ally.FindPath(resource.Tile, false);
+                data.allyPaths[ally] = Monster.FindPath(ally.Tile, resource.Tile);
                 data.controlValue += CalculateInfluence(ally, resource, data.allyPaths[ally]);
             }
 
@@ -263,7 +263,7 @@ public class AIController
         }
 
         // find the distance to the capture zone
-        int distance = (existingPath == null ? monster.FindPath(resource.Tile, false) : existingPath).Count - 1;
+        int distance = (existingPath == null ? Monster.FindPath(monster.Tile, resource.Tile) : existingPath).Count - 1;
         if(monster.Tile.x != resource.Tile.x && monster.Tile.y != resource.Tile.y) {
             // make corners worth the same as orthogonally adjacent
             distance--;

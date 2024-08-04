@@ -175,6 +175,7 @@ public class Monster : GridEntity
     }
 
     public void ApplyShield(Shield shield) {
+        RemoveShield();
         CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksOnce, Instantiate(shield.Visual));
         CurrentShield.Visual.transform.SetParent(transform, false);
         CurrentShield.Visual.transform.localPosition = Vector3.zero;
@@ -240,11 +241,22 @@ public class Monster : GridEntity
         public int Estimate { get { return travelDistance + distanceToEnd; } }
     }
 
-    // finds the shortest path to the end tile. Returns null if there is no path. If validating a move, returns null if this cannot get to the end in one move this turn
-    public List<Vector2Int> FindPath(Vector2Int endTile, bool validateMove, Vector2Int? simulatedStartTile = null) {
+    // finds the generic walkable path from a start point to an end point
+    public static List<Vector2Int> FindPath(Vector2Int startTile, Vector2Int endTile) {
+        return FindPath(startTile, endTile, null);
+    }
+
+    // asks a monster if it can get to the end tile in move, and finds that path while navigating around obstacle
+    public List<Vector2Int> FindPath(Vector2Int endTile) {
+        return FindPath(Tile, endTile, this);
+    }
+
+    // finds the shortest path to the end tile. Returns null if there is no path.
+    // If validating a move, returns null if this cannot get to the end in one move this turn
+    private static List<Vector2Int> FindPath(Vector2Int startTile, Vector2Int endTile, Monster traveller) {
         LevelGrid level = LevelGrid.Instance;
-        Vector2Int startTile = simulatedStartTile.HasValue ? simulatedStartTile.Value : Tile;
-        if(validateMove && (!CanMoveTo(endTile) || Global.CalcTileDistance(startTile, endTile) > CurrentSpeed)) {
+        bool validateMove = traveller != null;
+        if(validateMove && (!traveller.CanMoveTo(endTile) || Global.CalcTileDistance(startTile, endTile) > traveller.CurrentSpeed)) {
             return null;
         }
         if(!validateMove && !level.GetTile(endTile).Walkable) {
@@ -258,7 +270,7 @@ public class Monster : GridEntity
             }
         }
         pathDistances[startTile.y, startTile.x].travelDistance = 0;
-        pathDistances[startTile.y, startTile.x].distanceToEnd = Global.CalcTileDistance(Tile, endTile);
+        pathDistances[startTile.y, startTile.x].distanceToEnd = Global.CalcTileDistance(startTile, endTile);
 
         // find the shortest path using A*
         List<Vector2Int> closedList = new List<Vector2Int>();
@@ -269,7 +281,7 @@ public class Monster : GridEntity
 
             // check if this is the end
             if(nextTile == endTile) {
-                if(validateMove && pathDistances[nextTile.y, nextTile.x].travelDistance > CurrentSpeed) {
+                if(validateMove && pathDistances[nextTile.y, nextTile.x].travelDistance > traveller.CurrentSpeed) {
                     // invalid if too many steps
                     return null;
                 }
@@ -288,7 +300,7 @@ public class Monster : GridEntity
 
             // prevent moving to a neighbor when the tile is trapped
             TileAffector nextEffect = level.GetTile(nextTile).CurrentEffect;
-            if(validateMove && nextTile != startTile && nextEffect != null && nextEffect.Controller != Controller && nextEffect.StopsMovement) {
+            if(validateMove && nextTile != startTile && nextEffect != null && nextEffect.Controller != traveller.Controller && nextEffect.StopsMovement) {
                 continue;
             }
 
@@ -300,13 +312,13 @@ public class Monster : GridEntity
                     continue;
                 }
                 GridEntity occupant = level.GetEntity(neighbor);
-                if(validateMove && occupant != null && (occupant.Controller != Controller || !(occupant is Monster))) {
+                if(validateMove && occupant != null && (occupant.Controller != traveller.Controller || !(occupant is Monster))) {
                     continue;
                 }
 
                 bool inOpen = openList.Contains(neighbor);
                 bool inClosed = closedList.Contains(neighbor);
-                int discoveredDistance = pathDistances[nextTile.y, nextTile.x].travelDistance + level.GetTile(neighbor).GetTravelCost(this);
+                int discoveredDistance = pathDistances[nextTile.y, nextTile.x].travelDistance + (validateMove ? level.GetTile(neighbor).GetTravelCost(traveller) : 1);
                 if(!inOpen && !inClosed) {
                     // found a new route
                     openList.Add(neighbor);

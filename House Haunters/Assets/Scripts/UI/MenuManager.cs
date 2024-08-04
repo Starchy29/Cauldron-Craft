@@ -109,7 +109,8 @@ public class MenuManager : MonoBehaviour
         // check if the mouse is over an open menu or button
         if(moveMenu.isActiveAndEnabled && Global.GetObjectArea(moveMenu.Background).Contains(mousePos) ||
             buyMenu.isActiveAndEnabled && Global.GetObjectArea(buyMenu.Background).Contains(mousePos) ||
-            endTurnButton.isActiveAndEnabled && Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos)
+            endTurnButton.isActiveAndEnabled && Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos) ||
+            backButton.isActiveAndEnabled && Global.GetObjectArea(backButton.gameObject).Contains(mousePos)
         ) {
             return;
         }
@@ -171,6 +172,7 @@ public class MenuManager : MonoBehaviour
         Vector3 endPos = endTurnButton.transform.localPosition;
         endPos.x = (player.OnLeft ? -1 : 1) * Mathf.Abs(endPos.x);
         endTurnButton.transform.localPosition = endPos;
+        backButton.transform.localPosition = endPos;
     }
 
     private void SetState(SelectionTarget state) {

@@ -4,7 +4,8 @@ using System;
 using UnityEngine;
 
 public enum GameMode {
-    VSAI,
+    Attack,
+    Defend,
     PVP
 }
 
@@ -25,8 +26,8 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        Defender = new Team(Color.blue, true);
-        Attacker = new Team(Color.red, Mode == GameMode.VSAI);
+        Defender = new Team(Color.blue, Mode == GameMode.Attack);
+        Attacker = new Team(Color.red, Mode == GameMode.Defend);
         AllResources = new List<ResourcePile>();
 
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {

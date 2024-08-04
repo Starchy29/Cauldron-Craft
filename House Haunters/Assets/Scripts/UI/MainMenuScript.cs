@@ -14,7 +14,7 @@ public class MainMenuScript : MonoBehaviour
     }
 
     public static void StartVAI() {
-        GameManager.Mode = GameMode.VSAI;
+        GameManager.Mode = GameMode.Defend;
         SceneManager.LoadScene(1);
     }
 }

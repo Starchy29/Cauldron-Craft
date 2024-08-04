@@ -24,7 +24,7 @@ public class PathSelector : ISelector
                 continue;
             }
 
-            List<Vector2Int> path = user.FindPath(option, true);
+            List<Vector2Int> path = user.FindPath(option);
             if(path != null) {
                 // add the tiles of this path until it intersects with a previously found path
                 for(int i = path.Count - 1; i >= 0; i--) {

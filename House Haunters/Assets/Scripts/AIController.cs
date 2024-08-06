@@ -5,14 +5,12 @@ using System;
 
 public class AIController
 {
-    // playstyle values, 0-1
-    //private float greed = 0.5f; // how much this player likes to control multiple resources at once
-    //private float aggression; // how much this player prioritizes eliminating enemy monsters
-    //private float persistence;
-
     private Team controlTarget;
 
+    private ResourcePile targetResource;
     private static Dictionary<ResourcePile, ResourceData> resourceData;
+    private static Dictionary<Monster, List<Vector2Int>> walkOptions = new Dictionary<Monster, List<Vector2Int>>(); // cache to prevent repeated pathfinding
+    private static Dictionary<Monster, Vector2Int> pathedPositions = new Dictionary<Monster, Vector2Int>();
 
     public AIController(Team team) {
         this.controlTarget = team;
@@ -21,16 +19,61 @@ public class AIController
 
     // enacts every move in the turn immediately. The animation queuer makes the visuals play out in the correct order
     public void TakeTurn() {
-        // determine which resources to focus on
+        // focus attention on the resource that the attacking team is approaching
         resourceData = EvaluateResources();
+        targetResource = GameManager.Instance.AllResources.Max((ResourcePile resource) => resourceData[resource].threatValue + (resourceData[resource].captured ? -9999f : 0f));
 
-        foreach(Monster teammate in controlTarget.Teammates) {
-            ChooseMoves(teammate);
+        // cache where the monsters can move to avoid repeated pathfinding
+        pathedPositions.Clear();
+        walkOptions.Clear();
+        foreach(Monster monster in controlTarget.Teammates) {
+            pathedPositions[monster] = monster.Tile;
+            if(monster.CanUse(MonsterType.WALK_INDEX)) {
+                walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false).CollapseList();
+            }
+        }
+
+        // choose abilities
+        while(true) {
+            // find avaialble non-walk abilities
+            List<TurnOption> options = controlTarget.Teammates.ConvertAll((Monster monster) => ChooseAction(monster))
+                .FindAll((TurnOption option) => option.Effectiveness > 0);
+    
+            if(options.Count == 0) {
+                break;
+            }
+
+            // order based on dependencies
+
+            // execute a move
+            TurnOption chosenOption = options[0];
+            if(chosenOption.walkDestination.HasValue) {
+                chosenOption.user.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int> { chosenOption.walkDestination.Value });
+            }
+            if(chosenOption.abilitySlot.HasValue) {
+                chosenOption.user.UseMove(chosenOption.abilitySlot.Value, chosenOption.abilityTargets);
+            }
+        }
+
+        // when only moving is left, move to best positions
+        foreach(Monster monster in controlTarget.Teammates) {
+            if(monster.CanUse(MonsterType.WALK_INDEX)) {
+                if(pathedPositions[monster] != monster.Tile) {
+                    // update pathfinding if this monster has been moved
+                    walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX).CollapseList();
+                }
+
+                List<Vector2Int> bestTiles = walkOptions[monster].FindAll((Vector2Int tile) => LevelGrid.Instance.IsOpenTile(tile))
+                    .AllTiedMax((Vector2Int tile) => DeterminePositionWeight(tile, targetResource.Tile));
+                if(bestTiles.Count > 0) {
+                    monster.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int> { bestTiles[UnityEngine.Random.Range(0, bestTiles.Count)] });
+                }
+            }
         }
 
         AttemptCraft();
 
-        // end turn after animations play out
+        // end turn after animations play out using event
     }
 
     private void EndTurn(Team currentTurn) {
@@ -39,200 +82,70 @@ public class AIController
         }
     }
 
-    private void ChooseMoves(Monster monster) {
-        LevelGrid level = LevelGrid.Instance;
-        Vector2Int lastPositon = monster.Tile + new Vector2Int(1, 1); // being different from the monster's position causes end position evaluation 
-        List<List<Vector2Int>> walkableSpots = null;
-        Dictionary<Vector2Int, float> positionWeights = new Dictionary<Vector2Int, float>();
+    // determines which non-walk ability to use, walking first if necessary. Returns TurnOption.None if there are no good options available
+    private TurnOption ChooseAction(Monster monster) {
+        List<int> usableMoveSlots = monster.GetUsableMoveSlots();
+        bool canWalk = usableMoveSlots.Contains(MonsterType.WALK_INDEX);
+        usableMoveSlots.Remove(MonsterType.WALK_INDEX); // only consider actual abilities
+        if(usableMoveSlots.Count <= 0) {
+            return TurnOption.None;
+        }
 
-        ResourcePile targetResource = GameManager.Instance.AllResources.Max(
-            (ResourcePile resource) => {
-                float distanceWeight = (20f - resourceData[resource].allyPaths[monster].Count) / 20f;
-                return resourceData[resource].desirability * distanceWeight;
-            }
-        );
+        if(canWalk && pathedPositions[monster] != monster.Tile) {
+            // if moved, find new end positions
+            pathedPositions[monster] = monster.Tile;
+            walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false).CollapseList();
+        }
 
+        List<TurnOption> bestOptions = usableMoveSlots.ConvertAll((int slot) => DetermineBestOption(monster, slot, canWalk && monster.MovesLeft > 1))
+            .AllTiedMax((TurnOption option) => option.Effectiveness);
+        return bestOptions.Exists((TurnOption option) => option.Effectiveness > 0) ? bestOptions[UnityEngine.Random.Range(0, bestOptions.Count)] : TurnOption.None;
+    }
+
+    // find the best way of using this move
+    private TurnOption DetermineBestOption(Monster monster, int moveSlot, bool canMoveFirst) {
+        // find all possible targets, considering a walk first if able
+        Dictionary<Vector2Int, List<List<Vector2Int>>> positionTargetOptions = canMoveFirst ? 
+            monster.GetMoveOptionsAfterWalk(moveSlot, false, walkOptions[monster].FindAll((Vector2Int tile) => LevelGrid.Instance.IsOpenTile(tile)))
+            : new Dictionary<Vector2Int, List<List<Vector2Int>>>();
+
+        positionTargetOptions[monster.Tile] = monster.GetMoveOptions(moveSlot);
+
+        // determine the values of all options
+        float startPositionValue = DeterminePositionWeight(monster.Tile, targetResource.Tile);
         List<TurnOption> allOptions = new List<TurnOption>();
-        while(monster.MovesLeft > 0) {
-            List<int> usableMoves = monster.GetUsableMoveSlots();
-            if(usableMoves.Count == 0) {
-                return;
-            }
-            bool canWalk = usableMoves.Contains(MonsterType.WALK_INDEX);
-            float currentTileWeight = canWalk ? DeterminePositionWeight(monster.Tile, targetResource.Tile) : 0f;
-
-            // update walk end position weights when necessary
-            if(canWalk && (walkableSpots == null || monster.Tile != lastPositon)) {
-                lastPositon = monster.Tile;
-                positionWeights.Clear();
-                walkableSpots = monster.GetMoveOptions(MonsterType.WALK_INDEX);
-
-                foreach(List<Vector2Int> spot in walkableSpots) {
-                    positionWeights[spot[0]] = DeterminePositionWeight(spot[0], targetResource.Tile);
-                    
-                    TileAffector effect = level.GetTile(spot[0]).CurrentEffect;
-                    if(effect != null && effect.Controller != monster.Controller) {
-                        positionWeights[spot[0]] -= 0.2f; // discourage movement options that end in an enemy zone
-                    }
-                }
-            }
-
-            allOptions.Clear();
-
-            if(canWalk) {
-                // add best end position as an option
-                List<List<Vector2Int>> bestTiles = walkableSpots.AllTiedMax((List<Vector2Int> tile) => { return positionWeights[tile[0]]; });
-                Vector2Int bestTile = bestTiles[UnityEngine.Random.Range(0, bestTiles.Count)][0];
-                allOptions.Add(new TurnOption() { 
-                    walkDestination = bestTile,
-                    abilitySlot = null,
-                    abilityTargets = null,
-                    effectiveness = positionWeights[bestTile]
-                });
-            }
-
-            // find the best option for each move
-            foreach(int moveSlot in usableMoves) {
-                if(moveSlot == MonsterType.WALK_INDEX) {
-                    continue;
-                }
-
-                allOptions.Add(DetermineBestOption(monster, moveSlot));
-            }
-
-            if(canWalk && monster.MovesLeft > 1) {
-                // consider using an ability then doing something else
-                if(usableMoves.Count > 1) {
-                    int bestOptionIndex = 0;
-                    int secondBestOptionIndex = 0;
-                    for(int i = 1; i < allOptions.Count; i++) {
-                        if(allOptions[i].effectiveness > allOptions[bestOptionIndex].effectiveness) {
-                            secondBestOptionIndex = bestOptionIndex;
-                            bestOptionIndex = i;
-                        }
-                        else if(allOptions[i].effectiveness > allOptions[secondBestOptionIndex].effectiveness) {
-                            secondBestOptionIndex = i;
-                        }
-                    }
-
-                    float bestOptionWeight = allOptions[bestOptionIndex].effectiveness;
-                    float secondBestWeight = allOptions[secondBestOptionIndex].effectiveness;
-
-                    for(int i = 1; i < allOptions.Count; i++) {
-                        TurnOption option = allOptions[i];
-                        option.effectiveness += i == bestOptionIndex ? secondBestWeight : bestOptionWeight;
-                        allOptions[i] = option;
-                    }
-                }
-
-                // consider moving then using an ability
-                for(int i = 0; i < monster.Stats.Moves.Length; i++) {
-                    if(i == MonsterType.WALK_INDEX || monster.Cooldowns[i] > 0) {
-                        continue;
-                    }
-
-                    TurnOption? option = DetermineBestWalkOption(monster, i, walkableSpots, positionWeights);
-                    if(option.HasValue) {
-                        allOptions.Add(option.Value);
-                    }
-                }
-            } else {
-                // add the value of the current tile to each option
-                for(int i = 1; i < allOptions.Count; i++) {
-                    TurnOption option = allOptions[i];
-                    option.effectiveness += currentTileWeight;
-                }
-            }
-
-            // consider not using a move and staying still
-            allOptions.Add(new TurnOption {
-                walkDestination = null,
-                abilitySlot = null,
-                effectiveness = currentTileWeight
-            });
-
-            // execute the best option
-            List<TurnOption> bestOptions = allOptions.AllTiedMax((TurnOption option) => { return option.effectiveness; });
-            TurnOption chosenOption = bestOptions[UnityEngine.Random.Range(0, bestOptions.Count)];
-
-            if(!chosenOption.walkDestination.HasValue && !chosenOption.abilitySlot.HasValue) {
-                return; // choose to end turn with abilities left over
-            }
-
-            if(chosenOption.walkDestination.HasValue) {
-                monster.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int>(){ chosenOption.walkDestination.Value });
-            }
-
-            if(chosenOption.abilitySlot.HasValue &&
-                monster.GetMoveOptions(chosenOption.abilitySlot.Value).Find((List<Vector2Int> match) => { return match.AreContentsEqual(chosenOption.abilityTargets); }) != null
-            ) {
-                monster.UseMove(chosenOption.abilitySlot.Value, chosenOption.abilityTargets);
-            }
-        }
-    }
-
-    // returns a value 0-1 that represents how far this starting position is from the end goal
-    private float DeterminePositionWeight(Vector2Int startPosition, Vector2Int goal) {
-        // TODO: weight spaces on the capture point a decent amount more than the path to it
-
-        float tileDistance = Monster.FindPath(startPosition, goal).Count - 1f; // distance to an orthog/diag adjacent tile
-        if(startPosition.x != goal.x && startPosition.y != goal.y) {
-            tileDistance--; // make diagonal corners worth the same as orthogonally adjacent
-        }
-
-        const float MAX_DISTANCE = 20f;
-        return Mathf.Max(0f, (MAX_DISTANCE - tileDistance) / MAX_DISTANCE);
-    }
-
-    // returns the best way of using this moveslot without moving to another tile
-    private TurnOption DetermineBestOption(Monster monster, int moveSlot) {
-        List<List<Vector2Int>> targetGroups = monster.GetMoveOptions(moveSlot);
-
-        // TODO: add move heuristics
-
-        // for now, random
-        return new TurnOption {
-            walkDestination = null,
-            abilitySlot = moveSlot,
-            abilityTargets = targetGroups[UnityEngine.Random.Range(0, targetGroups.Count)],
-            effectiveness = 0.5f
-        };
-    }
-
-    // returns the best way of using this moveslot after moving to another tile
-    private TurnOption? DetermineBestWalkOption(Monster monster, int moveSlot, List<List<Vector2Int>> walkableTiles, Dictionary<Vector2Int, float> tileWeights) {
-        Dictionary<Vector2Int, List<List<Vector2Int>>> options = monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
-
-        List<TurnOption> converted = new List<TurnOption>();
-        foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> keyVal in options) {
-            foreach(List<Vector2Int> targetGroup in keyVal.Value) {
-                converted.Add(new TurnOption {
-                    walkDestination = keyVal.Key,
+        foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> positionTargets in positionTargetOptions) {
+            float posDelta = DeterminePositionWeight(positionTargets.Key, targetResource.Tile) - startPositionValue;
+            foreach(List<Vector2Int> targetGroup in positionTargets.Value) {
+                allOptions.Add(new TurnOption {
+                    user = monster,
+                    walkDestination = positionTargets.Key == monster.Tile ? null : positionTargets.Key,
                     abilitySlot = moveSlot,
                     abilityTargets = targetGroup,
-                    effectiveness = 0.5f + tileWeights[keyVal.Key]
+                    actionValue = DetermineOptionValue(monster, moveSlot, targetGroup),
+                    positionDelta = posDelta
                 });
             }
         }
 
-        if(converted.Count == 0) {
-            return null; // nothing can be targeted
-        }
+        // choose the best option
+        allOptions = allOptions.AllTiedMax((TurnOption option) => option.Effectiveness);
+        return allOptions[UnityEngine.Random.Range(0, allOptions.Count)];
+    }
 
+    // returns a value that represents how valuable the usage of the input move on the input targets would be
+    private float DetermineOptionValue(Monster monster, int moveSlot, List<Vector2Int> targets) {
         // TODO: add move heuristics
-        List<TurnOption> bestOptions = converted.AllTiedMax((TurnOption option) => { return option.effectiveness; });
-        return bestOptions[UnityEngine.Random.Range(0, bestOptions.Count)];
+
+        return 0.5f;
     }
     
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {
         Dictionary<ResourcePile, ResourceData> resourceData = new Dictionary<ResourcePile, ResourceData>();
 
-        Dictionary<Team, Dictionary<Ingredient, float>> teamNeededResources = new Dictionary<Team, Dictionary<Ingredient, float>>();
-        teamNeededResources[GameManager.Instance.Attacker] = GetIngredientPriorities(GameManager.Instance.Attacker);
-        teamNeededResources[GameManager.Instance.Defender] = GetIngredientPriorities(GameManager.Instance.Defender);
-
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
             ResourceData data = new ResourceData();
+            data.captured = resource.Controller == GameManager.Instance.Attacker;
 
             // determine how much influence each team has on this resource
             data.allyPaths = new Dictionary<Monster, List<Vector2Int>>();
@@ -245,14 +158,21 @@ public class AIController
                 data.threatValue += CalculateInfluence(enemy, resource);
             }
 
-            // determine how much each team needs this resource
-            data.desirability += teamNeededResources[GameManager.Instance.Attacker][resource.Type] * (GameManager.Instance.Attacker == controlTarget ? 1f : 0.5f);
-            data.desirability += teamNeededResources[GameManager.Instance.Defender][resource.Type] * (GameManager.Instance.Defender == controlTarget ? 1f : 0.5f);
-
             resourceData[resource] = data;
         }
 
         return resourceData;
+    }
+
+    // returns a value 0-1 that represents how far this starting position is from the end goal
+    private float DeterminePositionWeight(Vector2Int startPosition, Vector2Int goal) {
+        float tileDistance = Monster.FindPath(startPosition, goal).Count - 1f; // distance to an orthog/diag adjacent tile
+        if(startPosition.x != goal.x && startPosition.y != goal.y) {
+            tileDistance--; // make diagonal corners worth the same as orthogonally adjacent
+        }
+
+        const float MAX_DISTANCE = 20f;
+        return Mathf.Max(0f, (MAX_DISTANCE - tileDistance) / MAX_DISTANCE);
     }
 
     private float CalculateInfluence(Monster monster, ResourcePile resource, List<Vector2Int> existingPath = null) {
@@ -292,59 +212,30 @@ public class AIController
         }
     }
 
-    // returns a dictionary where each ingredient has an entry from 0-1 which indicates the ratio of how many are needed relative to the others
-    private Dictionary<Ingredient, float> GetIngredientPriorities(Team team) {
-        Dictionary<Ingredient, float> result = new Dictionary<Ingredient, float>();
-        
-        // reduce by the amount of ingredients in the inventory
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            result[ingredient] = -team.Resources[ingredient];
-        }
-
-        // add up the recipes of all monster types
-        //Dictionary<MonsterName, bool> crafted = team.CraftedMonsters;
-        //foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
-        //    if(!crafted[monster]) {
-        //        MonsterType data = MonstersData.Instance.GetMonsterData(monster);
-        //        foreach(Ingredient ingredient in data.Recipe) {
-        //            result[ingredient]++;
-        //        }
-        //    }
-        //}
-
-        // remove neagtive amounts and find total
-        float total = 0;
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            result[ingredient] = Mathf.Max(result[ingredient], 0f);
-            total += result[ingredient];
-        }
-
-        if(total == 0) {
-            return result;
-        }
-
-        // change counts to weights
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            result[ingredient] = result[ingredient] / total;
-        }
-
-        return result;
-    }
-
     private struct ResourceData {
         public Dictionary<Monster, List<Vector2Int>> allyPaths;
-        public float threatValue; // opponent's influence
-        public float controlValue; // controller's influence
-        public float desirability;
-
-        public float Intensity { get { return threatValue + controlValue; } } // amount of action at a control point
-        public float Advantage { get { return controlValue - threatValue; } } // positive: winning, negative: losing
+        public float threatValue; // attacker's
+        public float controlValue; // defender's influence
+        public bool captured;
     }
 
     private struct TurnOption {
+        public Monster user;
         public Vector2Int? walkDestination;
         public int? abilitySlot;
         public List<Vector2Int> abilityTargets;
-        public float effectiveness;
+        public float actionValue; // how valuable the used attacks etc. are
+        public float positionDelta; // how much better (or worse) the end position is
+
+        public float Effectiveness { get { return actionValue + positionDelta; } }
+
+        public static TurnOption None = new TurnOption {
+            user = null,
+            walkDestination = null,
+            abilitySlot = null,
+            abilityTargets = null,
+            actionValue = 0f,
+            positionDelta = 0f
+        };
     }
 }

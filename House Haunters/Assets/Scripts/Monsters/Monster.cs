@@ -129,17 +129,17 @@ public class Monster : GridEntity
     }
 
     // returns all target groups from each tile this monster can move to. Does not include options from staying on the current tile
-    public Dictionary<Vector2Int, List<List<Vector2Int>>> GetMoveOptionsAfterWalk(int moveSlot, bool includeUselessTiles, List<List<Vector2Int>> standableSpots = null) {
+    public Dictionary<Vector2Int, List<List<Vector2Int>>> GetMoveOptionsAfterWalk(int moveSlot, bool includeAllTargetArea, List<Vector2Int> standableSpots = null) {
         if(standableSpots == null) {
-            standableSpots = GetMoveOptions(MonsterType.WALK_INDEX);
+            standableSpots = GetMoveOptions(MonsterType.WALK_INDEX).CollapseList();
         }
         
         LevelGrid level = LevelGrid.Instance;
         Dictionary<Vector2Int, List<List<Vector2Int>>> result = new Dictionary<Vector2Int, List<List<Vector2Int>>>();
         Vector2Int startTile = Tile;
-        foreach(List<Vector2Int> standableSpot in standableSpots) {
-            level.TestEntity(this, standableSpot[0]);
-            result[standableSpot[0]] = Stats.Moves[moveSlot].GetOptions(this, !includeUselessTiles, !includeUselessTiles);
+        foreach(Vector2Int standableSpot in standableSpots) {
+            level.TestEntity(this, standableSpot);
+            result[standableSpot] = Stats.Moves[moveSlot].GetOptions(this, !includeAllTargetArea, !includeAllTargetArea);
         }
         level.TestEntity(this, startTile);
 
@@ -183,16 +183,12 @@ public class Monster : GridEntity
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(CurrentShield.Visual, true));
     }
 
-    public bool CanMoveTo(Vector2Int tile) {
-        return LevelGrid.Instance.GetTile(tile).Walkable && LevelGrid.Instance.GetEntity(tile) == null;
-    }
-
     public void RemoveShield() {
         if(CurrentShield == null) {
             return;
         }
 
-        Destroy(CurrentShield.Visual);
+        AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(CurrentShield.Visual));
         CurrentShield = null;
     }
 
@@ -251,15 +247,12 @@ public class Monster : GridEntity
         return FindPath(Tile, endTile, this);
     }
 
-    // finds the shortest path to the end tile. Returns null if there is no path.
+    // finds the shortest path to the end tile. Returns null if there is no path. Does not matter if the end spot is occupied
     // If validating a move, returns null if this cannot get to the end in one move this turn
     private static List<Vector2Int> FindPath(Vector2Int startTile, Vector2Int endTile, Monster traveller) {
         LevelGrid level = LevelGrid.Instance;
         bool validateMove = traveller != null;
-        if(validateMove && (!traveller.CanMoveTo(endTile) || Global.CalcTileDistance(startTile, endTile) > traveller.CurrentSpeed)) {
-            return null;
-        }
-        if(!validateMove && !level.GetTile(endTile).Walkable) {
+        if(validateMove && (!level.GetTile(endTile).Walkable || Global.CalcTileDistance(startTile, endTile) > traveller.CurrentSpeed)) {
             return null;
         }
 

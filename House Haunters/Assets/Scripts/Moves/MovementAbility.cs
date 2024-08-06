@@ -1,11 +1,12 @@
 using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class MovementAbility : Move
 {
     // constructor for a default walk move
-    public MovementAbility() : base("Move", 1, MoveType.Movement, Targets.Prefiltered, PathSelector.Singleton, null, walkAnimator, "Reposition to a nearby tile") {
+    public MovementAbility() : base("Move", 1, MoveType.Movement, Targets.StandableSpot, PathSelector.Singleton, null, walkAnimator, "Reposition to a nearby tile") {
         ApplyEffect = MoveMonster;
     }
 

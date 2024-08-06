@@ -20,8 +20,7 @@ public class Move {
         Allies,
         Enemies,
         ZonePlaceable,
-        StandableSpot,
-        Prefiltered
+        StandableSpot
     }
 
     private ISelector selection;
@@ -44,8 +43,7 @@ public class Move {
         { Targets.Allies, IsAllyOn },
         { Targets.Enemies, IsEnemyOn },
         { Targets.ZonePlaceable, CanPlaceZoneAt },
-        { Targets.StandableSpot, IsStandable },
-        { Targets.Prefiltered, IsFiltered }
+        { Targets.StandableSpot, IsStandable }
     };
 
     public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, EffectFunction effect, AnimationQueuer effectAnimation, string description = "") {
@@ -121,11 +119,7 @@ public class Move {
     }
 
     public static bool IsStandable(Monster user, Vector2Int tile) {
-        return user.CanMoveTo(tile);
-    }
-
-    public static bool IsFiltered(Monster user, Vector2Int tile) {
-        return true; // some moves, specifically movement, can use the selector to filter beforehand for better performance
+        return LevelGrid.Instance.IsOpenTile(tile);
     }
     #endregion
 }

@@ -106,6 +106,11 @@ public class LevelGrid : MonoBehaviour
         }
     }
 
+    // determines if this spot is an open space for a monster to move to
+    public bool IsOpenTile(Vector2Int tile) {
+        return environmentGrid[tile.y, tile.x].Walkable && entityGrid[tile.y, tile.x] == null;
+    }
+
     // allows simulation of entities at new positions without triggering any effects.
     // Entities are expected to be placed back to their original position at the end
     public void TestEntity(GridEntity entity, Vector2Int tempPosition) {

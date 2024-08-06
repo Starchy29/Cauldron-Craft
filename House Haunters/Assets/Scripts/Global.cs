@@ -11,7 +11,7 @@ public static class Global
 {
     public static Vector2Int[] Cardinals = new Vector2Int[4] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
-    #region Functional Programming List Functions
+    #region Extension Functions
     public delegate bool CheckCondition<T>(T data);
     public delegate float GetValue<T>(T data);
     public delegate EndType MapValue<StartValue, EndType>(StartValue value);
@@ -119,7 +119,6 @@ public static class Global
     public static T Collapse<T>(this List<T> list, ValueCombiner<T> valueCombiner) {
         return list.ToArray().Collapse(valueCombiner);
     }
-    #endregion
 
     public static int? IndexOf<T>(this T[] array, T value) {
         for(int i = 0; i < array.Length; i++) {
@@ -154,6 +153,19 @@ public static class Global
 
         return true;
     }
+
+    public static List<T> CollapseList<T>(this List<List<T>> listOfLists) {
+        if(listOfLists.Count == 0) {
+            return new List<T>();
+        }
+
+        List<T> result = listOfLists[0];
+        for(int i = 1; i < listOfLists.Count; i++) {
+            result.AddRange(listOfLists[i]);
+        }
+        return result;
+    }
+    #endregion
 
     public static int CalcTileDistance(Vector2Int start, Vector2Int end) {
         return Mathf.Abs(start.x - end.x) + Mathf.Abs(start.y - end.y);

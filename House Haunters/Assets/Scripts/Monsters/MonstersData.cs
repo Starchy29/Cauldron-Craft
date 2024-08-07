@@ -114,7 +114,7 @@ public class MonstersData
             new List<Move>() {
                 new ZoneMove("Toxic Coating", 3, ZoneSelector.AOESelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, StatusEffect.Poison, 0, null), null, ""),
                 new ShieldMove("Bubble", 1, new RangeSelector(3, false, true), new Shield(Shield.Strength.Weak, 3, true, prefabs.sludgeBubble), null, ""),
-                new Attack("Blob Lob", 1, 4, new ZoneSelector(3, 2), null, "")
+                new Attack("Blob Lob", 1, 4, new ZoneSelector(3, 2), AnimateLobber(prefabs.sludgeLob, 2.0f, 0.6f), "")
             }
         );
 
@@ -147,6 +147,15 @@ public class MonstersData
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)tiles[0]);
             AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, reversed ? end : start, reversed ? start : end, speed));
+        });
+    }
+
+    private static AnimationQueuer AnimateLobber(GameObject prefab, float height, float duration) {
+        return new AnimationQueuer(false, (Monster user, List<Vector2Int> tiles) => {
+            LevelGrid level = LevelGrid.Instance;
+            Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
+            Vector3 end = Global.DetermineCenter(tiles);
+            AnimationsManager.Instance.QueueAnimation(new LobAnimator(prefab, start, end, height, duration));
         });
     }
 

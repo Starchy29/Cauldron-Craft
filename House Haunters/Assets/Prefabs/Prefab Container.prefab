@@ -108,7 +108,7 @@ MonoBehaviour:
   overdriveStatus: {fileID: 6910954531195394623, guid: e165e810c8601304189c939f0614cc45, type: 3}
   sludgeSprite: {fileID: 21300000, guid: 5531dcf25e8c5e443b80d4211827b02a, type: 3}
   sludgeZone: {fileID: 8682491145182721602, guid: 37b395ce17ce39e4b8a5c5ab4c9cf358, type: 3}
-  sludgeLob: {fileID: 0}
+  sludgeLob: {fileID: 5325959576777769889, guid: e5e40ed135d6c37439e95452478355c3, type: 3}
   sludgeBubble: {fileID: 3062908169156878489, guid: e175f83d00e70664f9ab4aa3216a0bbe, type: 3}
   fossilSprite: {fileID: 21300000, guid: e1b3f818633c0444e9d6c6bf9f971905, type: 3}
   boneShot: {fileID: 7739928640664878823, guid: b3ebdeeabdcca2643ae7ae5910cad4c4, type: 3}

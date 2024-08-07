@@ -226,8 +226,10 @@ public class MonstersData
         level.MoveEntity(target, userTile);
         level.PlaceEntity(user, targetTile);
 
-        user.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
-        target.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)target.Tile);
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { 
+            user.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
+            target.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)target.Tile);
+        }));
     }
     #endregion
 }

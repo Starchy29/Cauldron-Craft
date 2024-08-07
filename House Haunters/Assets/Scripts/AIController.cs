@@ -136,10 +136,39 @@ public class AIController
     // returns a value that represents how valuable the usage of the input move on the input targets would be
     private float DetermineOptionValue(Monster monster, int moveSlot, List<Vector2Int> targets) {
         // TODO: add move heuristics
+        Move move = monster.Stats.Moves[moveSlot];
+        switch (move.Type) {
+            case MoveType.Movement:
+                break;
+            case MoveType.RangedAttack:
+            case MoveType.MeleeAttack:
+                return 0.8f;
+            case MoveType.Heal:
+                break;
+            case MoveType.Decay:
+                break;
+            case MoveType.Shield:
+                break;
+            case MoveType.Boost:
+                break;
+            case MoveType.Disrupt:
+                break;
+            case MoveType.Shift:
+                break;
+            case MoveType.Terrain:
+                break;
+        }
 
         return 0.5f;
+
+        if(move is Attack) {
+
+        }
+        if(move is ShieldMove) {
+
+        }
     }
-    
+
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {
         Dictionary<ResourcePile, ResourceData> resourceData = new Dictionary<ResourcePile, ResourceData>();
 

@@ -9,6 +9,7 @@ public enum UniqueStatuses
     Thorns
 }
 
+// allows scripting specific behavior of unique status effects
 public class UniqueStatus
 {
     private static List<UniqueStatus> allStatuses = new List<UniqueStatus>();
@@ -29,6 +30,8 @@ public class UniqueStatus
         visual = GameObject.Instantiate(visualPrefab);
         visual.transform.SetParent(target.transform);
         visual.transform.localPosition = Vector3.zero;
+        visual.SetActive(false);
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
 
         this.target = target;
         this.Type = type;

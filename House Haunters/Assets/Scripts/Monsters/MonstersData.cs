@@ -138,6 +138,8 @@ public class MonstersData
         return new AnimationQueuer(false, (Monster user, List<Vector2Int> tiles) => {
             GameObject particle = GameObject.Instantiate(particlePrefab);
             particle.transform.position = Global.DetermineCenter(tiles);
+            particle.SetActive(false);
+            AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(particle, true));
         });
     }
 
@@ -235,9 +237,12 @@ public class MonstersData
         level.MoveEntity(target, userTile);
         level.PlaceEntity(user, targetTile);
 
-        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { 
-            user.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
-            target.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)target.Tile);
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => {
+            Vector3 targetPosition = target.transform.position;
+            target.transform.position = user.transform.position;
+            user.transform.position = targetPosition;
+            user.UpdateSortingOrder();
+            target.UpdateSortingOrder();
         }));
     }
     #endregion

@@ -203,19 +203,12 @@ public class MenuManager : MonoBehaviour
         level.ColorTiles(null, TileHighlighter.State.Selectable);
         level.ColorTiles(null, TileHighlighter.State.Selected);
 
-        if(controller != null) {
-            foreach(Monster teammate in controller.Teammates) {
-                teammate.MoveCounter.Close();
-            }
-        }
-
         switch(state) {
             case SelectionTarget.Monster:
                 endTurnButton.gameObject.SetActive(true);
                 if(controller != null) {
                     List<Vector2Int> selectableTiles = new List<Vector2Int>();
                     foreach(Monster teammate in controller.Teammates) {
-                        teammate.MoveCounter.Open();
                         if(HasUsableMove(teammate)) {
                             selectableTiles.Add(teammate.Tile);
                         }
@@ -229,11 +222,6 @@ public class MenuManager : MonoBehaviour
                 }
                 break;
             case SelectionTarget.Move:
-                if(controller != null) {
-                    foreach(Monster teammate in controller.Teammates) {
-                        teammate.MoveCounter.Open();
-                    }
-                }
                 moveMenu.Open(selected, controller);
                 level.ColorTiles(new List<Vector2Int>() { selected.Tile }, TileHighlighter.State.Selected);
                 break;

@@ -6,7 +6,6 @@ using System;
 public class Monster : GridEntity
 {
     [SerializeField] public HealthBarScript healthBar;
-    [SerializeField] public MoveCounter MoveCounter;
 
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
@@ -36,7 +35,6 @@ public class Monster : GridEntity
         SetOutlineColor(controller.TeamColor);
         spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
-        MoveCounter.Setup(this);
 
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];

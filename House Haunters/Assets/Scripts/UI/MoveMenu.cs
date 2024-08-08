@@ -14,11 +14,14 @@ public class MoveMenu : MonoBehaviour
     [SerializeField] private GameObject StatusZone;
     [SerializeField] private GameObject StatusIconPrefab;
     [SerializeField] private StatusTooltip statusTooltip;
+    [SerializeField] private GameObject remainingMoveTracker;
 
+    private SpriteRenderer[] movesLeftCircles;
     private MoveButton[] buttons;
     private int numButtons;
     private float buttonHeight;
     private const float BUTTON_GAP = 0.2f;
+    private const int MAX_MOVES = 3;
 
     private List<StatusIcon> activeStatusIcons = new List<StatusIcon>();
     private Dictionary<StatusEffect, StatusIcon> normalStatusIcons;
@@ -38,6 +41,16 @@ public class MoveMenu : MonoBehaviour
         buttonHeight = MoveButtonPrefab.transform.localScale.y;
 
         SetUpStatusIcons();
+
+        movesLeftCircles = new SpriteRenderer[MAX_MOVES];
+        for(int i = 0; i < MAX_MOVES; i++) {
+            GameObject spawned = new GameObject();
+            movesLeftCircles[i] = spawned.AddComponent<SpriteRenderer>();
+            movesLeftCircles[i].sortingLayerName = "UI";
+            spawned.transform.SetParent(remainingMoveTracker.transform);
+            spawned.transform.localPosition = new Vector3((-1f + i) / remainingMoveTracker.transform.localScale.x, 0f, 0f);
+            spawned.transform.localScale = new Vector3(0.7f / remainingMoveTracker.transform.localScale.x, 0.7f, 1f);
+        }
 
         gameObject.SetActive(false);
     }
@@ -72,6 +85,16 @@ public class MoveMenu : MonoBehaviour
         }
 
         MonsterInfoAnchor.transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f, 0);
+
+        // set up remaining move count
+        remainingMoveTracker.SetActive(monster.Controller == opener);
+        if(monster.Controller == opener) {
+            remainingMoveTracker.transform.localPosition = new Vector3(0f, Background.transform.localScale.y / 2f + 0.5f, 0f);
+            for(int i = 0; i < MAX_MOVES; i++) {
+                movesLeftCircles[i].sprite = i < monster.MovesLeft ? PrefabContainer.Instance.fullCircle : PrefabContainer.Instance.emptyCircle;
+                movesLeftCircles[i].gameObject.SetActive(i < monster.MaxMoves);
+            }
+        }
 
         // set up monster health
         HealthMarker.text = monster.Health + "/" + monster.Stats.Health;

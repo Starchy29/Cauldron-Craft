@@ -68,6 +68,9 @@ public class PrefabContainer : MonoBehaviour
     public Sprite mineralLogo;
     public Sprite swarmLogo;
 
+    public Sprite emptyCircle;
+    public Sprite fullCircle;
+
     public GameObject BaseMonsterPrefab;
     public GameObject TempMonsterProjectile;
     public GameObject ExampleZone;

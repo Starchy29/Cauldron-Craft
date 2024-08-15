@@ -24,7 +24,7 @@ public class Monster : GridEntity
     public int MovesLeft { get; private set; }
 
     public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Drowsiness) ? -1 : 0); } }
-    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swiftness) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -StatusAilment.SPEED_BOOST : 0); } }
+    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swiftness) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
 
@@ -100,9 +100,7 @@ public class Monster : GridEntity
     }
 
     public bool HasStatus(StatusEffect status) {
-        TileAffector tileEffect = LevelGrid.Instance.GetTile(Tile).CurrentEffect;
-        return Statuses.Find((StatusAilment condition) => { return condition.effects.Contains(status); }) != null
-            || (tileEffect != null && tileEffect.Controller != Controller && tileEffect.AppliedStatus == status);
+        return Statuses.Find((StatusAilment condition) => { return condition.effects.Contains(status); }) != null;
     }
 
     public void ApplyStatus(StatusAilment blueprint, Monster user) {
@@ -139,7 +137,10 @@ public class Monster : GridEntity
             level.TestEntity(this, standableSpot);
             result[standableSpot] = Stats.Moves[moveSlot].GetOptions(this, !includeAllTargetArea, !includeAllTargetArea);
         }
-        level.TestEntity(this, startTile);
+
+        if(Tile != startTile) {
+            level.TestEntity(this, startTile);
+        }
 
         return result;
     }
@@ -205,10 +206,10 @@ public class Monster : GridEntity
 
     private void CheckStatuses() {
         if(HasStatus(StatusEffect.Regeneration)) {
-            Heal(2);
+            Heal(4);
         }
         if(HasStatus(StatusEffect.Poison)) {
-            TakeDamage(2);
+            TakeDamage(5);
         }
 
         for(int i = Statuses.Count - 1; i >= 0; i--) {

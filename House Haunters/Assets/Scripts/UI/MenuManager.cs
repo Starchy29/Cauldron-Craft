@@ -72,8 +72,8 @@ public class MenuManager : MonoBehaviour
             if(selected.Stats.Moves[selectedMoveSlot] is MovementAbility) {
                 bool highlighted = false;
                 foreach(ResourcePile resource in gameManager.AllResources) {
-                    // make sure not already on the capture point
-                    if(resource.IsInCaptureRange(selected.Tile)) {
+                    // make sure not already on the capture point and not already owned
+                    if(resource.IsInCaptureRange(selected.Tile) || resource.Controller == controller) {
                         continue;
                     }
 

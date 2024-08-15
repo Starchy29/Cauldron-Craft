@@ -7,7 +7,7 @@ class ZoneMove : Move
     public TileAffector TileEffect { get; private set; }
 
     public ZoneMove(string name, int cooldown, ISelector selector, TileAffector effect, AnimationQueuer effectAnimation, string description = "") 
-        : base(name, cooldown, DetermineMoveType(effect) , Targets.ZonePlaceable, selector, null, effectAnimation, description)
+        : base(name, cooldown, MoveType.Terrain, Targets.ZonePlaceable, selector, null, effectAnimation, description)
     {
         TileEffect = effect;
         ApplyEffect = PlaceZone;
@@ -15,21 +15,5 @@ class ZoneMove : Move
 
     private void PlaceZone(Monster user, Vector2Int tile) {
         TileAffector.ApplyEffect(TileEffect, user.Controller, tile);
-    }
-
-    private static MoveType DetermineMoveType(TileAffector effect) {
-        if(effect.AppliedStatus.HasValue) {
-            if(effect.AppliedStatus.Value == StatusEffect.Regeneration) {
-                return MoveType.Heal;
-            }
-
-            if(effect.AppliedStatus.Value == StatusEffect.Poison) {
-                return MoveType.Decay;
-            }
-
-            return StatusAilment.negativeStatuses.Contains(effect.AppliedStatus.Value) ? MoveType.Disrupt : MoveType.Boost;
-        }
-
-        return MoveType.Terrain;
     }
 }

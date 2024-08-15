@@ -7,7 +7,7 @@ public enum Ingredient
     Decay,
     Flora,
     Mineral,
-    Swarm
+    //Swarm
 }
 
 public class ResourcePile : GridEntity

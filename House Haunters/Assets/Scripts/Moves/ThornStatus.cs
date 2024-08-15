@@ -19,7 +19,7 @@ public class ThornStatus : UniqueStatus
 
     private static void DamageMeleeAttacker(Monster attacker, bool isMelee) {
         if(isMelee) {
-            attacker.TakeDamage(6);
+            attacker.TakeDamage(8);
         }
     }
 }

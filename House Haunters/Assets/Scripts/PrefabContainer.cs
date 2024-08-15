@@ -30,8 +30,7 @@ public class PrefabContainer : MonoBehaviour
         ingredientToSprite = new Dictionary<Ingredient, Sprite>() {
             { Ingredient.Decay, decayLogo },
             { Ingredient.Flora, floraLogo },
-            { Ingredient.Mineral, mineralLogo },
-            { Ingredient.Swarm, swarmLogo }
+            { Ingredient.Mineral, mineralLogo }
         };
 
         moveTypeToSprite = new Dictionary<MoveType, Sprite>() {
@@ -66,7 +65,6 @@ public class PrefabContainer : MonoBehaviour
     public Sprite decayLogo;
     public Sprite floraLogo;
     public Sprite mineralLogo;
-    public Sprite swarmLogo;
 
     public Sprite emptyCircle;
     public Sprite fullCircle;

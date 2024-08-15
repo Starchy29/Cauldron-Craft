@@ -10,9 +10,9 @@ public class TileAffector
     private GameObject visual;
     public int Duration { get; private set; }
 
-    public StatusEffect? AppliedStatus { get; private set; }
     public int MovementTax { get; private set; }
     private MonsterTrigger landEffect;
+    private MonsterTrigger endTurnEffect;
     public bool StopsMovement { get; private set; }
     private bool destroyOnUse;
 
@@ -27,25 +27,26 @@ public class TileAffector
         visual.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
 
-        TileAffector createdEffect = new TileAffector(visual, blueprint.Duration, blueprint.AppliedStatus, blueprint.MovementTax, blueprint.landEffect, blueprint.destroyOnUse, blueprint.StopsMovement);
+        TileAffector createdEffect = new TileAffector(visual, blueprint.Duration, blueprint.MovementTax, blueprint.landEffect, blueprint.destroyOnUse, blueprint.StopsMovement, blueprint.endTurnEffect);
         createdEffect.tile = tile;
         createdEffect.Controller = controller;
         controller.OnTurnStart += createdEffect.DecreaseDuration;
+        GameManager.Instance.OpponentOf(controller).OnTurnEnd += createdEffect.ApplyTurnEndEffect;
         LevelGrid.Instance.SetTileAffect(tile, createdEffect);
     }
 
-    public static TileAffector CreateBlueprint(GameObject prefab, int duration, StatusEffect? appliedStatus, int movementTax, MonsterTrigger landEffect, bool destroyOnUse = false, bool stopsMovement = false) {
-        return new TileAffector(prefab, duration, appliedStatus, movementTax, landEffect, destroyOnUse, stopsMovement);
+    public static TileAffector CreateBlueprint(GameObject prefab, int duration, int movementTax, MonsterTrigger landEffect, bool destroyOnUse = false, bool stopsMovement = false, MonsterTrigger endTurnEffect = null) {
+        return new TileAffector(prefab, duration, movementTax, landEffect, destroyOnUse, stopsMovement, endTurnEffect);
     }
 
-    private TileAffector(GameObject visual, int duration, StatusEffect? appliedStatus, int movementTax, MonsterTrigger landEffect, bool destroyOnUse, bool stopsMovement) {
+    private TileAffector(GameObject visual, int duration, int movementTax, MonsterTrigger landEffect, bool destroyOnUse, bool stopsMovement, MonsterTrigger endTurnEffect) {
         this.visual = visual;
         Duration = duration;
-        AppliedStatus = appliedStatus;
         MovementTax = movementTax;
         this.landEffect = landEffect;
         StopsMovement = stopsMovement;
         this.destroyOnUse = destroyOnUse;
+        this.endTurnEffect = endTurnEffect;
     }
 
     public void LandMonster(Monster lander) {
@@ -65,9 +66,17 @@ public class TileAffector
         }
     }
 
+    private void ApplyTurnEndEffect() {
+        Monster occupant = LevelGrid.Instance.GetMonster(tile);
+        if(endTurnEffect != null && occupant != null && occupant.Controller != Controller) {
+            endTurnEffect(occupant);
+        }
+    }
+
     private void Finish() {
         AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(visual));
         Controller.OnTurnStart -= DecreaseDuration;
         LevelGrid.Instance.SetTileAffect(tile, null);
+        GameManager.Instance.OpponentOf(Controller).OnTurnEnd -= ApplyTurnEndEffect;
     }
 }

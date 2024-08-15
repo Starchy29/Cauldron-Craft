@@ -23,7 +23,7 @@ public class RangeSelector : ISelector
             .Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
     }
 
-    private static bool HasLineOfSight(Vector2Int startTile, Vector2Int endTile) {
+    public static bool HasLineOfSight(Vector2Int startTile, Vector2Int endTile) {
         LevelGrid level = LevelGrid.Instance;
         Vector2 startPoint = level.Tiles.GetCellCenterWorld((Vector3Int)startTile);
         Vector2 direction = (Vector2)level.Tiles.GetCellCenterWorld((Vector3Int)endTile) - startPoint;

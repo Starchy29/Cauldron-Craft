@@ -6,7 +6,9 @@ public enum UniqueStatuses
 {
     LeechSpore,
     Wither,
-    Thorns
+    Thorns,
+    Sentry,
+    Hexed
 }
 
 // allows scripting specific behavior of unique status effects

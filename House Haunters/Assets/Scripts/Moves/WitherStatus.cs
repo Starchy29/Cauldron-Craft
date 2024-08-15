@@ -11,7 +11,7 @@ public class WitherStatus : UniqueStatus
     }
 
     protected override void DecreaseDuration() {
-        target.TakeDamage(4);
+        target.TakeDamage(5);
         base.DecreaseDuration();
     }
 }

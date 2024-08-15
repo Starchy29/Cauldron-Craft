@@ -49,7 +49,6 @@ MonoBehaviour:
   decayLogo: {fileID: 21300000, guid: da2b981931036834a9f50dd660c30dae, type: 3}
   floraLogo: {fileID: 21300000, guid: ca32c64207d021f47bb321810237b682, type: 3}
   mineralLogo: {fileID: 21300000, guid: b656ca6764190a347b5f0711e6662236, type: 3}
-  swarmLogo: {fileID: 21300000, guid: 712cb07a2ca848d4c9f23b97bcd3d7de, type: 3}
   emptyCircle: {fileID: 21300000, guid: d1ad41ce0aaddf241b6594d39e10cae7, type: 3}
   fullCircle: {fileID: 21300000, guid: 256dd6046f62c3e4bba650d172fc335e, type: 3}
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
@@ -92,7 +91,7 @@ MonoBehaviour:
   spikeShieldPrefab: {fileID: 4864488922578185088, guid: c812e527930d41348bd422d4d0a219ea, type: 3}
   thornShot: {fileID: 8245164862100309878, guid: 5c47a9a8ffc195e428db06c764f9a623, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
-  tangleVines: {fileID: 942366795742568175, guid: 98d98deb730289a429580ef2230b374c, type: 3}
+  tangleVines: {fileID: 2272507394141505538, guid: 99f20a77d8d10c3449ad32b364700ae2, type: 3}
   nectarRegen: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
   chompTeeth: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
   fungusSprite: {fileID: 21300000, guid: d02c3fcd707437845a668391b59d59b8, type: 3}

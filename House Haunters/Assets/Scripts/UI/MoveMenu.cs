@@ -219,8 +219,12 @@ public class MoveMenu : MonoBehaviour
             .SetData("Withering", "Take 4 damage at the end of every turn.", prefabs.witherIcon);
         uniqueStatusIcons[UniqueStatuses.Thorns] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
             .SetData("Thorny", "Deal 6 damage to enemies that melee attack this.", prefabs.thornsIcon);
+        uniqueStatusIcons[UniqueStatuses.Sentry] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
+            .SetData("Auto-locking", "Deals 5 damage to enemies that step within 5 tiles.", prefabs.thornsIcon);
+        uniqueStatusIcons[UniqueStatuses.Hexed] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
+            .SetData("Hexed", "Receive 8 damage at the end of the turn.", prefabs.witherIcon);
 
-        foreach (UniqueStatuses effect in Enum.GetValues(typeof(UniqueStatuses))) {
+        foreach(UniqueStatuses effect in Enum.GetValues(typeof(UniqueStatuses))) {
             uniqueStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
             uniqueStatusIcons[effect].gameObject.SetActive(false);
         }

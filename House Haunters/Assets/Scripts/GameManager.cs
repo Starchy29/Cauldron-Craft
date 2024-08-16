@@ -26,8 +26,8 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        Defender = new Team(Color.blue, false /*Mode == GameMode.Attack*/);
-        Attacker = new Team(Color.red, false /*Mode == GameMode.Defend*/);
+        Defender = new Team(Color.blue, true /*Mode == GameMode.Attack*/);
+        Attacker = new Team(Color.red, true /*Mode == GameMode.Defend*/);
         AllResources = new List<ResourcePile>();
 
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {

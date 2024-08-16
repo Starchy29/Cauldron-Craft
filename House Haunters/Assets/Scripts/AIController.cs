@@ -11,6 +11,7 @@ public class AIController
     private static Dictionary<ResourcePile, ResourceData> resourceData;
     private static Dictionary<Monster, List<Vector2Int>> walkOptions = new Dictionary<Monster, List<Vector2Int>>(); // cache to prevent repeated pathfinding
     private static Dictionary<Monster, Vector2Int> pathedPositions = new Dictionary<Monster, Vector2Int>();
+    private static Vector2 conflictCenter;
 
     public AIController(Team team) {
         this.controlTarget = team;
@@ -35,6 +36,18 @@ public class AIController
 
         // choose abilities
         while(true) {
+            Vector2 allyCenter = controlTarget.Teammates
+                .ConvertAll(monster => (Vector2)monster.transform.position)
+                .Collapse((Vector2 cur, Vector2 next) => cur + next)
+                / controlTarget.Teammates.Count;
+
+            Vector2 enemyCenter = GameManager.Instance.OpponentOf(controlTarget).Teammates
+                .ConvertAll(monster => (Vector2)monster.transform.position)
+                .Collapse((Vector2 cur, Vector2 next) => cur + next)
+                / GameManager.Instance.OpponentOf(controlTarget).Teammates.Count;
+
+            conflictCenter = (allyCenter + enemyCenter) / 2f;
+
             // find avaialble non-walk abilities
             List<TurnOption> options = controlTarget.Teammates.ConvertAll((Monster monster) => ChooseAction(monster))
                 .FindAll((TurnOption option) => option.Effectiveness > 0);
@@ -43,7 +56,7 @@ public class AIController
                 break;
             }
 
-            // order based on dependencies
+            // TODO: order based on dependencies
 
             // execute a move
             TurnOption chosenOption = options[0];
@@ -71,7 +84,7 @@ public class AIController
             }
         }
 
-        AttemptCraft();
+        //AttemptCraft();
 
         // end turn after animations play out using event
     }
@@ -117,57 +130,87 @@ public class AIController
         foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> positionTargets in positionTargetOptions) {
             float posDelta = DeterminePositionWeight(positionTargets.Key, targetResource.Tile) - startPositionValue;
             foreach(List<Vector2Int> targetGroup in positionTargets.Value) {
+                if(targetGroup.Count == 0) {
+                    continue;
+                }
+
                 allOptions.Add(new TurnOption {
                     user = monster,
                     walkDestination = positionTargets.Key == monster.Tile ? null : positionTargets.Key,
                     abilitySlot = moveSlot,
                     abilityTargets = targetGroup,
-                    actionValue = DetermineOptionValue(monster, moveSlot, targetGroup),
+                    actionValue = DetermineOptionValue(monster, moveSlot, targetGroup, positionTargets.Key),
                     positionDelta = posDelta
                 });
             }
         }
 
         // choose the best option
-        allOptions = allOptions.AllTiedMax((TurnOption option) => option.Effectiveness);
+        allOptions = allOptions.AllTiedMax((TurnOption option) => option.actionValue);
         return allOptions[UnityEngine.Random.Range(0, allOptions.Count)];
     }
 
     // returns a value that represents how valuable the usage of the input move on the input targets would be
-    private float DetermineOptionValue(Monster monster, int moveSlot, List<Vector2Int> targets) {
+    // userPosition is the tile that the user has theoretically moved to, which may be different from its current tile
+    private float DetermineOptionValue(Monster user, int moveSlot, List<Vector2Int> targets, Vector2Int userPosition) {
         // TODO: add move heuristics
         LevelGrid level = LevelGrid.Instance;
-        Move move = monster.Stats.Moves[moveSlot];
+        Move move = user.Stats.Moves[moveSlot];
+
+        if(move.Type == MoveType.Heal) {
+            // prioritize healing lower health allies
+            float value = -0.1f;
+            foreach(Vector2Int tile in targets) {
+                Monster ally = tile == userPosition ? user : level.GetMonster(tile);
+                value += 0.7f * (1f - (float)ally.Health / ally.Stats.Health);
+            }
+            return value;
+        }
 
         if(move is Attack) {
             int totalDamage = 0;
             foreach(Monster hit in targets.ConvertAll((Vector2Int tile) => level.GetMonster(tile))) {
-                totalDamage += hit.DetermineDamage(((Attack)move).Damage, monster);
+                totalDamage += hit.DetermineDamage(((Attack)move).Damage, user);
             }
             return totalDamage / 10.0f;
         }
 
         if(move is ShieldMove) {
             // all shield moves currently have one target each
-            Monster shielded = level.GetMonster(targets[0]);
+            Monster shielded = targets[0] == userPosition ? user : level.GetMonster(targets[0]);
             if(shielded.CurrentShield != null) {
                 return -0.2f; // replacing a shield is bad
             }
+
+            // priotize shielding when enemies are nearby
+            float value = -0.1f;
+            foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
+                value += Mathf.Max(Monster.FindPath(enemy.Tile, shielded.Tile).Count / 7f, 0f);
+            }
+            return value;
         }
 
         if(move is StatusMove) {
-
+            if(move.TargetType == Move.Targets.Enemies) {
+                StatusAilment effect = ((StatusMove)move).Condition;
+                return 0.2f * (targets.Count * effect.effects.Count * effect.duration);
+            }
         }
 
         if(move is ZoneMove) {
+            if(GameManager.Instance.OpponentOf(controlTarget).Teammates.Count == 0) {
+                return -1f;
+            }
 
+            float value = -0.2f;
+            foreach(Vector2Int tile in targets) {
+                float distance = Vector2.Distance(level.Tiles.GetCellCenterWorld((Vector3Int)tile), conflictCenter);
+                value += 0.4f * Mathf.Max(1f - distance / 12f, 0.25f);
+            }
+            return value;
         }
 
-        if(move.Type == MoveType.Heal) {
-            // prioritize healing low health teammates
-        }
-
-        return 0.5f;
+        return 0.3f;
     }
 
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {

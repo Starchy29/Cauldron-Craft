@@ -5,6 +5,7 @@ using UnityEngine;
 public class StatusMove : Move
 {
     private StatusAilment condition;
+    public StatusAilment Condition { get { return condition; } }
 
     private event EffectFunction extraEffect;
 

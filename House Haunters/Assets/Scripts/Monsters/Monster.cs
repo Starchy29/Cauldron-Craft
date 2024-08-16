@@ -63,7 +63,7 @@ public class Monster : GridEntity
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
-    public void ReceiveAttack(int damage, Monster attacker, bool isMelee = false) {
+    public int DetermineDamage(int startDamage, Monster attacker) {
         float multiplier = 1f + (attacker.HasStatus(StatusEffect.Strength) ? 0.5f : 0f) + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
         if(HasStatus(StatusEffect.Haunted)) {
             multiplier *= 1.5f;
@@ -75,10 +75,17 @@ public class Monster : GridEntity
             }
         }
         if(multiplier != 1f) {
-            damage = Mathf.CeilToInt(damage * multiplier);
+            startDamage = Mathf.CeilToInt(startDamage * multiplier);
+        }
+        return startDamage;
+    }
+
+    public void ReceiveAttack(int damage, Monster attacker, bool isMelee = false) {
+        if(CurrentShield != null && CurrentShield.BlocksOnce) {
+            RemoveShield();
         }
 
-        TakeDamage(damage);
+        TakeDamage(DetermineDamage(damage, attacker));
         OnAttacked?.Invoke(attacker, isMelee);
     }
 

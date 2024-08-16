@@ -136,37 +136,38 @@ public class AIController
     // returns a value that represents how valuable the usage of the input move on the input targets would be
     private float DetermineOptionValue(Monster monster, int moveSlot, List<Vector2Int> targets) {
         // TODO: add move heuristics
+        LevelGrid level = LevelGrid.Instance;
         Move move = monster.Stats.Moves[moveSlot];
-        switch (move.Type) {
-            case MoveType.Movement:
-                break;
-            case MoveType.RangedAttack:
-            case MoveType.MeleeAttack:
-                return 0.8f;
-            case MoveType.Heal:
-                break;
-            case MoveType.Decay:
-                break;
-            case MoveType.Shield:
-                break;
-            case MoveType.Boost:
-                break;
-            case MoveType.Disrupt:
-                break;
-            case MoveType.Shift:
-                break;
-            case MoveType.Terrain:
-                break;
+
+        if(move is Attack) {
+            int totalDamage = 0;
+            foreach(Monster hit in targets.ConvertAll((Vector2Int tile) => level.GetMonster(tile))) {
+                totalDamage += hit.DetermineDamage(((Attack)move).Damage, monster);
+            }
+            return totalDamage / 10.0f;
+        }
+
+        if(move is ShieldMove) {
+            // all shield moves currently have one target each
+            Monster shielded = level.GetMonster(targets[0]);
+            if(shielded.CurrentShield != null) {
+                return -0.2f; // replacing a shield is bad
+            }
+        }
+
+        if(move is StatusMove) {
+
+        }
+
+        if(move is ZoneMove) {
+
+        }
+
+        if(move.Type == MoveType.Heal) {
+            // prioritize healing low health teammates
         }
 
         return 0.5f;
-
-        if(move is Attack) {
-
-        }
-        if(move is ShieldMove) {
-
-        }
     }
 
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {

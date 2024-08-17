@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.U2D;
+using UnityEngine.SceneManagement;
 
 public class AutoButton : MonoBehaviour
 {
@@ -10,7 +10,8 @@ public class AutoButton : MonoBehaviour
         EndTurn,
         StartGamePVP,
         StartGameVAI,
-        BackTargetSelect
+        GameplayBack,
+        QuitGame
     }
 
     [SerializeField] private ClickFunction clickFunction;
@@ -49,8 +50,11 @@ public class AutoButton : MonoBehaviour
             case ClickFunction.StartGameVAI:
                 OnClick = MainMenuScript.StartVAI;
                 break;
-            case ClickFunction.BackTargetSelect:
+            case ClickFunction.GameplayBack:
                 OnClick = MenuManager.Instance.BackMenu;
+                break;
+            case ClickFunction.QuitGame:
+                OnClick = () => { SceneManager.LoadScene(0); };
                 break;
         }
     }

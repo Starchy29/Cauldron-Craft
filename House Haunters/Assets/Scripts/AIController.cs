@@ -11,7 +11,7 @@ public class AIController
     private static Dictionary<ResourcePile, ResourceData> resourceData;
     private static Dictionary<Monster, List<Vector2Int>> walkOptions = new Dictionary<Monster, List<Vector2Int>>(); // cache to prevent repeated pathfinding
     private static Dictionary<Monster, Vector2Int> pathedPositions = new Dictionary<Monster, Vector2Int>();
-    private static Vector2 conflictCenter;
+    private static Vector2 idealZoneMiddle;
 
     public AIController(Team team) {
         this.controlTarget = team;
@@ -34,23 +34,24 @@ public class AIController
             }
         }
 
-        // choose abilities
-        while(true) {
-            Vector2 allyCenter = controlTarget.Teammates
+        // find center of conflict for zone placement
+        Vector2 allyCenter = controlTarget.Teammates
                 .ConvertAll(monster => (Vector2)monster.transform.position)
                 .Collapse((Vector2 cur, Vector2 next) => cur + next)
                 / controlTarget.Teammates.Count;
 
-            Vector2 enemyCenter = GameManager.Instance.OpponentOf(controlTarget).Teammates
-                .ConvertAll(monster => (Vector2)monster.transform.position)
-                .Collapse((Vector2 cur, Vector2 next) => cur + next)
-                / GameManager.Instance.OpponentOf(controlTarget).Teammates.Count;
+        Vector2 enemyCenter = GameManager.Instance.OpponentOf(controlTarget).Teammates
+            .ConvertAll(monster => (Vector2)monster.transform.position)
+            .Collapse((Vector2 cur, Vector2 next) => cur + next)
+            / GameManager.Instance.OpponentOf(controlTarget).Teammates.Count;
 
-            conflictCenter = (allyCenter + enemyCenter) / 2f;
+        idealZoneMiddle = .25f * allyCenter + .75f * enemyCenter;
 
+        // choose abilities
+        while(true) {
             // find avaialble non-walk abilities
             List<TurnOption> options = controlTarget.Teammates.ConvertAll((Monster monster) => ChooseAction(monster))
-                .FindAll((TurnOption option) => option.Effectiveness > 0);
+                .FindAll((TurnOption option) => option.actionValue > 0);
     
             if(options.Count == 0) {
                 break;
@@ -84,7 +85,7 @@ public class AIController
             }
         }
 
-        //AttemptCraft();
+        AttemptCraft();
 
         // end turn after animations play out using event
     }
@@ -147,7 +148,8 @@ public class AIController
 
         // choose the best option
         allOptions = allOptions.AllTiedMax((TurnOption option) => option.actionValue);
-        return allOptions[UnityEngine.Random.Range(0, allOptions.Count)];
+        TurnOption stillOption = allOptions.Find((TurnOption option) => option.walkDestination == null);
+        return stillOption.user == null ? allOptions[UnityEngine.Random.Range(0, allOptions.Count)] : stillOption;
     }
 
     // returns a value that represents how valuable the usage of the input move on the input targets would be
@@ -185,7 +187,7 @@ public class AIController
             // priotize shielding when enemies are nearby
             float value = -0.1f;
             foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
-                value += Mathf.Max(Monster.FindPath(enemy.Tile, shielded.Tile).Count / 7f, 0f);
+                value += Mathf.Max(1f - Monster.FindPath(enemy.Tile, shielded.Tile).Count / 7f, 0f);
             }
             return value;
         }
@@ -202,10 +204,16 @@ public class AIController
                 return -1f;
             }
 
-            float value = -0.2f;
+            float value = -0.4f;
             foreach(Vector2Int tile in targets) {
-                float distance = Vector2.Distance(level.Tiles.GetCellCenterWorld((Vector3Int)tile), conflictCenter);
-                value += 0.4f * Mathf.Max(1f - distance / 12f, 0.25f);
+                if(level.GetTile(tile).CurrentEffect != null) {
+                    // discourage replacing an existing tile effect
+                    value -= 0.2f;
+                    continue;
+                }
+
+                float distance = Vector2.Distance(level.Tiles.GetCellCenterWorld((Vector3Int)tile), idealZoneMiddle);
+                value += 0.6f * (1f - distance / 4f);
             }
             return value;
         }

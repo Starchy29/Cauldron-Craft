@@ -12,13 +12,14 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private AutoButton backButton;
     [SerializeField] private BuyMenu buyMenu;
     [SerializeField] private TerrainDisplay terrainInfo;
+    [SerializeField] private GameObject pauseMenu;
 
     private HealthBarScript hoveredHealthbar;
     private List<HealthBarScript> targetedHealthBars;
 
     public bool UseKBMouse { get; set; }
 
-    private enum SelectionTarget { None, Monster, Move, Targets, CraftChoice }
+    private enum SelectionTarget { None, Monster, Move, Targets, CraftChoice, Paused }
     private SelectionTarget state;
     
     private LevelGrid level;
@@ -32,6 +33,7 @@ public class MenuManager : MonoBehaviour
     private Monster selected;
 
     public static MenuManager Instance {  get; private set; }
+    public bool Paused { get { return state == SelectionTarget.Paused; } }
 
     void Awake() {
         Instance = this;   
@@ -46,15 +48,26 @@ public class MenuManager : MonoBehaviour
     }
 
     void Update() {
-        // this object is active only when the player can select a monster or target
         InputManager input = InputManager.Instance;
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
 
+        if(input.PausePressed()) {
+            if(state == SelectionTarget.Paused) {
+                BackMenu();
+            } else {
+                SetState(SelectionTarget.Paused);
+            }
+            return;
+        }
+
         if(input.BackPressed()) {
             BackMenu();
-            if(!isActiveAndEnabled) {
-                return;
-            }
+            return;
+        }
+
+        if(state == SelectionTarget.None || state == SelectionTarget.Paused) {
+            // only update when the player can select a monster or target
+            return;
         }
 
         if(state == SelectionTarget.Targets) {
@@ -178,12 +191,12 @@ public class MenuManager : MonoBehaviour
     private void SetState(SelectionTarget state) {
         LevelGrid level = LevelGrid.Instance; // this function runs in Start()
         this.state = state;
-        gameObject.SetActive(true);
         TileSelector.SetActive(false);
         moveMenu.gameObject.SetActive(false);
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);
         backButton.gameObject.SetActive(false);
+        pauseMenu.SetActive(false);
 
         if(hoveredHealthbar != null) {
             hoveredHealthbar.gameObject.SetActive(false);
@@ -228,10 +241,11 @@ public class MenuManager : MonoBehaviour
             case SelectionTarget.Targets:
                 backButton.gameObject.SetActive(true);
                 break;
-            case SelectionTarget.CraftChoice:
+            case SelectionTarget.Paused:
+                pauseMenu.SetActive(true);
                 break;
+            case SelectionTarget.CraftChoice:
             case SelectionTarget.None:
-                gameObject.SetActive(false);
                 break;
         }
     }
@@ -244,6 +258,9 @@ public class MenuManager : MonoBehaviour
                 break;
             case SelectionTarget.Targets:
                 SetState(SelectionTarget.Move);
+                break;
+            case SelectionTarget.Paused:
+                SetState(gameManager.CurrentTurn == controller ? SelectionTarget.Monster : SelectionTarget.None);
                 break;
         }
     }

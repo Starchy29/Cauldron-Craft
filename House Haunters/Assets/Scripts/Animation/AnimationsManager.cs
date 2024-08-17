@@ -19,7 +19,7 @@ public class AnimationsManager : MonoBehaviour
     }
 
     void Update() {
-        if(animationQueue.Count == 0) {
+        if(animationQueue.Count == 0 || MenuManager.Instance.Paused) {
             return;
         }
 

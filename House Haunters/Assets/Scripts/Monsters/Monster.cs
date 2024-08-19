@@ -34,6 +34,9 @@ public class Monster : GridEntity
         controller.Join(this);
         SetOutlineColor(controller.TeamColor);
         spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
+        if(monsterType == MonsterName.Amalgamation || monsterType == MonsterName.Beast) {
+            spriteRenderer.transform.localScale = new Vector3(2f, 2f, 1f);
+        }
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
 
         Health = Stats.Health;

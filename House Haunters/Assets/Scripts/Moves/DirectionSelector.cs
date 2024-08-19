@@ -7,10 +7,12 @@ public class DirectionSelector : ISelector
 {
     public int Range { get; private set; }
     public bool Piercing { get; private set; }
+    public bool EnemyBlocked { get; private set; }
 
-    public DirectionSelector(int range, bool piercing) {
+    public DirectionSelector(int range, bool piercing, bool enemyBlocked = true) {
         Range = range;
         Piercing = piercing;
+        EnemyBlocked = enemyBlocked;
     }
 
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
@@ -36,7 +38,7 @@ public class DirectionSelector : ISelector
                 group = new List<Vector2Int>();
 
                 Monster monster = level.GetMonster(testTile);
-                if(monster != null && monster.Controller != user.Controller) {
+                if(EnemyBlocked && monster != null && monster.Controller != user.Controller) {
                     // stop when reaching an enemy
                     break;
                 }

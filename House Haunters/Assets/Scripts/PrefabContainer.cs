@@ -24,7 +24,10 @@ public class PrefabContainer : MonoBehaviour
             { MonsterName.Golem, golemSprite },
             { MonsterName.Automaton, automatonSprite },
             { MonsterName.Sludge, sludgeSprite },
-            { MonsterName.Fossil, fossilSprite }
+            { MonsterName.Fossil, fossilSprite },
+            { MonsterName.Phantom, phantomSprite },
+            { MonsterName.Beast, beastSprite },
+            { MonsterName.Amalgamation, amalgamationSprite }
         };
 
         ingredientToSprite = new Dictionary<Ingredient, Sprite>() {
@@ -133,7 +136,7 @@ public class PrefabContainer : MonoBehaviour
     #region
     public Sprite flytrapSprite;
     public GameObject tangleVines;
-    public GameObject nectarRegen;
+    public GameObject regeneration;
     public GameObject chompTeeth;
     #endregion
 
@@ -142,7 +145,7 @@ public class PrefabContainer : MonoBehaviour
     public Sprite fungusSprite;
     public GameObject leechSeed;
     public GameObject drowsySpores;
-    public GameObject fearSpores;
+    public GameObject fearStatus;
     public GameObject psychicBurst;
     #endregion
 
@@ -180,5 +183,24 @@ public class PrefabContainer : MonoBehaviour
     public GameObject boneShot;
     public GameObject boneShield;
     public GameObject quicksand;
+    #endregion
+
+    [Header("Phantom")]
+    #region
+    public Sprite phantomSprite;
+    public GameObject phantomSlash;
+    public GameObject nightmareStatus;
+    #endregion
+
+    [Header("Beast")]
+    #region
+    public Sprite beastSprite;
+    public GameObject beastSlash;
+    public GameObject beastSpeed;
+    #endregion
+
+    [Header("Amalgamation")]
+    #region
+    public Sprite amalgamationSprite;
     #endregion
 }

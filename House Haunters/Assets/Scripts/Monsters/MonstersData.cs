@@ -12,11 +12,11 @@ public enum MonsterName {
     Automaton,
     Sludge,
     Fungus,
-    // Phantom,
     Fossil,
+    Phantom,
     Jackolantern,
-    // Beast,
-    // Amalgamation
+    Beast,
+    Amalgamation
 }
 
 public class MonstersData
@@ -42,7 +42,7 @@ public class MonstersData
             new List<Move>() {
                 new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(3, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(5); }, null, "Heals an ally for 4 health."),
                 new StatusMove("Haunt", 3, false, new StatusAilment(StatusEffect.Haunted, 3, prefabs.spookHaunt), RangeSelector.MeleeSelector, null, "The target takes 1.5x damage for 3 turns."),
-                new Attack("Soul Drain", 1, 4, new RangeSelector(2, false, true), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals 3 health from the target.", StealHealth)
+                new Attack("Soul Drain", 1, 3, new RangeSelector(2, false, true), AnimateProjectile(prefabs.soulDrop, null, 6f, true), "Steals 3 health from the target.", StealHealth)
             }
         );
 
@@ -68,7 +68,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
             new List<Move>() {
-                new StatusMove("Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.nectarRegen), new RangeSelector(2, false, true), null, "Applies regeneration for 3 turns"),
+                new StatusMove("Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.regeneration), new RangeSelector(2, false, true), null, "Applies regeneration for 3 turns"),
                 new Move("Vine Grab", 1, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target towards the user"),
                 new Attack("Chomp", 1, 10, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 8 damage to the target")
             }
@@ -96,7 +96,7 @@ public class MonstersData
             27, 3,
             new List<Move>() {
                 new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), RangeSelector.MeleeSelector, null, "The target is reduced to one action for 2 turns"),
-                new StatusMove("Psychic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearSpores), new ZoneSelector(2, 2), AnimateParticle(prefabs.psychicBurst), "Halves the targets' damage for 1 turn"),
+                new StatusMove("Psychic Spores", 1, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearStatus), new ZoneSelector(2, 2), AnimateParticle(prefabs.psychicBurst), "Halves the targets' damage for 1 turn"),
                 new Move("Infect", 0, MoveType.Decay, Move.Targets.Enemies, new RangeSelector(2, false, true), LeechStatus.ApplyLeech, null, "Drains 2 health per turn for 3 turns")
             }
         );
@@ -125,6 +125,33 @@ public class MonstersData
                 new ShieldMove("Rib Cage", 2, SelfSelector.Instance, new Shield(Shield.Strength.Strong, 1, true, prefabs.boneShield), null, ""),
                 new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, 1, null), null, ""),
                 new Attack("Bone Shot", 1, 8, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 16f), "")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Phantom] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
+            21, 5,
+            new List<Move>() {
+                new StatusMove("Nightmare", 4, false, new StatusAilment(new List<StatusEffect> { StatusEffect.Drowsiness, StatusEffect.Fear }, 1, prefabs.nightmareStatus), RangeSelector.MeleeSelector, null, ""),
+                new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, ""),
+                new Attack("Slash", 1, 9, RangeSelector.MeleeSelector, null, "")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Beast] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
+            27, 5,
+            new List<Move>() {
+                new StatusMove("Battle Cry", 5, true, new StatusAilment(StatusEffect.Swiftness, 2, prefabs.beastSpeed), new ZoneSelector(2, 5), null, ""),
+                new Move("Shove", 2, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(1, false), Shove, null, ""),
+                new Attack("Claw", 1, 7, new ZoneSelector(1, 2), null, "")
+            }
+        );
+
+        monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
+            30, 3,
+            new List<Move>() {
+                new StatusMove("Mend Flesh", 6, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.regeneration), SelfSelector.Instance, null, ""),
+                new StatusMove("Horrify", 3, false, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearStatus), new ZoneSelector(2, 5), null, ""),
+                new Attack("Lash Out", 1, 6, new ZoneSelector(1, 3), null, "")
             }
         );
     }
@@ -243,6 +270,73 @@ public class MonstersData
             user.UpdateSortingOrder();
             target.UpdateSortingOrder();
         }));
+    }
+
+    private static void DashSlash(Monster user, Vector2Int target) {
+        LevelGrid level = LevelGrid.Instance;
+
+        // move to the end tile
+        Vector2Int start = user.Tile;
+        AnimationsManager.Instance.QueueAnimation(new PathAnimator(user, new List<Vector3> { level.Tiles.GetCellCenterWorld((Vector3Int)target) }, 20f));
+        level.MoveEntity(user, target);
+
+        // damage all enemies passed through
+        Vector2Int direction = target - start;
+        if(direction.x == 0) {
+            direction = new Vector2Int(0, direction.y > 0 ? 1 : -1);
+        } else {
+            direction = new Vector2Int(direction.x > 0 ? 1 : -1, 0);
+        }
+
+        for(Vector2Int tile = start + direction; tile != target; tile += direction) {
+            Monster hit = level.GetMonster(tile);
+            if(hit != null && hit.Controller != user.Controller) {
+                hit.ReceiveAttack(7, user, true);
+            }
+        }
+    }
+
+    private static void Shove(Monster user, Vector2Int targetTile) {
+        LevelGrid level = LevelGrid.Instance;
+        Monster enemy = level.GetMonster(targetTile);
+
+        const int SHOVE_DIST = 3;
+        const float SPEED = 18f;
+        const int DAMAGE = 6;
+
+        Vector2Int direction = targetTile - user.Tile;
+        for(int i = 0; i < SHOVE_DIST; i++) {
+            Vector2Int tile = targetTile + (i + 1) * direction;
+            WorldTile terrain = level.GetTile(tile);
+            Monster occupant = level.GetMonster(tile);
+
+            if(occupant != null || terrain.IsWall) {
+                // hit into another monster or crash into a wall
+                AnimationsManager.Instance.QueueAnimation(new PathAnimator(enemy, new List<Vector3> { level.Tiles.GetCellCenterWorld((Vector3Int)tile) }, SPEED));
+                AnimationsManager.Instance.QueueAnimation(new PathAnimator(enemy, new List<Vector3> { level.Tiles.GetCellCenterWorld((Vector3Int)(tile - direction)) }, SPEED));
+                level.MoveEntity(enemy, tile - direction);
+
+                if(occupant != null) {
+                    occupant.TakeDamage(DAMAGE);
+                }
+                enemy.TakeDamage(DAMAGE);
+                return;
+            }
+
+            if(!terrain.Walkable && !terrain.IsWall) {
+                // fall into pit
+                AnimationsManager.Instance.QueueAnimation(new PathAnimator(enemy, new List<Vector3> { level.Tiles.GetCellCenterWorld((Vector3Int)tile) }, SPEED));
+                AnimationsManager.Instance.QueueAnimation(new FallAnimator(enemy.gameObject, level.Tiles.GetCellCenterWorld((Vector3Int)(tile - direction))));
+                level.MoveEntity(enemy, tile - direction);
+                enemy.TakeDamage(DAMAGE);
+                return;
+            }
+        }
+
+        // travel full distance
+        Vector2Int endTile = targetTile + SHOVE_DIST * direction;
+        AnimationsManager.Instance.QueueAnimation(new PathAnimator(enemy, new List<Vector3> { level.Tiles.GetCellCenterWorld((Vector3Int)endTile) }, SPEED));
+        level.MoveEntity(enemy, endTile);
     }
     #endregion
 }

@@ -92,12 +92,12 @@ MonoBehaviour:
   thornShot: {fileID: 8245164862100309878, guid: 5c47a9a8ffc195e428db06c764f9a623, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
   tangleVines: {fileID: 2272507394141505538, guid: 99f20a77d8d10c3449ad32b364700ae2, type: 3}
-  nectarRegen: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
+  regeneration: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
   chompTeeth: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
   fungusSprite: {fileID: 21300000, guid: d02c3fcd707437845a668391b59d59b8, type: 3}
   leechSeed: {fileID: 8030383983686718888, guid: e8fa14b5afd934b4bb6a04f6af0bb038, type: 3}
   drowsySpores: {fileID: 8233400920672778888, guid: 4e6b889b7ea8dd145ab0d44b116a8769, type: 3}
-  fearSpores: {fileID: 867175141187624726, guid: 559f44e367abef14aa941f00c845bc7a, type: 3}
+  fearStatus: {fileID: 867175141187624726, guid: 559f44e367abef14aa941f00c845bc7a, type: 3}
   psychicBurst: {fileID: 692373174144819729, guid: dc44b39a221c8b94f8c5e69fa7ac68b0, type: 3}
   jackolanternSprite: {fileID: 21300000, guid: 69016b95560370e48b769880b801ce4f, type: 3}
   hexBlast: {fileID: 1957257125145424289, guid: e5212601687663c48bf7f9e289dffd0a, type: 3}
@@ -115,3 +115,10 @@ MonoBehaviour:
   boneShot: {fileID: 7739928640664878823, guid: b3ebdeeabdcca2643ae7ae5910cad4c4, type: 3}
   boneShield: {fileID: 4265488659706721328, guid: ea64b4314f79b0a488ba4cb247c7cc74, type: 3}
   quicksand: {fileID: 8796343949080538550, guid: e91278a3633471d4d941af105f44ed61, type: 3}
+  phantomSprite: {fileID: 21300000, guid: e08cafd7f84cf874b9f2ddfeb1a7344f, type: 3}
+  phantomSlash: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
+  nightmareStatus: {fileID: 8509943955392034232, guid: f640d6297da60c04d9ef5562d3b792eb, type: 3}
+  beastSprite: {fileID: 21300000, guid: 02e15213a5ed02a489f2f6489dbc33f6, type: 3}
+  beastSlash: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
+  beastSpeed: {fileID: 6910954531195394623, guid: e165e810c8601304189c939f0614cc45, type: 3}
+  amalgamationSprite: {fileID: 21300000, guid: 897b822c4c1f8bb46b29e55d97aa1521, type: 3}

@@ -37,7 +37,7 @@ public class MonstersData
 
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
-        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(MonsterName.LostSoul, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             23, 4,
             new List<Move>() {
                 new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(3, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(5); }, null, "Heals an ally for 4 health."),
@@ -46,7 +46,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Demon] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.Demon] = new MonsterType(MonsterName.Demon, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             25, 4,
             new List<Move>() {
                 new StatusMove("Ritual", 5, true, new StatusAilment(new List<StatusEffect>() { StatusEffect.Strength, StatusEffect.Haunted }, 3, prefabs.demonStrength), SelfSelector.Instance, null, "Increases damage dealt and taken by 1.5x for 3 turns"),
@@ -55,7 +55,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Cactus] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Cactus] = new MonsterType(MonsterName.Cactus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             27, 3,
             new List<Move>() {
                 new Move("Thorns", 2, MoveType.Boost, Move.Targets.Allies, new RangeSelector(4, true, true), ThornStatus.ApplyThorns, null, "For 3 turns, deal 6 damage to any enemy that strikes the target with a melee attack."),
@@ -65,7 +65,7 @@ public class MonstersData
         );
 
         tangledStatus = new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines);
-        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(MonsterName.Flytrap, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
             new List<Move>() {
                 new StatusMove("Nectar", 5, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.regeneration), new RangeSelector(2, false, true), null, "Applies regeneration for 3 turns"),
@@ -74,7 +74,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Golem] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Golem] = new MonsterType(MonsterName.Golem, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             25, 4,
             new List<Move>() {
                 new ShieldMove("Crystal Casing", 2, new RangeSelector(3, true, true), new Shield(Shield.Strength.Medium, 1, false, prefabs.crystalShield), null, ""),
@@ -83,7 +83,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Automaton] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Automaton] = new MonsterType(MonsterName.Automaton, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
             new List<Move>() {
                 new ShieldMove("Bastion", 1, SelfSelector.Instance, new Shield(Shield.Strength.Weak, 1, false, prefabs.bastionShield), null, ""),
@@ -92,7 +92,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(MonsterName.Fungus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Decay },
             27, 3,
             new List<Move>() {
                 new StatusMove("Sleepy Spores", 2, false, new StatusAilment(StatusEffect.Drowsiness, 2, prefabs.drowsySpores), RangeSelector.MeleeSelector, null, "The target is reduced to one action for 2 turns"),
@@ -101,7 +101,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(MonsterName.Jackolantern, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Mineral },
             23, 4,
             new List<Move>() {
                 new Move("Portal", 2, MoveType.Shift, Move.Targets.Allies, new RangeSelector(4, false, false), SwapPosition, null, "Swaps position with a nearby ally."),
@@ -110,7 +110,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Sludge] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Sludge] = new MonsterType(MonsterName.Sludge, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
             27, 4,
             new List<Move>() {
                 new ZoneMove("Toxic Puddle", 3, ZoneSelector.AOESelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, 0, null, false, false, (Monster occupant) => { occupant.TakeDamage(5); }), null, ""),
@@ -119,7 +119,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Fossil] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.Fossil] = new MonsterType(MonsterName.Fossil, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Decay },
             25, 3,
             new List<Move>() {
                 new ShieldMove("Rib Cage", 2, SelfSelector.Instance, new Shield(Shield.Strength.Strong, 1, true, prefabs.boneShield), null, ""),
@@ -128,7 +128,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Phantom] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Phantom] = new MonsterType(MonsterName.Phantom, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             21, 5,
             new List<Move>() {
                 new StatusMove("Nightmare", 4, false, new StatusAilment(new List<StatusEffect> { StatusEffect.Drowsiness, StatusEffect.Fear }, 1, prefabs.nightmareStatus), RangeSelector.MeleeSelector, null, ""),
@@ -137,7 +137,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Beast] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Beast] = new MonsterType(MonsterName.Beast, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
             27, 5,
             new List<Move>() {
                 new StatusMove("Battle Cry", 5, true, new StatusAilment(StatusEffect.Swiftness, 2, prefabs.beastSpeed), new ZoneSelector(2, 5), null, ""),
@@ -146,7 +146,7 @@ public class MonstersData
             }
         );
 
-        monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(MonsterName.Amalgamation, new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
             30, 3,
             new List<Move>() {
                 new StatusMove("Mend Flesh", 6, true, new StatusAilment(StatusEffect.Regeneration, 3, prefabs.regeneration), SelfSelector.Instance, null, ""),
@@ -296,11 +296,11 @@ public class MonstersData
         }
     }
 
+    public const int SHOVE_DIST = 3;
     private static void Shove(Monster user, Vector2Int targetTile) {
         LevelGrid level = LevelGrid.Instance;
         Monster enemy = level.GetMonster(targetTile);
 
-        const int SHOVE_DIST = 3;
         const float SPEED = 18f;
         const int DAMAGE = 6;
 
@@ -308,7 +308,7 @@ public class MonstersData
         for(int i = 0; i < SHOVE_DIST; i++) {
             Vector2Int tile = targetTile + (i + 1) * direction;
             WorldTile terrain = level.GetTile(tile);
-            Monster occupant = level.GetMonster(tile);
+            GridEntity occupant = level.GetEntity(tile);
 
             if(occupant != null || terrain.IsWall) {
                 // hit into another monster or crash into a wall
@@ -316,8 +316,8 @@ public class MonstersData
                 AnimationsManager.Instance.QueueAnimation(new PathAnimator(enemy, new List<Vector3> { level.Tiles.GetCellCenterWorld((Vector3Int)(tile - direction)) }, SPEED));
                 level.MoveEntity(enemy, tile - direction);
 
-                if(occupant != null) {
-                    occupant.TakeDamage(DAMAGE);
+                if(occupant != null && occupant is Monster) {
+                    ((Monster)occupant).TakeDamage(DAMAGE);
                 }
                 enemy.TakeDamage(DAMAGE);
                 return;

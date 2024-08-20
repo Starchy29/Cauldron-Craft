@@ -218,7 +218,65 @@ public class AIController
             return value;
         }
 
-        return 0.3f;
+        if(move.Type == MoveType.Decay) {
+            // leech, wither, hex
+            Monster target = level.GetMonster(targets[0]);
+            float value = target.Health / 8f;
+            return Mathf.Clamp(value, 0.2f, 0.7f);
+        }
+
+        if(move.Type == MoveType.Shift) {
+            switch(user.Stats.Type) {
+                case MonsterName.Phantom:
+                    // dash
+                    Vector2Int dir = targets[0] - user.Tile;
+                    if(dir.x == 0) {
+                        dir = new Vector2Int(0, dir.y > 0 ? 1 : -1);
+                    } else {
+                        dir = new Vector2Int(dir.x > 0 ? 1 : -1, 0);
+                    }
+
+                    float enemiesHit = 0;
+                    for(Vector2Int tile = user.Tile + dir; tile != targets[0]; tile += dir) {
+                        Monster occupant = level.GetMonster(tile);
+                        if(occupant != null && occupant.Controller != user.Controller) {
+                            enemiesHit++;
+                        }
+                    }
+                    return 0.1f * Global.CalcTileDistance(user.Tile, targets[0]) + 0.5f * enemiesHit;
+
+                case MonsterName.Jackolantern:
+                    // swap
+                    return Global.CalcTileDistance(user.Tile, targets[0]) * 0.1f;
+
+                case MonsterName.Flytrap:
+                    // pull
+                    return 0.3f + 0.1f * (Global.CalcTileDistance(user.Tile, targets[0]) - 1);
+
+                case MonsterName.Beast:
+                    // push
+                    Vector2Int direction = targets[0] - user.Tile;
+                    for(int i = 1; i <= MonstersData.SHOVE_DIST; i++) {
+                        Vector2Int tile = targets[0] + direction * i;
+                        GridEntity occupant = level.GetEntity(tile);
+                        WorldTile terrain = level.GetTile(tile);
+                        if(occupant != null || !terrain.Walkable) {
+                            if(occupant != null && occupant is Monster) {
+                                return ((Monster)occupant).Controller == user.Controller ? 0f : 1.2f;
+                            }
+                            return 0.6f;
+                        }
+                    }
+                    return 0.3f;
+            }
+        }
+
+        // at this point the only moves not accounted for are sentry and thorns
+        float result = -0.2f;
+        foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
+            result += Mathf.Max(1f - Monster.FindPath(enemy.Tile, targets[0]).Count / 5f, 0f);
+        }
+        return result;
     }
 
     private Dictionary<ResourcePile, ResourceData> EvaluateResources() {

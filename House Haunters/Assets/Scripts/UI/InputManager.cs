@@ -29,8 +29,7 @@ public class InputManager
     }
 
     public bool BackPressed() {
-        return Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame
-            || Keyboard.current != null && (Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.backspaceKey.wasPressedThisFrame);
+        return Keyboard.current != null && Keyboard.current.backspaceKey.wasPressedThisFrame;
     }
 
     public bool PausePressed() {

@@ -285,7 +285,7 @@ public class MenuManager : MonoBehaviour
         }
 
         // show health bars on possible targets
-        if(move.Type == MoveType.RangedAttack || move.Type == MoveType.MeleeAttack || move.Type == MoveType.Heal || move.Type == MoveType.Decay) {
+        if(move.Type == MoveType.Attack || move.Type == MoveType.Attack || move.Type == MoveType.Heal || move.Type == MoveType.Decay) {
             bool checkAllies = move.Type == MoveType.Heal;
             targetedHealthBars = new List<HealthBarScript>();
             List<Vector2Int> tilesWithMonsters = allTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });

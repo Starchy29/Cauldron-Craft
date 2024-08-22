@@ -6,7 +6,6 @@ public enum UniqueStatuses
 {
     LeechSpore,
     Wither,
-    Thorns,
     Sentry,
     Hexed
 }

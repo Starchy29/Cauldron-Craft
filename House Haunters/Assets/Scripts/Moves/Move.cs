@@ -4,11 +4,9 @@ using UnityEngine;
 
 public enum MoveType {
     Movement,
-    RangedAttack,
-    MeleeAttack,
+    Attack,
     Heal,
     Decay,
-    Shield,
     Boost,
     Disrupt,
     Shift,

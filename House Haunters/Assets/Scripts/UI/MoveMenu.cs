@@ -14,9 +14,7 @@ public class MoveMenu : MonoBehaviour
     [SerializeField] private GameObject StatusZone;
     [SerializeField] private GameObject StatusIconPrefab;
     [SerializeField] private StatusTooltip statusTooltip;
-    [SerializeField] private GameObject remainingMoveTracker;
 
-    private SpriteRenderer[] movesLeftCircles;
     private MoveButton[] buttons;
     private int numButtons;
     private float buttonHeight;
@@ -41,16 +39,6 @@ public class MoveMenu : MonoBehaviour
         buttonHeight = MoveButtonPrefab.transform.localScale.y;
 
         SetUpStatusIcons();
-
-        movesLeftCircles = new SpriteRenderer[MAX_MOVES];
-        for(int i = 0; i < MAX_MOVES; i++) {
-            GameObject spawned = new GameObject();
-            movesLeftCircles[i] = spawned.AddComponent<SpriteRenderer>();
-            movesLeftCircles[i].sortingLayerName = "UI";
-            spawned.transform.SetParent(remainingMoveTracker.transform);
-            spawned.transform.localPosition = new Vector3((-1f + i) / remainingMoveTracker.transform.localScale.x, 0f, 0f);
-            spawned.transform.localScale = new Vector3(0.7f / remainingMoveTracker.transform.localScale.x, 0.7f, 1f);
-        }
 
         gameObject.SetActive(false);
     }
@@ -85,16 +73,6 @@ public class MoveMenu : MonoBehaviour
         }
 
         MonsterInfoAnchor.transform.localPosition = new Vector3(0, -(buttonSpan - buttonHeight) / 2f, 0);
-
-        // set up remaining move count
-        remainingMoveTracker.SetActive(monster.Controller == opener);
-        if(monster.Controller == opener) {
-            remainingMoveTracker.transform.localPosition = new Vector3(0f, Background.transform.localScale.y / 2f + 0.5f, 0f);
-            for(int i = 0; i < MAX_MOVES; i++) {
-                movesLeftCircles[i].sprite = i < monster.MovesLeft ? PrefabContainer.Instance.fullCircle : PrefabContainer.Instance.emptyCircle;
-                movesLeftCircles[i].gameObject.SetActive(i < monster.MaxMoves);
-            }
-        }
 
         // set up monster health
         HealthMarker.text = monster.Health + "/" + monster.Stats.Health;
@@ -181,26 +159,20 @@ public class MoveMenu : MonoBehaviour
 
     private void SetUpStatusIcons() {
         Dictionary<StatusEffect, string> names = new Dictionary<StatusEffect, string>() {
-            { StatusEffect.Regeneration, "Regenerating" },
             { StatusEffect.Strength, "Strengthened" },
             { StatusEffect.Swiftness, "Swift" },
-            { StatusEffect.Energy, "Energized" },
-            { StatusEffect.Poison, "Poisoned" },
+            { StatusEffect.Wither, "Poisoned" },
             { StatusEffect.Fear, "Fearful" },
             { StatusEffect.Slowness, "Slowed" },
-            { StatusEffect.Drowsiness, "Drowsy" },
             { StatusEffect.Haunted, "Haunted" }
         };
 
         Dictionary<StatusEffect, string> descriptions = new Dictionary<StatusEffect, string>() {
-            { StatusEffect.Regeneration, "Heal 2 health at the end of every turn." },
             { StatusEffect.Strength, "Deal 1.5x damage." },
             { StatusEffect.Swiftness, "Move up to one tile further." },
-            { StatusEffect.Energy, "Gain an additional action every turn." },
-            { StatusEffect.Poison, "Take 2 damage at the end of every turn." },
+            { StatusEffect.Wither, "Take 2 damage at the end of every turn." },
             { StatusEffect.Fear, "Deal half the normal amount of damage." },
             { StatusEffect.Slowness, "Movement is reduced by 1 tile." },
-            { StatusEffect.Drowsiness, "Lose 1 action every turn." },
             { StatusEffect.Haunted, "Receive 1.5x damage." }
         };
 
@@ -217,8 +189,6 @@ public class MoveMenu : MonoBehaviour
             .SetData("Infected", "Drained for 2 life every turn.", prefabs.infectedIcon);
         uniqueStatusIcons[UniqueStatuses.Wither] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
             .SetData("Withering", "Take 4 damage at the end of every turn.", prefabs.witherIcon);
-        uniqueStatusIcons[UniqueStatuses.Thorns] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
-            .SetData("Thorny", "Deal 6 damage to enemies that melee attack this.", prefabs.thornsIcon);
         uniqueStatusIcons[UniqueStatuses.Sentry] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
             .SetData("Auto-locking", "Deals 5 damage to enemies that step within 5 tiles.", prefabs.thornsIcon);
         uniqueStatusIcons[UniqueStatuses.Hexed] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()

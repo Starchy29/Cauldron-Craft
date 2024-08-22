@@ -111,7 +111,7 @@ public class AIController
             walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false).CollapseList();
         }
 
-        List<TurnOption> bestOptions = usableMoveSlots.ConvertAll((int slot) => DetermineBestOption(monster, slot, canWalk && monster.MovesLeft > 1))
+        List<TurnOption> bestOptions = usableMoveSlots.ConvertAll((int slot) => DetermineBestOption(monster, slot, canWalk))
             .AllTiedMax((TurnOption option) => option.Effectiveness);
         return bestOptions.Exists((TurnOption option) => option.Effectiveness > 0) ? bestOptions[UnityEngine.Random.Range(0, bestOptions.Count)] : TurnOption.None;
     }
@@ -177,21 +177,6 @@ public class AIController
             return totalDamage / 10.0f;
         }
 
-        if(move is ShieldMove) {
-            // all shield moves currently have one target each
-            Monster shielded = targets[0] == userPosition ? user : level.GetMonster(targets[0]);
-            if(shielded.CurrentShield != null) {
-                return -0.2f; // replacing a shield is bad
-            }
-
-            // priotize shielding when enemies are nearby
-            float value = -0.1f;
-            foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
-                value += Mathf.Max(1f - Monster.FindPath(enemy.Tile, shielded.Tile).Count / 7f, 0f);
-            }
-            return value;
-        }
-
         if(move is StatusMove) {
             if(move.TargetType == Move.Targets.Enemies) {
                 StatusAilment effect = ((StatusMove)move).Condition;
@@ -226,10 +211,10 @@ public class AIController
         }
 
         if(move.Type == MoveType.Shift) {
-            switch(user.Stats.Type) {
+            /*switch(user.Stats.Type) {
                 case MonsterName.Phantom:
                     // dash
-                    Vector2Int dir = targets[0] - user.Tile;
+                    Vector2Int dir = targets[0] - userPosition;
                     if(dir.x == 0) {
                         dir = new Vector2Int(0, dir.y > 0 ? 1 : -1);
                     } else {
@@ -237,27 +222,31 @@ public class AIController
                     }
 
                     float enemiesHit = 0;
-                    for(Vector2Int tile = user.Tile + dir; tile != targets[0]; tile += dir) {
+                    for(Vector2Int tile = userPosition + dir; tile != targets[0]; tile += dir) {
                         Monster occupant = level.GetMonster(tile);
                         if(occupant != null && occupant.Controller != user.Controller) {
                             enemiesHit++;
                         }
                     }
-                    return 0.1f * Global.CalcTileDistance(user.Tile, targets[0]) + 0.5f * enemiesHit;
+                    return 0.1f * Global.CalcTileDistance(userPosition, targets[0]) + 0.5f * enemiesHit;
 
                 case MonsterName.Jackolantern:
                     // swap
-                    return Global.CalcTileDistance(user.Tile, targets[0]) * 0.1f;
+                    return Global.CalcTileDistance(userPosition, targets[0]) * 0.1f;
 
                 case MonsterName.Flytrap:
                     // pull
-                    return 0.3f + 0.1f * (Global.CalcTileDistance(user.Tile, targets[0]) - 1);
+                    return 0.3f + 0.1f * (Global.CalcTileDistance(userPosition, targets[0]) - 1);
 
                 case MonsterName.Beast:
                     // push
-                    Vector2Int direction = targets[0] - user.Tile;
+                    Vector2Int direction = targets[0] - userPosition;
                     for(int i = 1; i <= MonstersData.SHOVE_DIST; i++) {
                         Vector2Int tile = targets[0] + direction * i;
+                        if(!level.IsInGrid(tile)) {
+                            return 0f;
+                        }
+
                         GridEntity occupant = level.GetEntity(tile);
                         WorldTile terrain = level.GetTile(tile);
                         if(occupant != null || !terrain.Walkable) {
@@ -268,7 +257,7 @@ public class AIController
                         }
                     }
                     return 0.3f;
-            }
+            }*/
         }
 
         // at this point the only moves not accounted for are sentry and thorns

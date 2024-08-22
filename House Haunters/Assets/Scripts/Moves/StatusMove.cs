@@ -25,11 +25,7 @@ public class StatusMove : Move
     }
 
     private static MoveType DetermineMoveType(StatusAilment condition, bool forAllies) {
-        if(condition.effects.Contains(StatusEffect.Regeneration)) {
-            return MoveType.Heal;
-        }
-
-        if(condition.effects.Contains(StatusEffect.Poison)) {
+        if(condition.effects.Contains(StatusEffect.Wither)) {
             return MoveType.Decay;
         }
 

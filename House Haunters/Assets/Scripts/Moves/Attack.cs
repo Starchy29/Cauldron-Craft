@@ -10,7 +10,7 @@ public class Attack : Move
     private HitTrigger OnHit;
 
     public Attack(string name, int cooldown, int damage, ISelector selection, AnimationQueuer effectAnimation, string description = "", HitTrigger hitEffect = null) 
-        : base(name, cooldown, selection.Range > 1 ? MoveType.RangedAttack : MoveType.MeleeAttack, Targets.Enemies, selection, null, effectAnimation, description)
+        : base(name, cooldown, selection.Range > 1 ? MoveType.Attack : MoveType.Attack, Targets.Enemies, selection, null, effectAnimation, description)
     {
         Damage = damage;
         OnHit = hitEffect;
@@ -20,7 +20,7 @@ public class Attack : Move
     private void DealDamage(Monster user, Vector2Int tile) {
         Monster hitMonster = LevelGrid.Instance.GetMonster(tile);
         int startHealth = hitMonster.Health;
-        hitMonster.ReceiveAttack(Damage, user, Type == MoveType.MeleeAttack);
+        hitMonster.TakeDamage(Damage, user);
 
         if(OnHit != null) {
             OnHit(user, hitMonster, hitMonster.Health < startHealth ? startHealth - hitMonster.Health : 0);

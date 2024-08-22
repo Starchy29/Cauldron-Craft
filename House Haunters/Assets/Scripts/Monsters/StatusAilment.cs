@@ -7,15 +7,11 @@ using UnityEngine;
 
 public enum StatusEffect
 {
-    Regeneration,
+    Wither,
     Strength,
     Swiftness,
-    Energy,
-
-    Poison,
     Fear,
     Slowness,
-    Drowsiness,
     Haunted
 }
 
@@ -24,7 +20,7 @@ public class StatusAilment : IEquatable<StatusAilment>
     public const int SPEED_BOOST = 1;
 
     public static StatusEffect[] negativeStatuses = new StatusEffect[] { 
-        StatusEffect.Poison, 
+        StatusEffect.Wither, 
         StatusEffect.Fear,
         StatusEffect.Slowness,
         StatusEffect.Haunted

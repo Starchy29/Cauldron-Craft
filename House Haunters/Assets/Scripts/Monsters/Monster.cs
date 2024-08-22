@@ -16,14 +16,10 @@ public class Monster : GridEntity
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
     public event Trigger OnDeath;
-    public delegate void AttackTrigger(Monster attacker, bool isMelee);
-    public event AttackTrigger OnAttacked;
 
     public int[] Cooldowns {  get; private set; }
-    public Shield CurrentShield { get; private set; }
-    public int MovesLeft { get; private set; }
-
-    public int MaxMoves { get { return 2 + (HasStatus(StatusEffect.Energy) ? 1 : 0) + (HasStatus(StatusEffect.Drowsiness) ? -1 : 0); } }
+    public bool AbilityAvailable { get; private set; }
+    public bool WalkAvailable { get { return Cooldowns[MonsterType.WALK_INDEX] == 0; } }
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swiftness) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
@@ -34,16 +30,12 @@ public class Monster : GridEntity
         controller.Join(this);
         SetOutlineColor(controller.TeamColor);
         spriteRenderer.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
-        if(monsterType == MonsterName.Amalgamation || monsterType == MonsterName.Beast) {
-            spriteRenderer.transform.localScale = new Vector3(2f, 2f, 1f);
-        }
         Stats = MonstersData.Instance.GetMonsterData(monsterType);
 
         Health = Stats.Health;
         Cooldowns = new int[Stats.Moves.Length];
 
         OnTurnStart += RefreshMoves;
-        OnTurnStart += ReduceShield;
         OnTurnEnd += DecreaseCooldowns;
         OnTurnEnd += CheckStatuses;
 
@@ -71,28 +63,17 @@ public class Monster : GridEntity
         if(HasStatus(StatusEffect.Haunted)) {
             multiplier *= 1.5f;
         }
-        if(CurrentShield != null) {
-            multiplier *= CurrentShield.DamageMultiplier;
-            if(CurrentShield.BlocksOnce) {
-                RemoveShield();
-            }
-        }
         if(multiplier != 1f) {
             startDamage = Mathf.CeilToInt(startDamage * multiplier);
         }
         return startDamage;
     }
 
-    public void ReceiveAttack(int damage, Monster attacker, bool isMelee = false) {
-        if(CurrentShield != null && CurrentShield.BlocksOnce) {
-            RemoveShield();
+    public void TakeDamage(int amount, Monster attacker = null) {
+        if(attacker != null) {
+            amount = DetermineDamage(amount, attacker);
         }
 
-        TakeDamage(DetermineDamage(damage, attacker));
-        OnAttacked?.Invoke(attacker, isMelee);
-    }
-
-    public void TakeDamage(int amount) {
         Health -= amount;
         if(Health < 0) {
             Health = 0;
@@ -166,11 +147,14 @@ public class Monster : GridEntity
 
         Stats.Moves[moveSlot].Use(this, tiles);
         Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
-        MovesLeft--;
+        
+        if(moveSlot != MonsterType.WALK_INDEX) {
+            AbilityAvailable = false;
+        }
     }
 
     public bool CanUse(int moveSlot) {
-        return Stats.Moves[moveSlot] != null && MovesLeft > 0 && Cooldowns[moveSlot] == 0 && GetMoveOptions(moveSlot).Count > 0;
+        return (moveSlot == MonsterType.WALK_INDEX || AbilityAvailable) && Cooldowns[moveSlot] == 0 && GetMoveOptions(moveSlot).Count > 0;
     }
 
     public List<int> GetUsableMoveSlots() {
@@ -183,42 +167,12 @@ public class Monster : GridEntity
         return moveOptions;
     }
 
-    public void ApplyShield(Shield shield) {
-        RemoveShield();
-        CurrentShield = new Shield(shield.StrengthLevel, shield.Duration, shield.BlocksOnce, Instantiate(shield.Visual));
-        CurrentShield.Visual.transform.SetParent(transform, false);
-        CurrentShield.Visual.transform.localPosition = Vector3.zero;
-        CurrentShield.Visual.SetActive(false);
-        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(CurrentShield.Visual, true));
-    }
-
-    public void RemoveShield() {
-        if(CurrentShield == null) {
-            return;
-        }
-
-        AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(CurrentShield.Visual));
-        CurrentShield = null;
-    }
-
     private void RefreshMoves() {
-        MovesLeft = MaxMoves;
-    }
-
-    private void ReduceShield() {
-        if(CurrentShield != null) {
-            CurrentShield.Duration--;
-            if(CurrentShield.Duration <= 0) {
-                RemoveShield();
-            }
-        }
+        AbilityAvailable = true;
     }
 
     private void CheckStatuses() {
-        if(HasStatus(StatusEffect.Regeneration)) {
-            Heal(4);
-        }
-        if(HasStatus(StatusEffect.Poison)) {
+        if(HasStatus(StatusEffect.Wither)) {
             TakeDamage(5);
         }
 

@@ -23,7 +23,6 @@ public class MoveMenu : MonoBehaviour
 
     private List<StatusIcon> activeStatusIcons = new List<StatusIcon>();
     private Dictionary<StatusEffect, StatusIcon> normalStatusIcons;
-    private Dictionary<UniqueStatuses, StatusIcon> uniqueStatusIcons;
 
     public GameObject Background { get; private set; }
 
@@ -99,23 +98,16 @@ public class MoveMenu : MonoBehaviour
         }
         activeStatusIcons.Clear();
 
-        foreach(UniqueStatus status in monster.UniqueStatuses) {
-            activeStatusIcons.Add(uniqueStatusIcons[status.Type]);
-            uniqueStatusIcons[status.Type].duration = status.Duration;
-        }
-
         foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
             if(monster.HasStatus(effect)) {
                 activeStatusIcons.Add(normalStatusIcons[effect]);
-                normalStatusIcons[effect].duration = 0; // 0 indicates the status is a result of the terrain the monster is standing on
+                normalStatusIcons[effect].duration = 0;
             }
         }
 
         foreach(StatusAilment ailment in monster.Statuses) {
-            foreach(StatusEffect effect in ailment.effects) {
-                if(ailment.duration > normalStatusIcons[effect].duration) {
-                    normalStatusIcons[effect].duration = ailment.duration;
-                }
+            if(ailment.duration > normalStatusIcons[ailment.effect].duration) {
+                normalStatusIcons[ailment.effect].duration = ailment.duration;
             }
         }
 
@@ -159,21 +151,23 @@ public class MoveMenu : MonoBehaviour
 
     private void SetUpStatusIcons() {
         Dictionary<StatusEffect, string> names = new Dictionary<StatusEffect, string>() {
-            { StatusEffect.Strength, "Strengthened" },
-            { StatusEffect.Swiftness, "Swift" },
-            { StatusEffect.Wither, "Poisoned" },
+            { StatusEffect.Power, "Powered" },
+            { StatusEffect.Swift, "Swift" },
+            { StatusEffect.Poison, "Poisoned" },
             { StatusEffect.Fear, "Fearful" },
             { StatusEffect.Slowness, "Slowed" },
-            { StatusEffect.Haunted, "Haunted" }
+            { StatusEffect.Haunt, "Haunted" },
+            { StatusEffect.Sturdy, "Sturdy" }
         };
 
         Dictionary<StatusEffect, string> descriptions = new Dictionary<StatusEffect, string>() {
-            { StatusEffect.Strength, "Deal 1.5x damage." },
-            { StatusEffect.Swiftness, "Move up to one tile further." },
-            { StatusEffect.Wither, "Take 2 damage at the end of every turn." },
+            { StatusEffect.Power, "Deal 1.5x damage." },
+            { StatusEffect.Swift, "Move up to one tile further." },
+            { StatusEffect.Poison, "Take 2 damage at the end of every turn." },
             { StatusEffect.Fear, "Deal half the normal amount of damage." },
             { StatusEffect.Slowness, "Movement is reduced by 1 tile." },
-            { StatusEffect.Haunted, "Receive 1.5x damage." }
+            { StatusEffect.Haunt, "Receive 1.5x damage." },
+            { StatusEffect.Sturdy, "Receive half damage." }
         };
 
         PrefabContainer prefabs = PrefabContainer.Instance;
@@ -182,21 +176,6 @@ public class MoveMenu : MonoBehaviour
             normalStatusIcons[effect] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>().SetData(names[effect], descriptions[effect], prefabs.statusToSprite[effect]);
             normalStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
             normalStatusIcons[effect].gameObject.SetActive(false);
-        }
-
-        uniqueStatusIcons = new Dictionary<UniqueStatuses, StatusIcon>();
-        uniqueStatusIcons[UniqueStatuses.LeechSpore] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
-            .SetData("Infected", "Drained for 2 life every turn.", prefabs.infectedIcon);
-        uniqueStatusIcons[UniqueStatuses.Wither] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
-            .SetData("Withering", "Take 4 damage at the end of every turn.", prefabs.witherIcon);
-        uniqueStatusIcons[UniqueStatuses.Sentry] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
-            .SetData("Auto-locking", "Deals 5 damage to enemies that step within 5 tiles.", prefabs.thornsIcon);
-        uniqueStatusIcons[UniqueStatuses.Hexed] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>()
-            .SetData("Hexed", "Receive 8 damage at the end of the turn.", prefabs.witherIcon);
-
-        foreach(UniqueStatuses effect in Enum.GetValues(typeof(UniqueStatuses))) {
-            uniqueStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
-            uniqueStatusIcons[effect].gameObject.SetActive(false);
         }
     }
 }

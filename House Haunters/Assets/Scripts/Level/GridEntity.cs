@@ -5,7 +5,6 @@ using UnityEngine;
 public class GridEntity : MonoBehaviour
 {
     [SerializeField] protected SpriteRenderer spriteRenderer;
-    [SerializeField] private bool controlledByAttacker;
     public Vector2Int Tile { get; set; }
 
     public Team Controller;
@@ -15,7 +14,6 @@ public class GridEntity : MonoBehaviour
         transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)Tile);
         LevelGrid.Instance.PlaceEntity(this, Tile);
         UpdateSortingOrder();
-        Controller = controlledByAttacker ? GameManager.Instance.Attacker : GameManager.Instance.Defender;
     }
 
     // make it so entities lower on screen are drawn above higher ones

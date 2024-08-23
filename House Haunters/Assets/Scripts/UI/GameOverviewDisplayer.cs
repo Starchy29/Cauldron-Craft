@@ -25,7 +25,7 @@ public class GameOverviewDisplayer : MonoBehaviour
         }
         
         AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => {
-            textbox.text =  (turnStarter == GameManager.Instance.Attacker ? "Attacker's" : "Defender's") + " Turn";
+            textbox.text = turnStarter.TeamColor.ToString() + "'s Turn";
             textbox.color = turnStarter.TeamColor;
         }));
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(gameObject, true));
@@ -37,7 +37,7 @@ public class GameOverviewDisplayer : MonoBehaviour
         AnimationsManager.Instance.QueueAnimation(new PauseAnimator(99999f));
         won = true;
         gameObject.SetActive(true);
-        textbox.text = (winner == GameManager.Instance.Attacker ? "Attacker" : "Defender") + " Wins";
+        textbox.text = winner.TeamColor.ToString() + " Wins";
         textbox.color = winner.TeamColor;
         StartCoroutine(ReturnToMenuSoon());
     }

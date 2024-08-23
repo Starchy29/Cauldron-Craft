@@ -9,7 +9,6 @@ public enum MoveType {
     Decay,
     Boost,
     Disrupt,
-    Shift,
     Terrain
 }
 
@@ -27,6 +26,7 @@ public class Move {
     public Targets TargetType { get; private set; }
     public MoveType Type { get; private set; }
     public int Cooldown { get; private set; }
+    public bool CantWalkFirst { get; set; }
 
     public string Name { get; private set; }
     public string Description { get; private set; }

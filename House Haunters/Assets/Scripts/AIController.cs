@@ -22,7 +22,7 @@ public class AIController
     public void TakeTurn() {
         // focus attention on the resource that the attacking team is approaching
         resourceData = EvaluateResources();
-        targetResource = GameManager.Instance.AllResources.Max((ResourcePile resource) => resourceData[resource].threatValue + (resourceData[resource].captured ? -9999f : 0f));
+        targetResource = GameManager.Instance.AllResources.Max((ResourcePile resource) => resourceData[resource].threatValue);
 
         // cache where the monsters can move to avoid repeated pathfinding
         pathedPositions.Clear();
@@ -180,7 +180,7 @@ public class AIController
         if(move is StatusMove) {
             if(move.TargetType == Move.Targets.Enemies) {
                 StatusAilment effect = ((StatusMove)move).Condition;
-                return 0.2f * (targets.Count * effect.effects.Count * effect.duration);
+                return 0.2f * (targets.Count * effect.duration);
             }
         }
 
@@ -210,8 +210,8 @@ public class AIController
             return Mathf.Clamp(value, 0.2f, 0.7f);
         }
 
-        if(move.Type == MoveType.Shift) {
-            /*switch(user.Stats.Type) {
+        /*if(move.Type == MoveType.Shift) {
+            switch(user.Stats.Type) {
                 case MonsterName.Phantom:
                     // dash
                     Vector2Int dir = targets[0] - userPosition;
@@ -257,8 +257,8 @@ public class AIController
                         }
                     }
                     return 0.3f;
-            }*/
-        }
+            }
+        }*/
 
         // at this point the only moves not accounted for are sentry and thorns
         float result = -0.2f;
@@ -273,8 +273,6 @@ public class AIController
 
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
             ResourceData data = new ResourceData();
-            data.captured = resource.Controller == GameManager.Instance.Attacker;
-
             // determine how much influence each team has on this resource
             data.allyPaths = new Dictionary<Monster, List<Vector2Int>>();
             foreach(Monster ally in controlTarget.Teammates) {
@@ -344,7 +342,6 @@ public class AIController
         public Dictionary<Monster, List<Vector2Int>> allyPaths;
         public float threatValue; // attacker's
         public float controlValue; // defender's influence
-        public bool captured;
     }
 
     private struct TurnOption {

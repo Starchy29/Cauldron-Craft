@@ -7,32 +7,23 @@ using UnityEngine;
 
 public enum StatusEffect
 {
-    Wither,
-    Strength,
-    Swiftness,
+    Poison,
+    Power,
+    Swift,
     Fear,
     Slowness,
-    Haunted
+    Haunt,
+    Sturdy
 }
 
 public class StatusAilment : IEquatable<StatusAilment>
 {
-    public const int SPEED_BOOST = 1;
-
-    public static StatusEffect[] negativeStatuses = new StatusEffect[] { 
-        StatusEffect.Wither, 
-        StatusEffect.Fear,
-        StatusEffect.Slowness,
-        StatusEffect.Haunted
-    };
-
     public GameObject visual;
-    public List<StatusEffect> effects;
+    public StatusEffect effect;
     public int duration;
 
-    public StatusAilment(StatusEffect effect, int duration, GameObject visualPrefab) : this(new List<StatusEffect>(){ effect }, duration, visualPrefab) {}
-    public StatusAilment(List<StatusEffect> effects, int duration, GameObject visualPrefab) {
-        this.effects = effects;
+    public StatusAilment(StatusEffect effect, int duration, GameObject visualPrefab) {
+        this.effect = effect;
         this.duration = duration;
         visual = visualPrefab;
     }
@@ -43,5 +34,16 @@ public class StatusAilment : IEquatable<StatusAilment>
 
     public void Terminate() {
         AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(visual));
+    }
+
+    public static bool IsPositive(StatusEffect effect) {
+        switch(effect) {
+            case StatusEffect.Power:
+            case StatusEffect.Swift:
+            case StatusEffect.Sturdy:
+                return true;
+            default:
+                return false;
+        }
     }
 }

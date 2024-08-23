@@ -5,22 +5,21 @@ using System;
 
 public class Cauldron : GridEntity
 {
+    [SerializeField] private bool controlledByLeft;
     [SerializeField] private GameObject cookIndicator;
-    [SerializeField] private Sprite fullSprite;
-    [SerializeField] private Sprite emptySprite;
 
     private MonsterName cookingMonster;
 
     public enum State {
         Ready,
-        Cooking,
-        Cooldown
+        Cooking
     }
 
     public State CookState { get; private set; }
 
     protected override void Start() {
         base.Start();
+        Controller = GameManager.Instance.GetTeam(controlledByLeft);
         Controller.OnTurnEnd += HideCookable;
         Controller.Spawnpoint = this;
         SetOutlineColor(Controller.TeamColor);
@@ -44,21 +43,13 @@ public class Cauldron : GridEntity
     }
 
     private void UpdateCook() {
-        // pause during cooldown
-        if(CookState == State.Cooldown) {
-            CookState = State.Ready;
-            spriteRenderer.sprite = fullSprite;
-            return;
-        }
-
         // nothing to cook yet
         if(CookState == State.Ready) {
             return;
         }
 
         // finish cook
-        CookState = State.Cooldown;
-        spriteRenderer.sprite = emptySprite;
+        CookState = State.Ready;
 
         // find the spot to spawn on
         LevelGrid level = LevelGrid.Instance;
@@ -75,7 +66,6 @@ public class Cauldron : GridEntity
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         spawned.gameObject.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(spawned.gameObject, true));
-        spawned.ApplyStatus(new StatusAilment(StatusEffect.Swiftness, 1, PrefabContainer.Instance.SpawnSpeedPrefab), null);
         cookIndicator.SetActive(false);
     }
 

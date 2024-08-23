@@ -4,8 +4,7 @@ using System;
 using UnityEngine;
 
 public enum GameMode {
-    Attack,
-    Defend,
+    VSAI,
     PVP
 }
 
@@ -17,8 +16,8 @@ public class GameManager : MonoBehaviour
     public List<ResourcePile> AllResources { get; private set; }
     public Team CurrentTurn { get; private set; }
 
-    public Team Attacker { get; private set; }
-    public Team Defender { get; private set; }
+    private Team leftTeam;
+    private Team rightTeam;
 
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
     public event TurnEndEvent OnTurnChange;
@@ -26,15 +25,10 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        Defender = new Team(Color.blue, false /*Mode == GameMode.Attack*/);
-        Attacker = new Team(Color.red, true /*Mode == GameMode.Defend*/);
+        leftTeam = new Team(Color.blue, false /*Mode == GameMode.Attack*/);
+        rightTeam = new Team(Color.red, true /*Mode == GameMode.Defend*/);
         AllResources = new List<ResourcePile>();
-
-        foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
-            Attacker.Resources[ingredient] = 9;
-        }
-
-        CurrentTurn = Attacker;
+        CurrentTurn = leftTeam;
     }
 
     // runs after everything else because of script execution order
@@ -43,17 +37,15 @@ public class GameManager : MonoBehaviour
         CurrentTurn.StartTurn();
     }
 
+    public Team GetTeam(bool onLeft) {
+        return onLeft ? leftTeam : rightTeam;
+    }
+
     public Team OpponentOf(Team team) {
-        return team == Attacker ? Defender : Attacker;
+        return team == leftTeam ? rightTeam : leftTeam;
     }
 
     public void PassTurn(Team turnEnder) {
-        // check for offense victory
-        if(AllResources.Find((ResourcePile resource) => resource.Controller == Defender) == null) {
-            GameOverviewDisplayer.Instance.ShowWinner(Attacker);
-            return;
-        }
-
         CurrentTurn = OpponentOf(CurrentTurn);
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         OnTurnChange?.Invoke(turnEnder, CurrentTurn);
@@ -75,11 +67,6 @@ public class GameManager : MonoBehaviour
         LevelGrid.Instance.ClearEntity(defeated.Tile);
         defeated.Controller.Teammates.Remove(defeated);
         OnMonsterDefeated?.Invoke(defeated); // during event, has no tile but retains team
-
-        // check for defense victory
-        if(Attacker.Teammates.Count == 0 && Attacker.TotalIngredients < 3) {
-            GameOverviewDisplayer.Instance.ShowWinner(Defender);
-        }
     }
 
 }

@@ -11,7 +11,6 @@ public class Monster : GridEntity
     public int Health { get; private set; }
 
     public List<StatusAilment> Statuses { get; private set; } = new List<StatusAilment>();
-    public List<UniqueStatus> UniqueStatuses { get; private set; } = new List<UniqueStatus>();
 
     public event Trigger OnTurnStart;
     public event Trigger OnTurnEnd;
@@ -20,7 +19,7 @@ public class Monster : GridEntity
     public int[] Cooldowns {  get; private set; }
     public bool AbilityAvailable { get; private set; }
     public bool WalkAvailable { get { return Cooldowns[MonsterType.WALK_INDEX] == 0; } }
-    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swiftness) ? StatusAilment.SPEED_BOOST : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
+    public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swift) ? 1 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
 
@@ -59,14 +58,9 @@ public class Monster : GridEntity
     }
 
     public int DetermineDamage(int startDamage, Monster attacker) {
-        float multiplier = 1f + (attacker.HasStatus(StatusEffect.Strength) ? 0.5f : 0f) + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
-        if(HasStatus(StatusEffect.Haunted)) {
-            multiplier *= 1.5f;
-        }
-        if(multiplier != 1f) {
-            startDamage = Mathf.CeilToInt(startDamage * multiplier);
-        }
-        return startDamage;
+        float multiplier = 1f + (attacker.HasStatus(StatusEffect.Power) ? 0.5f : 0f) + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
+        multiplier *= 1f + (HasStatus(StatusEffect.Sturdy) ? 0.5f : 0f) + (HasStatus(StatusEffect.Haunt) ? -0.5f : 0f);
+        return Mathf.CeilToInt(startDamage * multiplier);
     }
 
     public void TakeDamage(int amount, Monster attacker = null) {
@@ -91,10 +85,10 @@ public class Monster : GridEntity
     }
 
     public bool HasStatus(StatusEffect status) {
-        return Statuses.Find((StatusAilment condition) => { return condition.effects.Contains(status); }) != null;
+        return Statuses.Exists((StatusAilment condition) => { return condition.effect == status; });
     }
 
-    public void ApplyStatus(StatusAilment blueprint, Monster user) {
+    public void ApplyStatus(StatusAilment blueprint) {
         StatusAilment duplicate = Statuses.Find((StatusAilment existing) => { return existing == blueprint; });
         if(duplicate != null) {
             duplicate.duration = blueprint.duration; // reset duration;
@@ -107,7 +101,7 @@ public class Monster : GridEntity
         visual.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
 
-        StatusAilment affliction = new StatusAilment(blueprint.effects, blueprint.duration, visual);
+        StatusAilment affliction = new StatusAilment(blueprint.effect, blueprint.duration, visual);
         Statuses.Add(affliction);
     }
 
@@ -154,6 +148,10 @@ public class Monster : GridEntity
     }
 
     public bool CanUse(int moveSlot) {
+        if(Stats.Moves[moveSlot].CantWalkFirst && !WalkAvailable) {
+            return false;
+        }
+
         return (moveSlot == MonsterType.WALK_INDEX || AbilityAvailable) && Cooldowns[moveSlot] == 0 && GetMoveOptions(moveSlot).Count > 0;
     }
 
@@ -172,8 +170,8 @@ public class Monster : GridEntity
     }
 
     private void CheckStatuses() {
-        if(HasStatus(StatusEffect.Wither)) {
-            TakeDamage(5);
+        if(HasStatus(StatusEffect.Poison)) {
+            TakeDamage(4);
         }
 
         for(int i = Statuses.Count - 1; i >= 0; i--) {

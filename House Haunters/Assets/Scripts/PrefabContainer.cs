@@ -39,7 +39,6 @@ public class PrefabContainer : MonoBehaviour
         moveTypeToSprite = new Dictionary<MoveType, Sprite>() {
             { MoveType.Attack, meleeIcon },
             { MoveType.Movement, movementIcon },
-            { MoveType.Shift, shiftIcon },
             { MoveType.Terrain, terrainIcon },
             { MoveType.Boost, supportIcon },
             { MoveType.Disrupt, disruptIcon },
@@ -48,12 +47,13 @@ public class PrefabContainer : MonoBehaviour
         };
 
         statusToSprite = new Dictionary<StatusEffect, Sprite>() {
-            { StatusEffect.Strength, strengthIcon },
-            { StatusEffect.Swiftness, hasteIcon },
-            { StatusEffect.Wither, poisonIcon },
+            { StatusEffect.Power, strengthIcon },
+            { StatusEffect.Swift, hasteIcon },
+            { StatusEffect.Poison, poisonIcon },
             { StatusEffect.Fear, fearIcon },
             { StatusEffect.Slowness, slowIcon },
-            { StatusEffect.Haunted, hauntedIcon },
+            { StatusEffect.Haunt, hauntedIcon },
+            { StatusEffect.Sturdy, strengthIcon },
         };
     }
 

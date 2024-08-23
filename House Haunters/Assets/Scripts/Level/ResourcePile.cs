@@ -37,7 +37,6 @@ public class ResourcePile : GridEntity
             floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);
         }
 
-        SetOutlineColor(Controller.TeamColor);
         productionIndicator.SetActive(true);
         StartCoroutine(HideResourceType());
     }
@@ -47,8 +46,9 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
-        if(Controller == GameManager.Instance.Defender && turnStarter == Controller) {
-            turnStarter.Resources[type]++;
+        if(turnStarter == Controller) {
+            turnStarter.Resources[type] += 2;
+            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
         }
     }
@@ -60,19 +60,29 @@ public class ResourcePile : GridEntity
     }
 
     private void CheckCapture(Monster mover) {
-        if(Controller == GameManager.Instance.Attacker) {
+        LevelGrid level = LevelGrid.Instance;
+        List<Monster> capturers = level.GetTilesInRange(Tile, 1, true)
+            .Map((Vector2Int tile) => { return level.GetMonster(tile); })
+            .Filter((Monster monster) => monster != null);
+
+        if(capturers.Count == 0) {
             return;
         }
 
-        LevelGrid level = LevelGrid.Instance;
-        List<Team> adjacentTeams = level.GetTilesInRange(Tile, 1, true)
-            .Map((Vector2Int tile) => { 
-                Monster monster = level.GetMonster(tile);
-                return monster == null ? null : monster.Controller; 
-            });
+        Team newController = null;
+        foreach(Monster monster in capturers) {
+            if(newController == null) {
+                newController = monster.Controller;
+            }
+            else if(monster.Controller != newController) {
+                // no one has control when contested
+                newController = null;
+                break;
+            }
+        }
 
-        if(adjacentTeams.Contains(GameManager.Instance.Attacker) && !adjacentTeams.Contains(GameManager.Instance.Defender)) {
-            Controller = GameManager.Instance.Attacker;
+        if(newController != Controller) {
+            Controller = newController;
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(Controller == null ? Color.clear : Controller.TeamColor); }));
             AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, Controller == null ? Color.white : Controller.TeamColor));
         }

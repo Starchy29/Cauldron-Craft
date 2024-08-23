@@ -28,7 +28,7 @@ public class Team
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
-            Resources[type] = 0;
+            Resources[type] = 3;
         }
 
         if(isAI) {

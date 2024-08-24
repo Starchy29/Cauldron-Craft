@@ -106,7 +106,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Phantom] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             21, 5,
             new Attack("Slash", 1, 9, RangeSelector.MeleeSelector, null, ""),
-            new Move("Pierce", 3, MoveType.Attack, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "")
+            new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "")
         );
 
         monsterTypes[(int)MonsterName.Beast] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },

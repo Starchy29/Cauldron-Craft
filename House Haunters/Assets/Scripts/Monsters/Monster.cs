@@ -18,7 +18,7 @@ public class Monster : GridEntity
 
     public int[] Cooldowns {  get; private set; }
     public bool AbilityAvailable { get; private set; }
-    public bool WalkAvailable { get { return Cooldowns[MonsterType.WALK_INDEX] == 0; } }
+    public bool WalkAvailable { get { return Cooldowns[MonsterType.WALK_INDEX] == 0 && CurrentSpeed > 0; } }
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swift) ? 1 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
@@ -59,7 +59,7 @@ public class Monster : GridEntity
 
     public int DetermineDamage(int startDamage, Monster attacker) {
         float multiplier = 1f + (attacker.HasStatus(StatusEffect.Power) ? 0.5f : 0f) + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
-        multiplier *= 1f + (HasStatus(StatusEffect.Sturdy) ? 0.5f : 0f) + (HasStatus(StatusEffect.Haunt) ? -0.5f : 0f);
+        multiplier *= 1f + (HasStatus(StatusEffect.Haunt) ? 0.5f : 0f) + (HasStatus(StatusEffect.Sturdy) ? -0.5f : 0f);
         return Mathf.CeilToInt(startDamage * multiplier);
     }
 
@@ -117,6 +117,11 @@ public class Monster : GridEntity
         
         LevelGrid level = LevelGrid.Instance;
         Dictionary<Vector2Int, List<List<Vector2Int>>> result = new Dictionary<Vector2Int, List<List<Vector2Int>>>();
+        if(Stats.Moves[moveSlot].CantWalkFirst) {
+            // no options after walk
+            return result;
+        }
+
         Vector2Int startTile = Tile;
         foreach(Vector2Int standableSpot in standableSpots) {
             level.TestEntity(this, standableSpot);
@@ -153,16 +158,6 @@ public class Monster : GridEntity
         }
 
         return (moveSlot == MonsterType.WALK_INDEX || AbilityAvailable) && Cooldowns[moveSlot] == 0 && GetMoveOptions(moveSlot).Count > 0;
-    }
-
-    public List<int> GetUsableMoveSlots() {
-        List<int> moveOptions = new List<int>();
-        for(int i = 0; i < Stats.Moves.Length; i++) {
-            if(CanUse(i)) {
-                moveOptions.Add(i);
-            }
-        }
-        return moveOptions;
     }
 
     private void RefreshMoves() {

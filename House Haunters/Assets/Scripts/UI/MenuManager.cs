@@ -44,12 +44,16 @@ public class MenuManager : MonoBehaviour
         level = LevelGrid.Instance;
         gameManager = GameManager.Instance;
         SetState(SelectionTarget.None);
-        AnimationsManager.Instance.OnAnimationsEnd += (Team currentTurn) => { if(currentTurn == controller) SetState(SelectionTarget.Monster); };
     }
 
     void Update() {
         InputManager input = InputManager.Instance;
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
+
+        if(gameManager.CurrentTurn == controller && state == SelectionTarget.None && !AnimationsManager.Instance.Animating) {
+            SetState(SelectionTarget.Monster);
+            return;
+        }
 
         if(input.PausePressed()) {
             if(state == SelectionTarget.Paused) {

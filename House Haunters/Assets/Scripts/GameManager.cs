@@ -10,7 +10,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.PVP;
+    public static GameMode Mode = GameMode.VSAI;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -25,8 +25,8 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        leftTeam = new Team(Color.blue, false /*Mode == GameMode.Attack*/);
-        rightTeam = new Team(Color.red, true /*Mode == GameMode.Defend*/);
+        leftTeam = new Team("Alchemists", new Color(0.1f, 0.5f, 0.9f), true);
+        rightTeam = new Team("Witchcrafters", new Color(0.5f, 0.8f, 0.1f), Mode == GameMode.VSAI);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
     }

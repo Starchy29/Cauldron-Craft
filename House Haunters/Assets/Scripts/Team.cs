@@ -6,6 +6,7 @@ using UnityEngine;
 // represents one team of monsters
 public class Team
 {
+    public String Name { get; private set; }
     public Color TeamColor { get; private set; }
     public List<Monster> Teammates { get; private set; }
     public Dictionary<Ingredient, int> Resources { get; private set; }
@@ -23,7 +24,8 @@ public class Team
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(Color color, bool isAI) {
+    public Team(String name, Color color, bool isAI) {
+        Name = name;
         TeamColor = color;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);

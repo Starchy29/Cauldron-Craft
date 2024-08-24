@@ -10,9 +10,6 @@ public class AnimationsManager : MonoBehaviour
 
     public bool Animating { get { return animationQueue.Count > 0; } }
 
-    public delegate void TurnTrigger(Team turn);
-    public event TurnTrigger OnAnimationsEnd;
-
     void Awake() {
         Instance = this;
         animationQueue = new Queue<IMoveAnimator>();
@@ -28,8 +25,6 @@ public class AnimationsManager : MonoBehaviour
             animationQueue.Dequeue();
             if(animationQueue.Count > 0) {
                 animationQueue.Peek().Start();
-            } else {
-                OnAnimationsEnd?.Invoke(GameManager.Instance.CurrentTurn);
             }
         }
     }

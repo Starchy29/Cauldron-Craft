@@ -43,7 +43,8 @@ public class PrefabContainer : MonoBehaviour
             { MoveType.Boost, supportIcon },
             { MoveType.Disrupt, disruptIcon },
             { MoveType.Heal, healIcon },
-            { MoveType.Decay, decayMoveIcon }
+            { MoveType.Decay, decayMoveIcon },
+            { MoveType.Shift, rangedIcon }
         };
 
         statusToSprite = new Dictionary<StatusEffect, Sprite>() {

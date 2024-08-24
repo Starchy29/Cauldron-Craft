@@ -9,6 +9,7 @@ public enum MoveType {
     Decay,
     Boost,
     Disrupt,
+    Shift,
     Terrain
 }
 

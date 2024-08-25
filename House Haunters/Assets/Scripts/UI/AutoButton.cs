@@ -32,14 +32,14 @@ public class AutoButton : MonoBehaviour
     public Trigger OnHover;
     public Trigger OnMouseLeave;
 
-    protected Color baseColor = new Color(0.7f, 0.7f, 0.7f);
-    private Color disabledColor;
-    private Color hoveredColor;
+    protected Color baseColor = new Color(0.85f, 0.85f, 0.85f);
+    private Color disabledColor = new Color(0.3f, 0.3f, 0.3f);
+    private Color hoveredColor = new Color(0.2f, 0.9f, 0.8f);
     private float tooltipTimer;
     private const float TOOL_TIP_WAIT = 0.6f;
 
     void Start() {
-        SetBackColor(baseColor);
+        //SetBackColor(baseColor);
         switch(clickFunction) {
             case ClickFunction.EndTurn:
                 OnClick = MenuManager.Instance.EndTurn;
@@ -95,11 +95,11 @@ public class AutoButton : MonoBehaviour
         }
     }
 
-    public void SetBackColor(Color color) {
-        baseColor = color;
-        disabledColor = Global.ChangeSaturation(Global.ChangeValue(color, -0.3f), -0.1f);
-        hoveredColor = Global.ChangeSaturation(Global.ChangeValue(color, +0.1f), +0.3f);
-    }
+    //public void SetBackColor(Color color) {
+    //    baseColor = color;
+    //    disabledColor = Global.ChangeSaturation(Global.ChangeValue(color, -0.3f), -0.1f);
+    //    hoveredColor = Global.ChangeSaturation(Global.ChangeValue(color, +0.1f), +0.3f);
+    //}
 
     private void OnDisable() {
         if(tooltip != null) {

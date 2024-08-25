@@ -38,7 +38,7 @@ public class PrefabContainer : MonoBehaviour
 
         moveTypeToSprite = new Dictionary<MoveType, Sprite>() {
             { MoveType.Attack, meleeIcon },
-            { MoveType.Movement, movementIcon },
+            { MoveType.Movement, shiftIcon },
             { MoveType.Terrain, terrainIcon },
             { MoveType.Boost, supportIcon },
             { MoveType.Disrupt, disruptIcon },

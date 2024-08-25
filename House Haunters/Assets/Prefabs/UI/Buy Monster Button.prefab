@@ -372,7 +372,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 1, z: 1}
+  m_LocalScale: {x: 2.4, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 534002460352983720}
@@ -455,4 +455,3 @@ MonoBehaviour:
   - {fileID: 8606553269070076839}
   - {fileID: 7277877476952090429}
   - {fileID: 6964246289980515560}
-  checkmark: {fileID: 0}

@@ -21,6 +21,11 @@ public class MovementAbility : Move
 
     private static AnimationQueuer walkAnimator = new AnimationQueuer(true, AnimateWalk);
     private static void AnimateWalk(Monster user, List<Vector2Int> tiles) {
+        if(user.FindPath(tiles[0]) == null) {
+            Debug.LogError($"Path for animation was null for monster at {user.Tile} attempting to move to {tiles[0]}");
+            return;
+        }
+
         List<Vector3> pathWorldLocations = user.FindPath(tiles[0]).Map((Vector2Int tile) => { return LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile); });
         AnimationsManager.Instance.QueueAnimation(new PathAnimator(user, pathWorldLocations, 2f * user.CurrentSpeed));
     }

@@ -13,11 +13,11 @@ public class BuyMenu : MonoBehaviour
     private BuyMonsterButton[] buttons;
 
     void Awake() {
-        float ySpacing = 1.2f;
+        float ySpacing = MonsterButtonPrefab.transform.localScale.y + 0.2f;
         float xSpacing = MonsterButtonPrefab.transform.localScale.x + 0.2f;
 
         MonsterName[] monsters = (MonsterName[])Enum.GetValues(typeof(MonsterName));
-        float startY = (monsters.Length - 1) / 4f * ySpacing;
+        float startY = (monsters.Length - 0.4f) / 4f * ySpacing;
         buttons = new BuyMonsterButton[monsters.Length];
         for(int i = 0; i < monsters.Length; i++) {
             buttons[i] = Instantiate(MonsterButtonPrefab).GetComponent<BuyMonsterButton>();

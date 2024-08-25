@@ -90,19 +90,21 @@ public class AIController
         });
 
         // find the best walk destination
-        Vector2Int idealEndTile = walkOptions[monster].FindAll((Vector2Int tile) => LevelGrid.Instance.IsOpenTile(tile))
-            .Max((Vector2Int tile) => DeterminePositionValue(tile, targetResource.Tile));
+        List<Vector2Int> walkableTiles = walkOptions[monster].FindAll((Vector2Int tile) => LevelGrid.Instance.IsOpenTile(tile));
+        Vector2Int idealEndTile = walkableTiles.Count > 0 ? walkableTiles.Max((Vector2Int tile) => DeterminePositionValue(tile, targetResource.Tile)) : monster.Tile;
         float startPosValue = DeterminePositionValue(monster.Tile, targetResource.Tile);
         float idealEndValue = DeterminePositionValue(idealEndTile, targetResource.Tile);
 
         // consider simply walking
-        options.Add(new TurnOption { 
-            user = monster,
-            ordering = TurnOption.MoveOrdering.WalkOnly,
-            walkDestination = idealEndTile,
-            abilityValue = 0f,
-            positionValue = idealEndValue
-        });
+        if(walkableTiles.Count > 0) {
+            options.Add(new TurnOption { 
+                user = monster,
+                ordering = TurnOption.MoveOrdering.WalkOnly,
+                walkDestination = idealEndTile,
+                abilityValue = 0f,
+                positionValue = idealEndValue
+            });
+        }
 
         // for each ability, find the best option
         for(int i = 0; i < monster.Stats.Moves.Length; i++) {
@@ -111,9 +113,11 @@ public class AIController
             }
 
             // consider moving then using the ability
-            TurnOption walkFirst = ChooseWalkedOption(monster, i, startPosValue);
-            if(walkFirst.ordering != TurnOption.MoveOrdering.None) {
-                options.Add(walkFirst);
+            if(walkableTiles.Count > 0) {
+                TurnOption walkFirst = ChooseWalkedOption(monster, i, startPosValue, walkableTiles);
+                if(walkFirst.ordering != TurnOption.MoveOrdering.None) {
+                    options.Add(walkFirst);
+                }
             }
 
             // consider using the ability then moving
@@ -123,8 +127,7 @@ public class AIController
                 continue;
             }
 
-            if(monster.Stats.Moves[i].Type == MoveType.Shift) {
-                // if the ability causes a reposition, cannot predict which tiles it could move to after the ability
+            if(walkableTiles.Count == 0 || monster.Stats.Moves[i].Name == "Pierce") {
                 abilityFirst.ordering = TurnOption.MoveOrdering.AbilityOnly;
                 abilityFirst.positionValue = startPosValue;
                 options.Add(abilityFirst);
@@ -161,8 +164,7 @@ public class AIController
     }
 
     // best way of moving to another tile then using an ability
-    private TurnOption ChooseWalkedOption(Monster monster, int moveSlot, float startTileValue) {
-        List<Vector2Int> walkableTiles = walkOptions[monster].FindAll((Vector2Int tile) => LevelGrid.Instance.IsOpenTile(tile));
+    private TurnOption ChooseWalkedOption(Monster monster, int moveSlot, float startTileValue, List<Vector2Int> walkableTiles) {
         Dictionary<Vector2Int, List<List<Vector2Int>>> positionTargetOptions = monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
 
         List<TurnOption> allOptions = new List<TurnOption>();
@@ -249,16 +251,9 @@ public class AIController
             return value;
         }
 
-        if(move.Type == MoveType.Decay) {
-            // leech, wither, hex
-            Monster target = level.GetMonster(targets[0]);
-            float value = target.Health / 8f;
-            return Mathf.Clamp(value, 0.2f, 0.7f);
-        }
-
-        /*if(move.Type == MoveType.Shift) {
-            switch(user.Stats.Type) {
-                case MonsterName.Phantom:
+        if(move.Type == MoveType.Shift) {
+            switch(move.Name) {
+                case "Pierce":
                     // dash
                     Vector2Int dir = targets[0] - userPosition;
                     if(dir.x == 0) {
@@ -276,42 +271,13 @@ public class AIController
                     }
                     return 0.1f * Global.CalcTileDistance(userPosition, targets[0]) + 0.5f * enemiesHit;
 
-                case MonsterName.Jackolantern:
-                    // swap
-                    return Global.CalcTileDistance(userPosition, targets[0]) * 0.1f;
-
-                case MonsterName.Flytrap:
+                case "Vine Grasp":
                     // pull
                     return 0.3f + 0.1f * (Global.CalcTileDistance(userPosition, targets[0]) - 1);
-
-                case MonsterName.Beast:
-                    // push
-                    Vector2Int direction = targets[0] - userPosition;
-                    for(int i = 1; i <= MonstersData.SHOVE_DIST; i++) {
-                        Vector2Int tile = targets[0] + direction * i;
-                        if(!level.IsInGrid(tile)) {
-                            return 0f;
-                        }
-
-                        GridEntity occupant = level.GetEntity(tile);
-                        WorldTile terrain = level.GetTile(tile);
-                        if(occupant != null || !terrain.Walkable) {
-                            if(occupant != null && occupant is Monster) {
-                                return ((Monster)occupant).Controller == user.Controller ? 0f : 1.2f;
-                            }
-                            return 0.6f;
-                        }
-                    }
-                    return 0.3f;
             }
-        }*/
-
-        // at this point the only moves not accounted for are sentry and thorns
-        float result = -0.2f;
-        foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
-            result += Mathf.Max(1f - Monster.FindPath(enemy.Tile, targets[0]).Count / 5f, 0f);
         }
-        return result;
+
+        return 0.3f;
     }
 
     // returns a value 0-1 that represents how far this starting position is from the end goal
@@ -374,7 +340,7 @@ public class AIController
         }
 
         List<MonsterName> buyOptions = new List<MonsterName>();
-        foreach (MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
+        foreach(MonsterName monsterType in System.Enum.GetValues(typeof(MonsterName))) {
             if(controlTarget.CanAfford(monsterType)) {
                 buyOptions.Add(monsterType);
             }

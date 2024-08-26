@@ -163,9 +163,9 @@ public class MoveMenu : MonoBehaviour
         Dictionary<StatusEffect, string> descriptions = new Dictionary<StatusEffect, string>() {
             { StatusEffect.Power, "Deal 1.5x damage." },
             { StatusEffect.Swift, "Move up to one tile further." },
-            { StatusEffect.Poison, "Take 2 damage at the end of every turn." },
-            { StatusEffect.Fear, "Deal half the normal amount of damage." },
-            { StatusEffect.Slowness, "Movement is reduced by 1 tile." },
+            { StatusEffect.Poison, "Take 5 damage at the end of every turn." },
+            { StatusEffect.Fear, "Deal halved damage." },
+            { StatusEffect.Slowness, "Movement is reduced by 2 tiles." },
             { StatusEffect.Haunt, "Receive 1.5x damage." },
             { StatusEffect.Sturdy, "Receive half damage." }
         };

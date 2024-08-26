@@ -21,6 +21,7 @@ public class ProjectileAnimator : IMoveAnimator
 
         projectile = GameObject.Instantiate(projectilePrefab);
         projectile.transform.position = startPosition;
+        projectile.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x));
         projectile.SetActive(false);
     }
 

@@ -54,12 +54,22 @@ public class Monster : GridEntity
         if(Health > Stats.Health) {
             Health = Stats.Health;
         }
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { 
+            GameObject particle = Instantiate(PrefabContainer.Instance.regeneration);
+            particle.transform.position = transform.position;
+        }));
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
     public int DetermineDamage(int startDamage, Monster attacker) {
-        float multiplier = 1f + (attacker.HasStatus(StatusEffect.Power) ? 0.5f : 0f) + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f);
-        multiplier *= 1f + (HasStatus(StatusEffect.Haunt) ? 0.5f : 0f) + (HasStatus(StatusEffect.Sturdy) ? -0.5f : 0f);
+        float multiplier = 1f 
+            + (attacker.HasStatus(StatusEffect.Power) ? 0.5f : 0f) 
+            + (attacker.HasStatus(StatusEffect.Fear) ? -0.5f : 0f)
+            + (HasStatus(StatusEffect.Haunt) ? 0.5f : 0f)
+            + (HasStatus(StatusEffect.Sturdy) ? -0.5f : 0f);
+        if(multiplier < 0.25f) {
+            multiplier = 0.25f;
+        }
         return Mathf.CeilToInt(startDamage * multiplier);
     }
 
@@ -136,6 +146,11 @@ public class Monster : GridEntity
     }
 
     public void UseMove(int moveSlot, List<Vector2Int> tiles) {
+        Move move = Stats.Moves[moveSlot];
+        if(move.TargetType == Move.Targets.Enemies && move.Range == 1) {
+            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(gameObject, Global.DetermineCenter(tiles) - (Vector2)transform.position));
+        }
+
         Vector2 selectionMid = Global.DetermineCenter(tiles);
         if(selectionMid.x > transform.position.x) {
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetSpriteFlip(false); }));
@@ -166,7 +181,7 @@ public class Monster : GridEntity
 
     private void CheckStatuses() {
         if(HasStatus(StatusEffect.Poison)) {
-            TakeDamage(4);
+            TakeDamage(5);
         }
 
         for(int i = Statuses.Count - 1; i >= 0; i--) {

@@ -16,7 +16,7 @@ public class MonsterType
         { 2, "Shift" },
         { 3, "Crawl" },
         { 4, "Walk" },
-        { 5, "Sprint" }
+        { 5, "Dash" }
     };
 
     public MonsterType(List<Ingredient> recipe, int health, int speed, Move primary, Move special) {

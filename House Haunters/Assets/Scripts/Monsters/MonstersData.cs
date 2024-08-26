@@ -73,8 +73,8 @@ public class MonstersData
 
         monsterTypes[(int)MonsterName.Automaton] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
-            new Attack("Flame Cannon", 1, 9, new ZoneSelector(4, 2), AnimateLobber(prefabs.TempMonsterProjectile, 4f, 1f), "Deals 9 damage."),
-            new Move("Repair", 2, MoveType.Heal, Move.Targets.Allies, SelfSelector.Instance, (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(5); }, null, "Heals 5 health.")
+            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 4f, 1f), "Deals 9 damage."),
+            new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, "Receive half damage for a turn.")
         );
         monsterTypes[(int)MonsterName.Automaton].Moves[MonsterType.PRIMARY_INDEX].CantWalkFirst = true;
 
@@ -118,7 +118,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
             30, 3,
             new Attack("Lash Out", 1, 8, new ZoneSelector(1, 3), null, "Deals 8 damage."),
-            new StatusMove("Horrify", 3, new StatusAilment(StatusEffect.Fear, 1, prefabs.fearStatus), ZoneSelector.AOESelector, null, "Halves damage dealt for 1 turn")
+            new Move("Mend Flesh", 2, MoveType.Heal, Move.Targets.Allies, SelfSelector.Instance, (user, tile) => user.Heal(4), null, "Heal 4 health")
         );
     }
 

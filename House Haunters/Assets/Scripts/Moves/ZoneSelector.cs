@@ -10,12 +10,14 @@ public class ZoneSelector : ISelector
 
     public int Range { get; private set; }
     public int Width { get; private set; }
+    public bool Circular { get; private set; }
 
     private LevelGrid level;
 
-    public ZoneSelector(int reachRadius, int width) {
+    public ZoneSelector(int reachRadius, int width, bool circular = false) {
         Range = reachRadius;
         Width = width;
+        Circular = circular;
     }
 
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
@@ -26,6 +28,10 @@ public class ZoneSelector : ISelector
             for(int y = -Range; y <= Range - Width + 1; y++) {
                 Vector2Int bottomLeft = user.Tile + new Vector2Int(x, y);
                 List<Vector2Int> group = GenerateSquare(bottomLeft);
+                if(Circular && group.FindAll((Vector2Int tile) => Global.CalcTileDistance(tile, user.Tile) > Range).Count >= group.Count / 2) {
+                    continue;
+                }
+
                 if(group.Count > 0) {
                     groups.Add(group);
                 }

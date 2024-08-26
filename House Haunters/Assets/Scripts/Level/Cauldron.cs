@@ -26,7 +26,7 @@ public class Cauldron : GridEntity
     }
 
     public void StartTurn() {
-        UpdateCook();
+        FinishCook();
         NotifyCookable();
     }
 
@@ -42,13 +42,11 @@ public class Cauldron : GridEntity
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, true));
     }
 
-    private void UpdateCook() {
-        // nothing to cook yet
+    public void FinishCook() {
         if(CookState == State.Ready) {
             return;
         }
 
-        // finish cook
         CookState = State.Ready;
 
         // find the spot to spawn on

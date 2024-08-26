@@ -19,6 +19,8 @@ public class ResourcePile : GridEntity
     
     public Ingredient Type { get { return type; } }
 
+    private bool contested; // both teams present
+
     protected override void Start() {
         base.Start();
         LevelGrid.Instance.OnMonsterMove += CheckCapture;
@@ -46,7 +48,7 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
-        if(turnStarter == Controller) {
+        if(contested || turnStarter == Controller) {
             turnStarter.Resources[type] += 2;
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
             AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
@@ -65,26 +67,38 @@ public class ResourcePile : GridEntity
             .Map((Vector2Int tile) => { return level.GetMonster(tile); })
             .Filter((Monster monster) => monster != null);
 
-        if(capturers.Count == 0) {
+        if(capturers.Count == 0 && !contested) {
+            // players retain control when they leave the capture area
             return;
         }
 
+        bool nowContested = false;
         Team newController = null;
         foreach(Monster monster in capturers) {
             if(newController == null) {
                 newController = monster.Controller;
             }
             else if(monster.Controller != newController) {
-                // no one has control when contested
-                newController = null;
+                // both have control when contested
+                nowContested = true;
                 break;
             }
         }
 
-        if(newController != Controller) {
+        if(newController != Controller || nowContested != contested) {
+            contested = nowContested;
             Controller = newController;
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(Controller == null ? Color.clear : Controller.TeamColor); }));
-            AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, Controller == null ? Color.white : Controller.TeamColor));
+
+            Color color = Color.clear;
+            if(contested) {
+                color = (Controller.TeamColor + GameManager.Instance.OpponentOf(Controller).TeamColor) / 2f;
+            }
+            else if(Controller != null) {
+                color = Controller.TeamColor;
+            }
+
+            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(color); }));
+            AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, color == Color.clear ? Color.white : color));
         }
     }
 

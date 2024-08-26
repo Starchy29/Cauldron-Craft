@@ -9,8 +9,6 @@ public class GameOverviewDisplayer : MonoBehaviour
 
     public static GameOverviewDisplayer Instance { get; private set; }
 
-    private bool won;
-
     private void Awake() {
         Instance = this;
         foreach(Transform child in transform) {
@@ -20,10 +18,6 @@ public class GameOverviewDisplayer : MonoBehaviour
     }
 
     public void ShowTurnStart(Team turnStarter) {
-        if(won) {
-            return;
-        }
-        
         AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => {
             textbox.text = "The " + turnStarter.Name;
             textbox.color = turnStarter.TeamColor;
@@ -34,16 +28,22 @@ public class GameOverviewDisplayer : MonoBehaviour
     }
 
     public void ShowWinner(Team winner) {
-        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(99999f));
-        won = true;
-        gameObject.SetActive(true);
-        textbox.text = "The " + winner.Name + " Wins";
-        textbox.color = winner.TeamColor;
-        StartCoroutine(ReturnToMenuSoon());
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => {
+            gameObject.SetActive(true);
+            textbox.text = "The " + winner.Name + " Win";
+            textbox.color = winner.TeamColor;
+        }));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(5f));
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SceneManager.LoadScene(0); }));
     }
 
-    private IEnumerator ReturnToMenuSoon() {
-        yield return new WaitForSeconds(5f);
-        SceneManager.LoadScene(0);
+    public void ShowLoser(Team loser) {
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => {
+            gameObject.SetActive(true);
+            textbox.text = "The " + loser.Name + " Lose";
+            textbox.color = GameManager.Instance.OpponentOf(loser).TeamColor;
+        }));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(5f));
+        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SceneManager.LoadScene(0); }));
     }
 }

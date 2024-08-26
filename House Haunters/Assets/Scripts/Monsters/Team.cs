@@ -21,6 +21,10 @@ public class Team
         return totalIngredients;
     } }
 
+    public Dictionary<MonsterName, bool> CraftedMonsters { get; private set; }
+    private int totalCrafted;
+    private static int CRAFT_GOAL = Enum.GetValues(typeof(MonsterName)).Length;
+
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
@@ -29,6 +33,12 @@ public class Team
         TeamColor = color;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
+
+        CraftedMonsters = new Dictionary<MonsterName, bool>();
+        foreach(MonsterName monster in Enum.GetValues(typeof(MonsterName))) {
+            CraftedMonsters[monster] = false;
+        }
+
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
             Resources[type] = 3;
         }
@@ -75,6 +85,16 @@ public class Team
         animator.QueueAnimation(new IngredientAnimator(Spawnpoint, data.Recipe));
 
         Spawnpoint.StartCook(type);
+
+        // check for victory
+        if(!CraftedMonsters[type]) {
+            CraftedMonsters[type] = true;
+            totalCrafted++;
+            if(totalCrafted >= CRAFT_GOAL) {
+                Spawnpoint.FinishCook();
+                GameOverviewDisplayer.Instance.ShowWinner(this);
+            }
+        }
     }
     
     public void Join(Monster monster) {

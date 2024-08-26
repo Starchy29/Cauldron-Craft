@@ -5,12 +5,13 @@ using UnityEngine;
 
 public enum GameMode {
     VSAI,
-    PVP
+    PVP,
+    AUTO
 }
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.VSAI;
+    public static GameMode Mode = GameMode.PVP;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -25,7 +26,7 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        leftTeam = new Team("Alchemists", new Color(0.1f, 0.5f, 0.9f), false);
+        leftTeam = new Team("Alchemists", new Color(0.1f, 0.5f, 0.9f), Mode == GameMode.AUTO);
         rightTeam = new Team("Witchcrafters", new Color(0.5f, 0.8f, 0.1f), Mode == GameMode.VSAI);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
@@ -64,6 +65,12 @@ public class GameManager : MonoBehaviour
 
     // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator
     public void DefeatMonster(Monster defeated) {
+        // check for loss due to no remaining monsters
+        if(defeated.Controller.Teammates.Count == 1 && defeated.Controller.TotalIngredients < 3) {
+            GameOverviewDisplayer.Instance.ShowLoser(defeated.Controller);
+            return;
+        }
+
         LevelGrid.Instance.ClearEntity(defeated.Tile);
         defeated.Controller.Teammates.Remove(defeated);
         OnMonsterDefeated?.Invoke(defeated); // during event, has no tile but retains team

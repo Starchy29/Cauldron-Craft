@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 256dd6046f62c3e4bba650d172fc335e
+guid: b667cce2e3a62a4419cc75c53b72468e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1161779948134090771
-    second: full circle_0
+      213: 7436752905596058467
+    second: empty half circle_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 400
+  spritePixelsToUnits: 200
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: full circle_0
+      name: empty half circle_0
       rect:
         serializedVersion: 2
-        x: 36
-        y: 36
-        width: 328
-        height: 328
+        x: 1
+        y: 1
+        width: 117
+        height: 198
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,8 +127,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: de7bb44ea4780efe0800000000000000
-      internalID: -1161779948134090771
+      spriteID: 36b3864bd57a43760800000000000000
+      internalID: 7436752905596058467
       vertices: []
       indices: 
       edges: []
@@ -144,7 +144,7 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      full circle_0: -1161779948134090771
+      empty half circle_0: 7436752905596058467
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

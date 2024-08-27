@@ -105,7 +105,7 @@ public class MonstersData
 
         monsterTypes[(int)MonsterName.Phantom] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             22, 5,
-            new Attack("Slash", 1, 12, RangeSelector.MeleeSelector, null, "Deals 12 damage."),
+            new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, null, "Deals 11 damage."),
             new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "Shifts forward and deals 9 damage to enemies passed through.")
         );
 
@@ -117,7 +117,7 @@ public class MonstersData
 
         monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
             30, 3,
-            new Attack("Lash Out", 1, 8, new ZoneSelector(1, 3), null, "Deals 8 damage."),
+            new Attack("Lash Out", 1, 7, new ZoneSelector(1, 3), null, "Deals 7 damage."),
             new Move("Mend Flesh", 2, MoveType.Heal, Move.Targets.Allies, SelfSelector.Instance, (user, tile) => user.Heal(4), null, "Heal 4 health")
         );
     }

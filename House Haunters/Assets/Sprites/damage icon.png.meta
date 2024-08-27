@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 256dd6046f62c3e4bba650d172fc335e
+guid: 666adadf52aa74445853f1b9620910cf
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1161779948134090771
-    second: full circle_0
+      213: 3728038097655058313
+    second: damage icon_0
+  - first:
+      213: 4269659303729614782
+    second: damage icon_1
+  - first:
+      213: -4907398083471081182
+    second: damage icon_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +119,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: full circle_0
+      name: damage icon_0
       rect:
         serializedVersion: 2
-        x: 36
-        y: 36
-        width: 328
-        height: 328
+        x: 59
+        y: 32
+        width: 217
+        height: 183
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,8 +133,50 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: de7bb44ea4780efe0800000000000000
-      internalID: -1161779948134090771
+      spriteID: 98f4ad7d5e6acb330800000000000000
+      internalID: 3728038097655058313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: damage icon_1
+      rect:
+        serializedVersion: 2
+        x: 90
+        y: 107
+        width: 217
+        height: 183
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebfcebed380e04b30800000000000000
+      internalID: 4269659303729614782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: damage icon_2
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 168
+        width: 218
+        height: 184
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 221064f817b65ebb0800000000000000
+      internalID: -4907398083471081182
       vertices: []
       indices: 
       edges: []
@@ -144,7 +192,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      full circle_0: -1161779948134090771
+      damage icon_0: 3728038097655058313
+      damage icon_1: 4269659303729614782
+      damage icon_2: -4907398083471081182
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

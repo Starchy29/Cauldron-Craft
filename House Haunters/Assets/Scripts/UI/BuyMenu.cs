@@ -21,7 +21,7 @@ public class BuyMenu : MonoBehaviour
         buttons = new BuyMonsterButton[monsters.Length];
         for(int i = 0; i < monsters.Length; i++) {
             buttons[i] = Instantiate(MonsterButtonPrefab).GetComponent<BuyMonsterButton>();
-            buttons[i].SetMonster(monsters[i]);
+            buttons[i].SetMonster(monsters[i], i % 2 == 0);
             buttons[i].transform.SetParent(transform);
 
             int ySpot = i / 2;
@@ -45,6 +45,7 @@ public class BuyMenu : MonoBehaviour
         bool currentTurn = GameManager.Instance.CurrentTurn == team;
         foreach(BuyMonsterButton button in buttons) {
             button.Disabled = !team.CanAfford(button.MonsterOption) || !cauldronReady || !currentTurn;
+            button.SetCrafted(team);
         }
 
         // display ingredient amounts

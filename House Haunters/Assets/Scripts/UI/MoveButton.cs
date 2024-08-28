@@ -14,6 +14,7 @@ public class MoveButton : AutoButton
     [SerializeField] private TextMeshPro rangeLabel;
 
     private int moveSlot;
+    public List<Selection> TargetOptions { get; private set; }
     public List<Vector2Int> CoveredArea { get; private set; }
     public List<Vector2Int> CoveredAreaAfterWalk { get; private set; }
 
@@ -31,7 +32,7 @@ public class MoveButton : AutoButton
     void Awake() {
         OnHover = HighlightArea;
         OnMouseLeave = HideHighlight;
-        OnClick = () => { MenuManager.Instance.SelectMove(moveSlot); };
+        OnClick = () => { MenuManager.Instance.SelectMove(moveSlot, TargetOptions); };
         CoveredAreaAfterWalk = new List<Vector2Int>();
     }
 
@@ -40,15 +41,20 @@ public class MoveButton : AutoButton
         Move move = user.Stats.Moves[moveSlot];
         
         bool showFiltered = move.TargetType == Move.Targets.StandableSpot;
-        CoveredArea = move.GetOptions(user, showFiltered, false)
+        List<Selection> targetGroups = move.GetOptions(user, false);
+        TargetOptions = targetGroups.FindAll((Selection targets) => targets.Filtered.Count > 0);
+        CoveredArea = targetGroups.ConvertAll((Selection targets) => new List<Vector2Int>(showFiltered ? targets.Filtered : targets.Unfiltered))
             .Collapse((List<Vector2Int> cur, List<Vector2Int> next) => { cur.AddRange(next); return cur; });
         
         CoveredAreaAfterWalk.Clear();
         if(moveSlot != MonsterType.WALK_INDEX && move.Range > 0 && 
             (user.Controller != GameManager.Instance.CurrentTurn || user.WalkAvailable == user.AbilityAvailable)
         ) {
-            foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> option in user.GetMoveOptionsAfterWalk(moveSlot, true)) {
-                CoveredAreaAfterWalk.AddRange(option.Value.Collapse((List<Vector2Int> cur, List<Vector2Int> next) => { cur.AddRange(next); return cur; }));
+            foreach(KeyValuePair<Vector2Int, List<Selection>> option in user.GetMoveOptionsAfterWalk(moveSlot, true)) {
+                CoveredAreaAfterWalk.AddRange(option.Value
+                    .ConvertAll((Selection targets) => new List<Vector2Int>(targets.Unfiltered))
+                    .Collapse((List<Vector2Int> cur, List<Vector2Int> next) => { cur.AddRange(next); return cur; })
+                );
             }
         }
 

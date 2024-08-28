@@ -29,7 +29,7 @@ public class AIController
         foreach(Monster monster in controlTarget.Teammates) {
             pathedPositions[monster] = monster.Tile;
             if(monster.WalkAvailable) {
-                walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false).CollapseList();
+                //walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false).CollapseList();
             }
         }
 
@@ -63,10 +63,10 @@ public class AIController
             TurnOption chosenOption = options[UnityEngine.Random.Range(0, options.Count)];
             foreach(TurnOption.MoveOrdering action in chosenOption.GetSequence()) {
                 if(action == TurnOption.MoveOrdering.WalkOnly) {
-                    chosenOption.user.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int> { chosenOption.walkDestination });
+                    //chosenOption.user.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int> { chosenOption.walkDestination });
                 }
                 else if(action == TurnOption.MoveOrdering.AbilityOnly) {
-                    chosenOption.user.UseMove(chosenOption.abilitySlot, chosenOption.abilityTargets);
+                    //chosenOption.user.UseMove(chosenOption.abilitySlot, chosenOption.abilityTargets);
                 }
             }
         }
@@ -145,7 +145,7 @@ public class AIController
 
     // best way of using an ability without moving
     private TurnOption ChooseStillOption(Monster monster, int moveSlot) {
-        List<List<Vector2Int>> targetGroups = monster.GetMoveOptions(moveSlot);
+        List<List<Vector2Int>> targetGroups = null;//monster.GetMoveOptions(moveSlot);
         if(targetGroups.Count == 0) {
             return new TurnOption {
                 user = monster,
@@ -165,7 +165,7 @@ public class AIController
 
     // best way of moving to another tile then using an ability
     private TurnOption ChooseWalkedOption(Monster monster, int moveSlot, float startTileValue, List<Vector2Int> walkableTiles) {
-        Dictionary<Vector2Int, List<List<Vector2Int>>> positionTargetOptions = monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
+        Dictionary<Vector2Int, List<List<Vector2Int>>> positionTargetOptions = null;//monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
 
         List<TurnOption> allOptions = new List<TurnOption>();
         foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> positionTargets in positionTargetOptions) {

@@ -115,18 +115,18 @@ public class Monster : GridEntity
         Statuses.Add(affliction);
     }
 
-    public List<List<Vector2Int>> GetMoveOptions(int moveSlot, bool filtered = true) {
-        return Stats.Moves[moveSlot].GetOptions(this, filtered);
+    public List<Selection> GetMoveOptions(int moveSlot) {
+        return Stats.Moves[moveSlot].GetOptions(this);
     }
 
     // returns all target groups from each tile this monster can move to. Does not include options from staying on the current tile
-    public Dictionary<Vector2Int, List<List<Vector2Int>>> GetMoveOptionsAfterWalk(int moveSlot, bool includeAllTargetArea, List<Vector2Int> standableSpots = null) {
+    public Dictionary<Vector2Int, List<Selection>> GetMoveOptionsAfterWalk(int moveSlot, bool includeAllTargetArea, List<Vector2Int> standableSpots = null) {
         if(standableSpots == null) {
-            standableSpots = GetMoveOptions(MonsterType.WALK_INDEX).CollapseList();
+            standableSpots = GetMoveOptions(MonsterType.WALK_INDEX).ConvertAll((Selection tileContainer) => tileContainer.Filtered[0]);
         }
         
         LevelGrid level = LevelGrid.Instance;
-        Dictionary<Vector2Int, List<List<Vector2Int>>> result = new Dictionary<Vector2Int, List<List<Vector2Int>>>();
+        Dictionary<Vector2Int, List<Selection>> result = new Dictionary<Vector2Int, List<Selection>>();
         if(Stats.Moves[moveSlot].CantWalkFirst) {
             // no options after walk
             return result;
@@ -135,7 +135,7 @@ public class Monster : GridEntity
         Vector2Int startTile = Tile;
         foreach(Vector2Int standableSpot in standableSpots) {
             level.TestEntity(this, standableSpot);
-            result[standableSpot] = Stats.Moves[moveSlot].GetOptions(this, !includeAllTargetArea, !includeAllTargetArea);
+            result[standableSpot] = Stats.Moves[moveSlot].GetOptions(this, !includeAllTargetArea);
         }
 
         if(Tile != startTile) {
@@ -145,13 +145,10 @@ public class Monster : GridEntity
         return result;
     }
 
-    public void UseMove(int moveSlot, List<Vector2Int> tiles) {
+    public void UseMove(int moveSlot, Selection targets) {
         Move move = Stats.Moves[moveSlot];
-        if(move.TargetType == Move.Targets.Enemies && move.Range == 1) {
-            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(gameObject, Global.DetermineCenter(tiles) - (Vector2)transform.position));
-        }
 
-        Vector2 selectionMid = Global.DetermineCenter(tiles);
+        Vector2 selectionMid = Global.DetermineCenter(targets.Filtered);
         if(selectionMid.x > transform.position.x) {
             AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(false); });
         }
@@ -159,7 +156,12 @@ public class Monster : GridEntity
             AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(true); });
         }
 
-        Stats.Moves[moveSlot].Use(this, tiles);
+        // lunge at the target if melee attacking
+        if(move.TargetType == Move.Targets.Enemies && move.Range == 1) {
+            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(gameObject, Global.DetermineCenter(targets.Filtered) - (Vector2)transform.position));
+        }
+
+        Stats.Moves[moveSlot].Use(this, targets);
         Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;
         
         if(moveSlot != MonsterType.WALK_INDEX) {

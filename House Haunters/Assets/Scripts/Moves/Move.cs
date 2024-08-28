@@ -57,48 +57,28 @@ public class Move {
     }
 
     // has options to filter down to options with at least one target as well as filter out useless tiles
-    public List<List<Vector2Int>> GetOptions(Monster user, bool filtered = true, bool ignoreUseless = true) {
+    public List<Selection> GetOptions(Monster user, bool ignoreUseless = true) {
         List<List<Vector2Int>> group = selection.GetSelectionGroups(user);
 
+        List<Selection> options = group.ConvertAll((List<Vector2Int> unfiltered) => { 
+            return new Selection(unfiltered, unfiltered.FindAll((Vector2Int tile) => TargetFilters[TargetType](user, tile)));
+        });
+
         if(ignoreUseless) {
-            group = group.Filter((List<Vector2Int> group) => { return HasValidOption(user, group); });
+            options = options.FindAll((Selection group) => group.Filtered.Count > 0);
         }
 
-        if(filtered) {
-            group = group.Map((List<Vector2Int> group) => { 
-                return group.Filter((Vector2Int tile) => { 
-                    return TargetFilters[TargetType](user, tile); 
-                }); 
-            });
-        }
-
-        return group;
+        return options;
     }
 
-    public void Use(Monster user, List<Vector2Int> tiles) {
-        List<Vector2Int> filteredTiles = tiles;
-        filteredTiles = tiles.Filter((Vector2Int tile) => { return TargetFilters[TargetType](user, tile); });
-
+    public void Use(Monster user, Selection targets) {
         if(effectAnimation != null) {
-            effectAnimation.QueueAnimation(user, effectAnimation.UseFilteredSelection ? filteredTiles : tiles);
-        } else {
-            // for moves that temporarily have no animation
-            AnimationsManager.Instance.QueueAnimation(new PauseAnimator(0.2f));
+            effectAnimation.QueueAnimation(user, effectAnimation.UseFilteredSelection ? targets.Filtered : targets.Unfiltered);
         }
 
-        foreach(Vector2Int tile in filteredTiles) {
+        foreach(Vector2Int tile in targets.Filtered) {
             ApplyEffect(user, tile);
         }
-    }
-
-    private bool HasValidOption(Monster user, List<Vector2Int> tileGroup) {
-        foreach(Vector2Int tile in tileGroup) {
-            if(TargetFilters[TargetType](user, tile)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     #region filter functions

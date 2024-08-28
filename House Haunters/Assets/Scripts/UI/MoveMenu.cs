@@ -152,7 +152,8 @@ public class MoveMenu : MonoBehaviour
             { StatusEffect.Fear, "Fearful" },
             { StatusEffect.Slowness, "Slowed" },
             { StatusEffect.Haunt, "Haunted" },
-            { StatusEffect.Sturdy, "Sturdy" }
+            { StatusEffect.Sturdy, "Sturdy" },
+            { StatusEffect.Cursed, "Cursed" }
         };
 
         Dictionary<StatusEffect, string> descriptions = new Dictionary<StatusEffect, string>() {
@@ -162,7 +163,8 @@ public class MoveMenu : MonoBehaviour
             { StatusEffect.Fear, "Deal half damage." },
             { StatusEffect.Slowness, "Movement is reduced by 2 tiles." },
             { StatusEffect.Haunt, "Receive 1.5x damage." },
-            { StatusEffect.Sturdy, "Receive half damage." }
+            { StatusEffect.Sturdy, "Receive half damage." },
+            { StatusEffect.Cursed, "Enemies that attack this take 4 damage." }
         };
 
         PrefabContainer prefabs = PrefabContainer.Instance;

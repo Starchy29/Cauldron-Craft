@@ -82,7 +82,12 @@ public class Monster : GridEntity
         if(Health < 0) {
             Health = 0;
         }
+
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
+
+        if(attacker != null && HasStatus(StatusEffect.Cursed)) {
+            attacker.TakeDamage(4);
+        }
 
         if(Health == 0) {
             GameManager.Instance.DefeatMonster(this);
@@ -115,8 +120,8 @@ public class Monster : GridEntity
         Statuses.Add(affliction);
     }
 
-    public List<Selection> GetMoveOptions(int moveSlot) {
-        return Stats.Moves[moveSlot].GetOptions(this);
+    public List<Selection> GetMoveOptions(int moveSlot, bool ignoreUseless = true) {
+        return Stats.Moves[moveSlot].GetOptions(this, ignoreUseless);
     }
 
     // returns all target groups from each tile this monster can move to. Does not include options from staying on the current tile

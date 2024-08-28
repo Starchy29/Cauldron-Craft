@@ -13,7 +13,8 @@ public enum StatusEffect
     Fear,
     Slowness,
     Haunt,
-    Sturdy
+    Sturdy,
+    Cursed
 }
 
 public class StatusAilment : IEquatable<StatusAilment>
@@ -41,6 +42,7 @@ public class StatusAilment : IEquatable<StatusAilment>
             case StatusEffect.Power:
             case StatusEffect.Swift:
             case StatusEffect.Sturdy:
+            case StatusEffect.Cursed:
                 return true;
             default:
                 return false;

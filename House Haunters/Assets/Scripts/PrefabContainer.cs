@@ -55,6 +55,7 @@ public class PrefabContainer : MonoBehaviour
             { StatusEffect.Slowness, slowIcon },
             { StatusEffect.Haunt, hauntedIcon },
             { StatusEffect.Sturdy, strengthIcon },
+            { StatusEffect.Cursed, curseIcon }
         };
     }
 
@@ -103,6 +104,7 @@ public class PrefabContainer : MonoBehaviour
     public Sprite infectedIcon;
     public Sprite witherIcon;
     public Sprite thornsIcon;
+    public Sprite curseIcon;
     #endregion
 
     [Header("Lost Soul")]

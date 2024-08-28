@@ -29,7 +29,8 @@ public class AIController
         foreach(Monster monster in controlTarget.Teammates) {
             pathedPositions[monster] = monster.Tile;
             if(monster.WalkAvailable) {
-                //walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false).CollapseList();
+                walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false)
+                    .ConvertAll((Selection tileContainter) => tileContainter.Unfiltered[0]);
             }
         }
 
@@ -63,10 +64,10 @@ public class AIController
             TurnOption chosenOption = options[UnityEngine.Random.Range(0, options.Count)];
             foreach(TurnOption.MoveOrdering action in chosenOption.GetSequence()) {
                 if(action == TurnOption.MoveOrdering.WalkOnly) {
-                    //chosenOption.user.UseMove(MonsterType.WALK_INDEX, new List<Vector2Int> { chosenOption.walkDestination });
+                    chosenOption.user.UseMove(MonsterType.WALK_INDEX, new Selection(chosenOption.walkDestination));
                 }
                 else if(action == TurnOption.MoveOrdering.AbilityOnly) {
-                    //chosenOption.user.UseMove(chosenOption.abilitySlot, chosenOption.abilityTargets);
+                    chosenOption.user.UseMove(chosenOption.abilitySlot, chosenOption.abilityTargets);
                 }
             }
         }
@@ -145,7 +146,7 @@ public class AIController
 
     // best way of using an ability without moving
     private TurnOption ChooseStillOption(Monster monster, int moveSlot) {
-        List<List<Vector2Int>> targetGroups = null;//monster.GetMoveOptions(moveSlot);
+        List<Selection> targetGroups = monster.GetMoveOptions(moveSlot);
         if(targetGroups.Count == 0) {
             return new TurnOption {
                 user = monster,
@@ -153,8 +154,8 @@ public class AIController
             };
         }
 
-        List<List<Vector2Int>> bestTargets = targetGroups.AllTiedMax((List<Vector2Int> targetGroup) => DetermineOptionValue(monster, moveSlot, targetGroup, monster.Tile));
-        List<Vector2Int> chosenTarget = bestTargets[UnityEngine.Random.Range(0, bestTargets.Count)];
+        List<Selection> bestTargets = targetGroups.AllTiedMax((Selection targetGroup) => DetermineOptionValue(monster, moveSlot, targetGroup.Filtered, monster.Tile));
+        Selection chosenTarget = bestTargets[UnityEngine.Random.Range(0, bestTargets.Count)];
         return new TurnOption {
             user = monster,
             ordering = TurnOption.MoveOrdering.AbilityOnly,
@@ -165,16 +166,16 @@ public class AIController
 
     // best way of moving to another tile then using an ability
     private TurnOption ChooseWalkedOption(Monster monster, int moveSlot, float startTileValue, List<Vector2Int> walkableTiles) {
-        Dictionary<Vector2Int, List<List<Vector2Int>>> positionTargetOptions = null;//monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
+        Dictionary<Vector2Int, List<Selection>> positionTargetOptions = monster.GetMoveOptionsAfterWalk(moveSlot, false, walkableTiles);
 
         List<TurnOption> allOptions = new List<TurnOption>();
-        foreach(KeyValuePair<Vector2Int, List<List<Vector2Int>>> positionTargets in positionTargetOptions) {
+        foreach(KeyValuePair<Vector2Int, List<Selection>> positionTargets in positionTargetOptions) {
             Vector2Int walkDestination = positionTargets.Key;
-            List<List<Vector2Int>> targetGroups = positionTargets.Value;
+            List<Selection> targetGroups = positionTargets.Value;
 
             float posVal = DeterminePositionValue(walkDestination, targetResource.Tile);
-            foreach(List<Vector2Int> targetGroup in targetGroups) {
-                if(targetGroup.Count == 0) {
+            foreach(Selection targetGroup in targetGroups) {
+                if(targetGroup.Filtered.Count == 0) {
                     continue;
                 }
 
@@ -184,7 +185,7 @@ public class AIController
                     walkDestination = walkDestination,
                     abilitySlot = moveSlot,
                     abilityTargets = targetGroup,
-                    abilityValue = DetermineOptionValue(monster, moveSlot, targetGroup, walkDestination),
+                    abilityValue = DetermineOptionValue(monster, moveSlot, targetGroup.Filtered, walkDestination),
                     positionValue = posVal
                 });
             }
@@ -369,7 +370,7 @@ public class AIController
         public MoveOrdering ordering;
         public Vector2Int walkDestination;
         public int abilitySlot;
-        public List<Vector2Int> abilityTargets;
+        public Selection abilityTargets;
         public float abilityValue; // how valuable the used ability with the given targets is
         public float positionValue; // how close the end position is to the target position
 

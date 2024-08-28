@@ -6,7 +6,7 @@ class ZoneMove : Move
 {
     public TileAffector TileEffect { get; private set; }
 
-    public ZoneMove(string name, int cooldown, ISelector selector, TileAffector effect, AnimationQueuer effectAnimation, string description = "") 
+    public ZoneMove(string name, int cooldown, ISelector selector, TileAffector effect, AnimationFunction effectAnimation, string description = "") 
         : base(name, cooldown, MoveType.Terrain, Targets.ZonePlaceable, selector, null, effectAnimation, description)
     {
         TileEffect = effect;

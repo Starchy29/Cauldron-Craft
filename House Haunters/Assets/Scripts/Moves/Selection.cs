@@ -11,4 +11,9 @@ public struct Selection
         Unfiltered = unfiltered;
         Filtered = filtered;
     }
+
+    public Selection(Vector2Int tile) {
+        Unfiltered = new List<Vector2Int> { tile };
+        Filtered = Unfiltered;
+    }
 }

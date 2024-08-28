@@ -36,7 +36,7 @@ public class BuyMonsterButton : AutoButton
         }
 
         // setup tooltip
-        int healthScore = Mathf.Min(3, (data.Health - 22) / 2);
+        int healthScore = Mathf.FloorToInt((data.Health - 22) / 3f)+ 1;
         int speedScore = data.Speed - 2;
 
         Move primary = data.Moves[MonsterType.PRIMARY_INDEX];

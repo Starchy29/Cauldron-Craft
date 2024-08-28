@@ -79,6 +79,7 @@ MonoBehaviour:
   infectedIcon: {fileID: 21300000, guid: 21e89046f1d4e884c920c28ef2d839df, type: 3}
   witherIcon: {fileID: 21300000, guid: 4951339eb730bb7488512e017de69663, type: 3}
   thornsIcon: {fileID: 21300000, guid: feda6fb0e00694a4c8a52db778a888a8, type: 3}
+  curseIcon: {fileID: 21300000, guid: 9d0223b3c7f6bcc4b9afe6b0b1b1d41d, type: 3}
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
   spookHaunt: {fileID: 3049984156711576710, guid: 0e8ef0ba35ce5f149a58c207ba6c6bdf, type: 3}
   soulDrop: {fileID: 6846268628254101615, guid: 19060420541f99c4da3700f5dd32b933, type: 3}

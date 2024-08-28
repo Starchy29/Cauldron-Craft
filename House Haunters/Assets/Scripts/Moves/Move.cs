@@ -32,7 +32,8 @@ public class Move {
     public string Name { get; private set; }
     public string Description { get; private set; }
 
-    private AnimationQueuer effectAnimation;
+    public delegate void AnimationFunction(Monster user, Selection targets);
+    private AnimationFunction QueueAnimation;
 
     public delegate void EffectFunction(Monster user, Vector2Int tile);
     protected EffectFunction ApplyEffect;
@@ -45,7 +46,7 @@ public class Move {
         { Targets.StandableSpot, IsStandable }
     };
 
-    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, EffectFunction effect, AnimationQueuer effectAnimation, string description = "") {
+    public Move(string name, int cooldown, MoveType type, Targets targetType, ISelector selection, EffectFunction effect, AnimationFunction moveAnimation, string description = "") {
         ApplyEffect = effect;
         Cooldown = cooldown;
         this.selection = selection;
@@ -53,7 +54,7 @@ public class Move {
         Type = type;
         Name = name == null? "" : name;
         Description = description;
-        this.effectAnimation = effectAnimation;
+        QueueAnimation = moveAnimation;
     }
 
     // has options to filter down to options with at least one target as well as filter out useless tiles
@@ -72,8 +73,8 @@ public class Move {
     }
 
     public void Use(Monster user, Selection targets) {
-        if(effectAnimation != null) {
-            effectAnimation.QueueAnimation(user, effectAnimation.UseFilteredSelection ? targets.Filtered : targets.Unfiltered);
+        if(QueueAnimation != null) {
+            QueueAnimation(user, targets);
         }
 
         foreach(Vector2Int tile in targets.Filtered) {

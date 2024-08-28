@@ -11,10 +11,22 @@ public class MoveButton : AutoButton
     [SerializeField] private TextMeshPro description;
     [SerializeField] private GameObject hourglass;
     [SerializeField] private TextMeshPro maxCooldownLabel;
+    [SerializeField] private TextMeshPro rangeLabel;
 
     private int moveSlot;
     public List<Vector2Int> CoveredArea { get; private set; }
     public List<Vector2Int> CoveredAreaAfterWalk { get; private set; }
+
+    private static Dictionary<MoveType, Color> moveColors = new Dictionary<MoveType, Color> {
+        { MoveType.Attack, Color.red },
+        { MoveType.Movement, Color.green },
+        { MoveType.Heal, new Color(0.9f, 0.1f, 0.6f) },
+        { MoveType.Boost, Color.yellow },
+        { MoveType.Disrupt, new Color(0.7f, 0f, 0.9f) },
+        { MoveType.Decay, new Color(0f, 0.3f, 0.7f) },
+        { MoveType.Terrain, new Color(0.2f, 0.6f, 0.4f) },
+        { MoveType.Shift, new Color(0.9f, 0.4f, 0.1f) },
+    };
 
     void Awake() {
         OnHover = HighlightArea;
@@ -41,17 +53,19 @@ public class MoveButton : AutoButton
         }
 
         nameLabel.text = move.Name;
-        cooldown.text = user.Cooldowns[moveSlot] > 0 ? "" + user.Cooldowns[moveSlot] : "";
-        hourglass.SetActive(user.Cooldowns[moveSlot] > 0);
+        cooldown.text = user.Cooldowns[moveSlot] <= 1 ? "" : "" + (user.Cooldowns[moveSlot] - 1);
+        hourglass.SetActive(user.Cooldowns[moveSlot] > 1);
 
         typeIcon.sprite = PrefabContainer.Instance.moveTypeToSprite[move.Type];
-        //SetBackColor(moveTypeToColor[move.Type]);
 
-        // open info menu
+        baseColor = new Color(0.7f, 0.7f, 0.7f) + 0.3f * moveColors[move.Type];
+        disabledColor = new Color(0.15f, 0.15f, 0.15f) + 0.15f * moveColors[move.Type];
+        hoveredColor = new Color(0.95f, 0.95f, 0.95f);
 
         // description
         description.text = move.Description;
-        maxCooldownLabel.text = "" + move.Cooldown;
+        maxCooldownLabel.text = "" + (move.Cooldown - 1);
+        rangeLabel.text = move.Range > 0 ? "" + move.Range : "" + user.Stats.Speed;
     }
 
     private void HighlightArea() {

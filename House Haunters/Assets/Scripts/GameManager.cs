@@ -34,6 +34,20 @@ public class GameManager : MonoBehaviour
 
     // runs after everything else because of script execution order
     void Start() {
+        //GameOverviewDisplayer.Instance.ShowObjective();
+
+        //AnimationsManager.Instance.QueueFunction(() => { 
+        //    foreach(ResourcePile resource in AllResources) {
+        //        resource.productionIndicator.SetActive(true);
+        //    }
+        //});
+        //AnimationsManager.Instance.QueueAnimation(new PauseAnimator(3f));
+        //AnimationsManager.Instance.QueueFunction(() => { 
+        //    foreach(ResourcePile resource in AllResources) {
+        //        resource.productionIndicator.SetActive(false);
+        //    }
+        //});
+
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         CurrentTurn.StartTurn();
     }
@@ -67,7 +81,7 @@ public class GameManager : MonoBehaviour
     public void DefeatMonster(Monster defeated) {
         // check for loss due to no remaining monsters
         if(defeated.Controller.Teammates.Count == 1 && defeated.Controller.TotalIngredients < 3) {
-            GameOverviewDisplayer.Instance.ShowLoser(defeated.Controller);
+            GameOverviewDisplayer.Instance.ShowWinner(OpponentOf(defeated.Controller));
             return;
         }
 

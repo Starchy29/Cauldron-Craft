@@ -54,10 +54,10 @@ public class Monster : GridEntity
         if(Health > Stats.Health) {
             Health = Stats.Health;
         }
-        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { 
+        AnimationsManager.Instance.QueueFunction(() => { 
             GameObject particle = Instantiate(PrefabContainer.Instance.regeneration);
             particle.transform.position = transform.position;
-        }));
+        });
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
 
@@ -153,10 +153,10 @@ public class Monster : GridEntity
 
         Vector2 selectionMid = Global.DetermineCenter(tiles);
         if(selectionMid.x > transform.position.x) {
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetSpriteFlip(false); }));
+            AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(false); });
         }
         else if(selectionMid.x < transform.position.x) {
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetSpriteFlip(true); }));
+            AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(true); });
         }
 
         Stats.Moves[moveSlot].Use(this, tiles);

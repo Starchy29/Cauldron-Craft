@@ -35,4 +35,11 @@ public class AnimationsManager : MonoBehaviour
             moveAnimator.Start();
         }
     }
+
+    public void QueueFunction(Trigger function) {
+        animationQueue.Enqueue(new FunctionAnimator(function));
+        if(animationQueue.Count == 1) {
+            animationQueue.Peek().Start();
+        }
+    }
 }

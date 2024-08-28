@@ -33,8 +33,8 @@ public class AutoButton : MonoBehaviour
     public Trigger OnMouseLeave;
 
     protected Color baseColor = new Color(0.85f, 0.85f, 0.85f);
-    private Color disabledColor = new Color(0.3f, 0.3f, 0.3f);
-    private Color hoveredColor = new Color(0.2f, 0.9f, 0.8f);
+    protected Color disabledColor = new Color(0.3f, 0.3f, 0.3f);
+    protected Color hoveredColor = new Color(0.2f, 0.9f, 0.8f);
     private float tooltipTimer;
     private const float TOOL_TIP_WAIT = 0.6f;
 

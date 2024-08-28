@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using System.Linq;
 
 public class MoveMenu : MonoBehaviour
 {
@@ -90,8 +89,6 @@ public class MoveMenu : MonoBehaviour
             Heart.color = new Color(0.3f, 0.8f, 0.2f);
         }
 
-        // set up shield
-
         // find which status icons to show
         foreach(StatusIcon oldStatus in activeStatusIcons) {
             oldStatus.gameObject.SetActive(false);
@@ -112,24 +109,22 @@ public class MoveMenu : MonoBehaviour
         }
 
         // place status icons
-        int statusDims = 1;
-        while(activeStatusIcons.Count > statusDims * statusDims) {
-            statusDims++; // keep the statuses in a square grid
-        }
-        
-        float zoneWidth = StatusZone.transform.lossyScale.x;
-        const float GAP_PERCENT = 0.2f;
-        float iconWidth = zoneWidth * ((1f - GAP_PERCENT * (statusDims - 1)) / statusDims);
-        float gapWidth = zoneWidth * GAP_PERCENT;
-        Vector3 localTopLeft = new Vector3(-zoneWidth / 2f + iconWidth / 2f, zoneWidth / 2f - iconWidth / 2f, 0);
+        int rows = activeStatusIcons.Count > 3 ? 2 : 1;
+        int cols = Mathf.CeilToInt(activeStatusIcons.Count / (float)rows);
+        Vector2 zoneSize = StatusZone.transform.lossyScale;
+        const float GAP_PERCENT = 0.1f;
+        float iconWidth = (zoneSize.y - GAP_PERCENT) / 2f;
+        float gapWidth = zoneSize.y * GAP_PERCENT;
+        float stepWidth = iconWidth + gapWidth;
+        Vector3 startPos = new Vector3(-0.5f * stepWidth * (cols - 1), 0.5f * stepWidth * (rows - 1), 0f);
 
         for(int i = 0; i < activeStatusIcons.Count; i++) {
-            int x = i % statusDims;
-            int y = i / statusDims;
+            int col = i % cols;
+            int row = i / cols;
 
             GameObject statusIcon = activeStatusIcons[i].gameObject;
             statusIcon.SetActive(true);
-            statusIcon.transform.localPosition = localTopLeft + new Vector3(x * (iconWidth + gapWidth), y * -(iconWidth + gapWidth), 0);
+            statusIcon.transform.position = StatusZone.transform.position + startPos + new Vector3(col * stepWidth, row * -stepWidth, 0);
             statusIcon.transform.localScale = new Vector3(iconWidth, iconWidth, 1);
         }
     }
@@ -164,7 +159,7 @@ public class MoveMenu : MonoBehaviour
             { StatusEffect.Power, "Deal 1.5x damage." },
             { StatusEffect.Swift, "Move up to one tile further." },
             { StatusEffect.Poison, "Take 5 damage at the end of every turn." },
-            { StatusEffect.Fear, "Deal halved damage." },
+            { StatusEffect.Fear, "Deal half damage." },
             { StatusEffect.Slowness, "Movement is reduced by 2 tiles." },
             { StatusEffect.Haunt, "Receive 1.5x damage." },
             { StatusEffect.Sturdy, "Receive half damage." }
@@ -174,7 +169,7 @@ public class MoveMenu : MonoBehaviour
         normalStatusIcons = new Dictionary<StatusEffect, StatusIcon>();
         foreach(StatusEffect effect in Enum.GetValues(typeof(StatusEffect))) {
             normalStatusIcons[effect] = Instantiate(StatusIconPrefab).GetComponent<StatusIcon>().SetData(names[effect], descriptions[effect], prefabs.statusToSprite[effect]);
-            normalStatusIcons[effect].transform.SetParent(StatusZone.transform, false);
+            normalStatusIcons[effect].transform.SetParent(transform, false);
             normalStatusIcons[effect].gameObject.SetActive(false);
         }
     }

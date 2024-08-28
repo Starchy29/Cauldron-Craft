@@ -74,7 +74,7 @@ public class AIController
         AttemptCraft();
 
         // end turn after animations play out
-        AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { controlTarget.EndTurn(); }));
+        AnimationsManager.Instance.QueueFunction(() => { controlTarget.EndTurn(); });
     }
 
     // determines the best sequence of walk and ability to use this turn

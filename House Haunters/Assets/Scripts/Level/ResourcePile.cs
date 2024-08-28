@@ -14,7 +14,7 @@ public class ResourcePile : GridEntity
 {
     [SerializeField] private Ingredient type;
     [SerializeField] private GameObject floorCoverPrefab;
-    [SerializeField] private GameObject productionIndicator;
+    [SerializeField] public GameObject productionIndicator;
     [SerializeField] private CaptureVFX captureVisual;
     
     public Ingredient Type { get { return type; } }
@@ -38,9 +38,6 @@ public class ResourcePile : GridEntity
             floorCover.transform.localScale = new Vector3(Random.value < 0.5f ? 1f : 1f, Random.value < 0.5f ? 1f : 1f, 1f);
             floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);
         }
-
-        productionIndicator.SetActive(true);
-        StartCoroutine(HideResourceType());
     }
 
     public bool IsInCaptureRange(Vector2Int tile) {
@@ -50,8 +47,8 @@ public class ResourcePile : GridEntity
     private void GrantResource(Team turnEnder, Team turnStarter) {
         if(contested || turnStarter == Controller) {
             turnStarter.Resources[type] += 2;
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(SpawnHarvestParticle));
+            AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
+            AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
         }
     }
 
@@ -97,13 +94,8 @@ public class ResourcePile : GridEntity
                 color = Controller.TeamColor;
             }
 
-            AnimationsManager.Instance.QueueAnimation(new FunctionAnimator(() => { SetOutlineColor(color); }));
+            AnimationsManager.Instance.QueueFunction(() => { SetOutlineColor(color); });
             AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, color == Color.clear ? Color.white : color));
         }
-    }
-
-    private IEnumerator HideResourceType() {
-        yield return new WaitForSeconds(4.0f);
-        productionIndicator.SetActive(false);
     }
 }

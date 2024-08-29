@@ -11,7 +11,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.PVP;
+    public static GameMode Mode = GameMode.AUTO;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }

@@ -20,14 +20,9 @@ public class Cauldron : GridEntity
     protected override void Start() {
         base.Start();
         Controller = GameManager.Instance.GetTeam(controlledByLeft);
-        Controller.OnTurnEnd += HideCookable;
         Controller.Spawnpoint = this;
+        Controller.OnTurnStart += FinishCook;
         SetOutlineColor(Controller.TeamColor);
-    }
-
-    public void StartTurn() {
-        FinishCook();
-        NotifyCookable();
     }
 
     public void StartCook(MonsterName monsterType) {
@@ -43,48 +38,33 @@ public class Cauldron : GridEntity
     }
 
     public void FinishCook() {
-        if(CookState == State.Ready) {
+        if(CookState != State.Cooking) {
             return;
         }
-
-        CookState = State.Ready;
 
         // find the spot to spawn on
         LevelGrid level = LevelGrid.Instance;
         Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
-        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return !LevelGrid.Instance.GetTile(tile).IsWall && level.GetEntity(tile) == null; });
+        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return level.IsOpenTile(tile); });
         if(options.Count == 0) {
             return;
         }
 
-        options.Sort((Vector2Int current, Vector2Int next) => { return DetermineSpawnSpotPriority(current, levelMid) - DetermineSpawnSpotPriority(next, levelMid); });
-        Vector2Int spawnSpot = options[0];
+        CookState = State.Ready;
+        Vector2Int spawnSpot = options.Max((Vector2Int tile) => DetermineSpawnSpotPriority(tile, levelMid));
 
         // spawn the monster
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         spawned.gameObject.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(spawned.gameObject, true));
-        cookIndicator.SetActive(false);
-    }
-
-    private void NotifyCookable() {
-        if(Controller.CanCraft()) {
-            cookIndicator.SetActive(true);
-            cookIndicator.GetComponent<SpriteRenderer>().sprite = null;
-        }
-    }
-
-    private void HideCookable() {
-        if(CookState != State.Cooking) {
-            cookIndicator.SetActive(false);
-        }
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, false));
     }
 
     private int DetermineSpawnSpotPriority(Vector2Int tile, Vector2Int levelMid) {
         Vector2Int toCenter = levelMid - Tile;
         bool horizontal = toCenter.x > toCenter.y;
-        return -100 * (Global.CalcTileDistance(tile, Tile) <= 1 ? 1 : 0) // prioritize orthogonally adjacent over diagonal
-            + 10 * (horizontal ? Mathf.Abs(tile.x - levelMid.x) : Mathf.Abs(tile.y - levelMid.y))
-            + 1 * (horizontal ? Mathf.Abs(tile.y - levelMid.y) : Mathf.Abs(tile.x - levelMid.x));
+        return (Global.CalcTileDistance(tile, Tile) > 1 ? -100 : 0) // prioritize orthogonally adjacent over diagonal
+            + -10 * (horizontal ? Mathf.Abs(tile.x - levelMid.x) : Mathf.Abs(tile.y - levelMid.y))
+            + -1 * (horizontal ? Mathf.Abs(tile.y - levelMid.y) : Mathf.Abs(tile.x - levelMid.x));
     }
 }

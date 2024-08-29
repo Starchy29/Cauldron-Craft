@@ -36,9 +36,9 @@ public class AIController
 
         // find center of conflict for zone placement
         Vector2 allyCenter = controlTarget.Teammates
-                .ConvertAll(monster => (Vector2)monster.transform.position)
-                .Collapse((Vector2 cur, Vector2 next) => cur + next)
-                / controlTarget.Teammates.Count;
+            .ConvertAll(monster => (Vector2)monster.transform.position)
+            .Collapse((Vector2 cur, Vector2 next) => cur + next)
+            / controlTarget.Teammates.Count;
 
         Vector2 enemyCenter = GameManager.Instance.OpponentOf(controlTarget).Teammates
             .ConvertAll(monster => (Vector2)monster.transform.position)
@@ -47,27 +47,49 @@ public class AIController
 
         idealZoneMiddle = .25f * allyCenter + .75f * enemyCenter;
 
-        // choose abilities
-        for(int i = 0; i < controlTarget.Teammates.Count; i++) {
-            // find avaialble non-walk abilities
-            List<TurnOption> options = controlTarget.Teammates.FindAll((Monster monster) => monster.WalkAvailable && monster.AbilityAvailable)
-                .ConvertAll((Monster monster) => ChooseAction(monster))
-                .FindAll((TurnOption option) => option.ordering != TurnOption.MoveOrdering.None);
-            
-            if(options.Count == 0) {
-                break;
+        // order abilities
+        Dictionary<Monster, int> movePriorities = new Dictionary<Monster, int>();
+        foreach(Monster teammate in controlTarget.Teammates) {
+            // -2: targets an ally
+            // -1 targets an ally and targeted by an ally
+            // 0: no priority
+            // 1: targeted by an ally
+            movePriorities[teammate] = 0;
+        }
+
+        List<TurnOption> monsterPlans = controlTarget.Teammates.ConvertAll((Monster monster) => ChooseAction(monster));
+        foreach(TurnOption plan in monsterPlans) {
+            if(!plan.UsesAbility) {
+                continue;
             }
 
-            // TODO: order based on dependencies
+            Move plannedMove = plan.user.Stats.Moves[plan.abilitySlot];
+            if(plannedMove is StatusMove && (plannedMove as StatusMove).Condition.effect == StatusEffect.Haunt) {
+                movePriorities[plan.user] = -2; // always haunt the enemy first
+            }
+            else if(plannedMove.TargetType == Move.Targets.Allies) {
+                movePriorities[plan.user] = movePriorities[plan.user] == 1 || movePriorities[plan.user] == -1 ? -1 : -2;
+                foreach(Vector2Int tile in plan.abilityTargets.Filtered) {
+                    if(tile == plan.walkDestination) {
+                        continue; // targeting yourself has no dependencies
+                    }
+                    Monster ally = LevelGrid.Instance.GetMonster(tile);
+                    movePriorities[ally] = movePriorities[ally] == -2 || movePriorities[plan.user] == -1 ? -1 : 1;
+                }
+            }
+        }
 
-            // execute a move
-            TurnOption chosenOption = options[UnityEngine.Random.Range(0, options.Count)];
-            foreach(TurnOption.MoveOrdering action in chosenOption.GetSequence()) {
+        // choose abilities
+        List<Monster> orderedTeammates = new List<Monster>(controlTarget.Teammates);
+        orderedTeammates.Sort((Monster cur, Monster next) => movePriorities[cur] - movePriorities[next]);
+        foreach(Monster teammate in orderedTeammates) {
+            TurnOption choice = ChooseAction(teammate);
+            foreach(TurnOption.MoveOrdering action in choice.GetSequence()) {
                 if(action == TurnOption.MoveOrdering.WalkOnly) {
-                    chosenOption.user.UseMove(MonsterType.WALK_INDEX, new Selection(chosenOption.walkDestination));
+                    choice.user.UseMove(MonsterType.WALK_INDEX, new Selection(choice.walkDestination));
                 }
                 else if(action == TurnOption.MoveOrdering.AbilityOnly) {
-                    chosenOption.user.UseMove(chosenOption.abilitySlot, chosenOption.abilityTargets);
+                    choice.user.UseMove(choice.abilitySlot, choice.abilityTargets);
                 }
             }
         }
@@ -227,9 +249,24 @@ public class AIController
         }
 
         if(move is StatusMove) {
+            StatusAilment effect = ((StatusMove)move).Condition;
+            Monster hit = targets[0] == userPosition ? user : level.GetMonster(targets[0]);
             if(move.TargetType == Move.Targets.Enemies) {
-                StatusAilment effect = ((StatusMove)move).Condition;
-                return 0.2f * (targets.Count * effect.duration);
+                if(effect.effect == StatusEffect.Fear && !(hit.Stats.Moves[MonsterType.PRIMARY_INDEX] is Attack)) {
+                    return -1f; // dont weaken an enemy that has no attacks
+                }
+
+                return 0.8f * (hit.Health / (float)hit.Stats.Health);
+            } else {
+                if(effect.effect == StatusEffect.Power && !(hit.Stats.Moves[MonsterType.PRIMARY_INDEX] is Attack)) {
+                    return -1f; // dont strengthen an ally that has no attacks
+                }
+
+                float value = -0.3f;
+                foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
+                    value += 0.4f * Mathf.Max(0f, Global.CalcTileDistance(hit.Tile, enemy.Tile) / 6f);
+                }
+                return value;
             }
         }
 
@@ -270,7 +307,7 @@ public class AIController
                             enemiesHit++;
                         }
                     }
-                    return 0.1f * Global.CalcTileDistance(userPosition, targets[0]) + 0.5f * enemiesHit;
+                    return 0.4f * DeterminePositionValue(targets[0], targetResource.Tile) + 0.5f * enemiesHit;
 
                 case "Vine Grasp":
                     // pull
@@ -375,6 +412,9 @@ public class AIController
         public float positionValue; // how close the end position is to the target position
 
         public float Effectiveness { get { return abilityValue + positionValue; } }
+
+        private static List<MoveOrdering> abilityOrders = new List<MoveOrdering> { MoveOrdering.AbilityOnly, MoveOrdering.WalkThenAbility, MoveOrdering.AbilityThenWalk };
+        public bool UsesAbility { get { return abilityOrders.Contains(ordering); } }
 
         public MoveOrdering[] GetSequence() {
             switch(ordering) {

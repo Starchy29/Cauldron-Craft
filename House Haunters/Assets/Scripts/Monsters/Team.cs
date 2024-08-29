@@ -91,6 +91,7 @@ public class Team
             CraftedMonsters[type] = true;
             totalCrafted++;
             if(totalCrafted >= CRAFT_GOAL) {
+                AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
                 Spawnpoint.FinishCook();
                 GameOverviewDisplayer.Instance.ShowWinner(this);
             }
@@ -107,7 +108,6 @@ public class Team
             teammate.StartTurn();
         }
 
-        Spawnpoint.StartTurn();
         OnTurnStart?.Invoke();
 
         if(AI == null) {

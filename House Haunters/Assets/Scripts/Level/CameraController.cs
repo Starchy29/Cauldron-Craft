@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
-    private const float BOUNDS_EXTENDS = 4f;
+    private const float BOUNDS_EXTENDS = 2f;
     private const float HALF_HEIGHT = 5.625f;
     private const float HALF_WIDTH = HALF_HEIGHT * 16f/9f;
     private Vector2 mouseAnchor;

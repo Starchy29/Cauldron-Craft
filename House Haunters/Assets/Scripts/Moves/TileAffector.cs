@@ -10,6 +10,7 @@ public class TileAffector
     private GameObject visual;
     public int Duration { get; private set; }
 
+    public bool HasNegativeEffect { get { return landEffect != null || endTurnEffect != null; } }
     public int MovementTax { get; private set; }
     private MonsterTrigger landEffect;
     private MonsterTrigger endTurnEffect;

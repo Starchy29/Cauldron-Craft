@@ -6,12 +6,12 @@ using UnityEngine;
 public enum GameMode {
     VSAI,
     PVP,
-    AUTO
+    Auto
 }
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.AUTO;
+    public static GameMode Mode = GameMode.Auto;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        leftTeam = new Team("Alchemists", new Color(0.1f, 0.5f, 0.9f), Mode == GameMode.AUTO);
+        leftTeam = new Team("Alchemists", new Color(0.1f, 0.5f, 0.9f), Mode == GameMode.Auto);
         rightTeam = new Team("Witchcrafters", new Color(0.5f, 0.8f, 0.1f), Mode != GameMode.PVP);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
@@ -87,6 +87,9 @@ public class GameManager : MonoBehaviour
 
         LevelGrid.Instance.ClearEntity(defeated.Tile);
         defeated.Controller.Teammates.Remove(defeated);
+        if(defeated.Controller.AI != null) {
+            defeated.Controller.AI.RemoveMonster(defeated);
+        }
         OnMonsterDefeated?.Invoke(defeated); // during event, has no tile but retains team
     }
 

@@ -47,9 +47,7 @@ public class MoveButton : AutoButton
             .Collapse((List<Vector2Int> cur, List<Vector2Int> next) => { cur.AddRange(next); return cur; });
         
         CoveredAreaAfterWalk.Clear();
-        if(moveSlot != MonsterType.WALK_INDEX && move.Range > 0 && 
-            (user.Controller != GameManager.Instance.CurrentTurn || user.WalkAvailable == user.AbilityAvailable)
-        ) {
+        if(moveSlot != MonsterType.WALK_INDEX && move.Range > 0) {
             foreach(KeyValuePair<Vector2Int, List<Selection>> option in user.GetMoveOptionsAfterWalk(moveSlot, true)) {
                 CoveredAreaAfterWalk.AddRange(option.Value
                     .ConvertAll((Selection targets) => new List<Vector2Int>(targets.Unfiltered))

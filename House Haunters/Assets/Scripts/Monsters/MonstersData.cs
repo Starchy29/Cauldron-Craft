@@ -3,22 +3,6 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-public enum MonsterName {
-    LostSoul,
-    Demon,
-    Flytrap,
-    Cactus,
-    Golem,
-    Automaton,
-    Sludge,
-    Fungus,
-    Fossil,
-    Phantom,
-    Jackolantern,
-    Beast,
-    Amalgamation
-}
-
 public class MonstersData
 {
     private static MonstersData instance;
@@ -40,82 +24,82 @@ public class MonstersData
 
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
-        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(MonsterName.LostSoul, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             22, 4,
             new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(6); }, AnimateLobber(prefabs.soulDrop, 1.5f, 0.5f), "Heals an ally for 6 health."),
             new StatusMove("Haunt", 2, new StatusAilment(StatusEffect.Haunt, 2, prefabs.spookHaunt), RangeSelector.MeleeSelector, null, "The target takes 1.5x damage for 2 turns.")
         );
 
-        monsterTypes[(int)MonsterName.Demon] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.Demon] = new MonsterType(MonsterName.Demon, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             25, 4,
             new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 8 damage to the target and 5 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 5); }),
             new StatusMove("Ritual", 2, new StatusAilment(StatusEffect.Power, 2, prefabs.demonStrength), SelfSelector.Instance, null, "Lose 4 life to gain power next turn", (user, tile) => user.TakeDamage(4))
         );
 
-        monsterTypes[(int)MonsterName.Cactus] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Cactus] = new MonsterType(MonsterName.Cactus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
             new Attack("Barb Bullet", 1, 7, new DirectionSelector(6, true), AnimateLinearShot(prefabs.thornShot, null, 20f), "Deals 7 damage and pierces through enemies."),
             new ZoneMove("Thorn Trap", 2, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 5, 0, (lander) => { lander.TakeDamage(6); }, true, true), null, "Places a trap that blocks enemies and deals 6 damage when stepped on.")
         );
 
         tangledStatus = new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines);
-        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(MonsterName.Flytrap, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
             new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 12 damage to the target."),
             new Move("Vine Grasp", 2, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target to the user and slows it for 2 turns.")
         );
 
-        monsterTypes[(int)MonsterName.Golem] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Golem] = new MonsterType(MonsterName.Golem, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             25, 5,
             new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.crystalShield), new RangeSelector(2, false, true), null, "Increases damage by 1.5x for 1 turn."),
             new StatusMove("Crystals", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.spikeShieldPrefab), new RangeSelector(1, false, true), null, "Halves damage received for 2 turns.")
         );
 
-        monsterTypes[(int)MonsterName.Automaton] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Automaton] = new MonsterType(MonsterName.Automaton, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
-            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 4f, 1f), "Deals 9 damage."),
+            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 3f, 1f), "Deals 9 damage."),
             new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, "Receive half damage for a turn.")
         );
         monsterTypes[(int)MonsterName.Automaton].Moves[MonsterType.PRIMARY_INDEX].CantWalkFirst = true;
 
-        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.Fungus] = new MonsterType(MonsterName.Fungus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Decay },
             28, 3,
             new StatusMove("Infect", 1, new StatusAilment(StatusEffect.Poison, 3, prefabs.leechSeed), new RangeSelector(2, false, true), null, "Deals 5 damage for 3 turns."),
             new StatusMove("Psychic Spores", 1, new StatusAilment(StatusEffect.Fear, 2, prefabs.fearStatus), RangeSelector.MeleeSelector, AnimateParticle(prefabs.psychicBurst), "Halves the target's damage for 2 turns.")
         );
 
         hexedStatus = new StatusAilment(StatusEffect.Slowness, 1, prefabs.hexBlast);
-        monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(MonsterName.Jackolantern, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Mineral },
             22, 4,
             new StatusMove("Will o' Wisp", 1, new StatusAilment(StatusEffect.Haunt, 1, prefabs.spookHaunt), new RangeSelector(3, false, true), null, "The target receives 1.5x damage this turn."),
             new StatusMove("Hex", 2, new StatusAilment(StatusEffect.Cursed, 3, prefabs.hexBlast), new RangeSelector(2, false, true), null, "Makes an ally deal 4 revenge damage for 3 turns.")
         );
 
-        monsterTypes[(int)MonsterName.Sludge] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Sludge] = new MonsterType(MonsterName.Sludge, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
             25, 4,
             new Attack("Blob Lob", 1, 8, new RangeSelector(4, false, true), AnimateLobber(prefabs.sludgeLob, 2.0f, 0.6f), "Deals 8 damage."),
             new ZoneMove("Toxic Puddle", 3, ZoneSelector.AdjacentSelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, 0, null, false, false, (Monster occupant) => { occupant.TakeDamage(5); }), null, "Places a zone that deals 5 damage to enemies that stand on it.")
         );
 
-        monsterTypes[(int)MonsterName.Fossil] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Decay },
+        monsterTypes[(int)MonsterName.Fossil] = new MonsterType(MonsterName.Fossil, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Decay },
             22, 3,
-            new Attack("Bone Shot", 1, 10, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 16f), ""),
+            new Attack("Bone Shot", 1, 10, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 16f), "Deals 10 damage."),
             new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, 1, null), null, "Places an area that slows enemies passing through.")
         );
 
-        monsterTypes[(int)MonsterName.Phantom] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Phantom] = new MonsterType(MonsterName.Phantom, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             20, 5,
             new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, null, "Deals 11 damage."),
             new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "Shifts forward and deals 9 damage to enemies passed through.")
         );
 
-        monsterTypes[(int)MonsterName.Beast] = new MonsterType(new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
+        monsterTypes[(int)MonsterName.Beast] = new MonsterType(MonsterName.Beast, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
             25, 4,
             new Attack("Claw", 1, 9, new ZoneSelector(1, 2), null, "Deals 9 damage."),
             new StatusMove("Battle Cry", 5, new StatusAilment(StatusEffect.Swift, 2, prefabs.beastSpeed), ZoneSelector.AOESelector, null, "Increases speed for 2 turns.")
         );
 
-        monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
+        monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(MonsterName.Amalgamation, new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
             30, 3,
             new Attack("Lash Out", 1, 7, new ZoneSelector(1, 3), null, "Deals 7 damage."),
             new Move("Mend Flesh", 2, MoveType.Heal, Move.Targets.Allies, SelfSelector.Instance, (user, tile) => user.Heal(4), null, "Heal 4 health")

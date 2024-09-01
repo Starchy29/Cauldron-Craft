@@ -163,7 +163,7 @@ public class Monster : GridEntity
 
         // lunge at the target if melee attacking
         if(move.TargetType == Move.Targets.Enemies && move.Range == 1) {
-            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(gameObject, Global.DetermineCenter(targets.Filtered) - (Vector2)transform.position));
+            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(gameObject, Global.DetermineCenter(targets.Filtered)));
         }
 
         Stats.Moves[moveSlot].Use(this, targets);

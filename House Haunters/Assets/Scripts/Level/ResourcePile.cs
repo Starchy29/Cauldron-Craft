@@ -19,7 +19,7 @@ public class ResourcePile : GridEntity
     
     public Ingredient Type { get { return type; } }
 
-    private bool contested; // both teams present
+    public bool Contested { get; private set; } // both teams present
 
     protected override void Start() {
         base.Start();
@@ -45,7 +45,7 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
-        if(contested || turnStarter == Controller) {
+        if(Contested || turnStarter == Controller) {
             turnStarter.Resources[type] += 2;
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
@@ -64,7 +64,7 @@ public class ResourcePile : GridEntity
             .Map((Vector2Int tile) => { return level.GetMonster(tile); })
             .Filter((Monster monster) => monster != null);
 
-        if(capturers.Count == 0 && !contested) {
+        if(capturers.Count == 0 && !Contested) {
             // players retain control when they leave the capture area
             return;
         }
@@ -82,12 +82,17 @@ public class ResourcePile : GridEntity
             }
         }
 
-        if(newController != Controller || nowContested != contested) {
-            contested = nowContested;
+        if(nowContested) {
+            // keep the same controller when contested to avoid bugs
+            newController = Controller;
+        }
+
+        if(newController != Controller || nowContested != Contested) {
+            Contested = nowContested;
             Controller = newController;
 
             Color color = Color.clear;
-            if(contested) {
+            if(Contested) {
                 color = (Controller.TeamColor + GameManager.Instance.OpponentOf(Controller).TeamColor) / 2f;
             }
             else if(Controller != null) {

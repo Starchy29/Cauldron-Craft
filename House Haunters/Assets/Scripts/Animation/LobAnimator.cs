@@ -25,6 +25,7 @@ public class LobAnimator : IMoveAnimator
 
     public void Start() {
         visual.SetActive(true);
+        visual.transform.position = start;
     }
 
     public void Update(float deltaTime) {

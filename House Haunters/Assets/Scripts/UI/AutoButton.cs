@@ -11,7 +11,8 @@ public class AutoButton : MonoBehaviour
         StartGamePVP,
         StartGameVAI,
         GameplayBack,
-        QuitGame
+        QuitMatch,
+        CloseGame
     }
 
     [SerializeField] private ClickFunction clickFunction;
@@ -53,8 +54,11 @@ public class AutoButton : MonoBehaviour
             case ClickFunction.GameplayBack:
                 OnClick = MenuManager.Instance.BackMenu;
                 break;
-            case ClickFunction.QuitGame:
+            case ClickFunction.QuitMatch:
                 OnClick = () => { SceneManager.LoadScene(0); };
+                break;
+            case ClickFunction.CloseGame:
+                OnClick = () => { Application.Quit(); };
                 break;
         }
     }

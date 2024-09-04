@@ -138,6 +138,11 @@ public class AIController
         orderedTeammates.Sort((Monster cur, Monster next) => movePriorities[cur] - movePriorities[next]);
         foreach(Monster teammate in orderedTeammates) {
             TurnOption choice = ChooseAction(teammate);
+
+            if(choice.ordering != TurnOption.MoveOrdering.None) {
+                AnimationsManager.Instance.QueueAnimation(new CameraAnimator(choice.user.transform.position));
+            }
+
             foreach(TurnOption.MoveOrdering action in choice.GetSequence()) {
                 if(action == TurnOption.MoveOrdering.WalkOnly) {
                     choice.user.UseMove(MonsterType.WALK_INDEX, new Selection(choice.walkDestination));
@@ -539,7 +544,8 @@ public class AIController
             // only craft a duplicate if necessary
             return;
         }
-            
+
+        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(controlTarget.Spawnpoint.transform.position));
         controlTarget.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);
     }
 

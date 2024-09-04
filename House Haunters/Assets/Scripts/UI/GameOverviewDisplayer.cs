@@ -19,7 +19,7 @@ public class GameOverviewDisplayer : MonoBehaviour
 
     public void ShowObjective() {
         gameObject.SetActive(true);
-        textbox.text = "Craft every kind of monster";
+        textbox.text = "Craft every monster!";
         textbox.color = Color.white;
         AnimationsManager.Instance.QueueAnimation(new PauseAnimator(3f));
         AnimationsManager.Instance.QueueFunction(() => { gameObject.SetActive(false); });

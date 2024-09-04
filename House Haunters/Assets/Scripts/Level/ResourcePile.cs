@@ -45,15 +45,25 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
+        int harvestCount = 0;
         if(Contested) {
-            turnStarter.Resources[type] += 1;
-            AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
+            harvestCount = 1;
         }
         else if(turnStarter == Controller) {
-            turnStarter.Resources[type] += 2;
-            AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
+            harvestCount = 2;
+        }
+
+        if(harvestCount == 0) {
+            return;
+        }
+
+        turnStarter.Resources[type] += harvestCount;
+
+        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
+        for(int i = 0; i < harvestCount; i ++) {
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
         }
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(HarvestedIngredient.DURATION));
     }
 
     private void SpawnHarvestParticle() {

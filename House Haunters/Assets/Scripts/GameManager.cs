@@ -34,20 +34,8 @@ public class GameManager : MonoBehaviour
 
     // runs after everything else because of script execution order
     void Start() {
-        //GameOverviewDisplayer.Instance.ShowObjective();
-
-        //AnimationsManager.Instance.QueueFunction(() => { 
-        //    foreach(ResourcePile resource in AllResources) {
-        //        resource.productionIndicator.SetActive(true);
-        //    }
-        //});
-        //AnimationsManager.Instance.QueueAnimation(new PauseAnimator(3f));
-        //AnimationsManager.Instance.QueueFunction(() => { 
-        //    foreach(ResourcePile resource in AllResources) {
-        //        resource.productionIndicator.SetActive(false);
-        //    }
-        //});
-
+        QueueIntro();
+        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(CurrentTurn.Spawnpoint.transform.position));
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         CurrentTurn.StartTurn();
     }
@@ -62,6 +50,7 @@ public class GameManager : MonoBehaviour
 
     public void PassTurn(Team turnEnder) {
         CurrentTurn = OpponentOf(CurrentTurn);
+        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(CurrentTurn.Spawnpoint.transform.position));
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         OnTurnChange?.Invoke(turnEnder, CurrentTurn);
         CurrentTurn.StartTurn();
@@ -93,4 +82,14 @@ public class GameManager : MonoBehaviour
         OnMonsterDefeated?.Invoke(defeated); // during event, has no tile but retains team
     }
 
+    private void QueueIntro() {
+        GameOverviewDisplayer.Instance.ShowObjective();
+        AllResources.Sort((ResourcePile cur, ResourcePile next) => (int)(-cur.transform.position.y + next.transform.position.y)); // sort top to bottom
+        foreach(ResourcePile resource in AllResources) {
+            AnimationsManager.Instance.QueueAnimation(new CameraAnimator(resource.transform.position));
+            AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(resource.productionIndicator, true));
+            AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1.5f));
+            AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(resource.productionIndicator, false));
+        }
+    }
 }

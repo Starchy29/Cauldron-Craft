@@ -10,14 +10,16 @@ public class CameraController : MonoBehaviour
     private const float HALF_WIDTH = HALF_HEIGHT * 16f/9f;
     private Vector2 mouseAnchor;
 
+    public static CameraController Instance { get; private set; }
+    private void Awake() {
+        Instance = this;
+    }
+
     void Update() {
         if(GameManager.Instance.CurrentTurn.AI == null) {
             PlayerUpdate();
-        } else {
-            AIUpdate();
         }
     }
-
     private void PlayerUpdate() {
         if(Mouse.current == null) {
             return;
@@ -31,16 +33,16 @@ public class CameraController : MonoBehaviour
             Vector3 mouseDelta = mousePos - mouseAnchor;
             mouseDelta.x = 0;
             transform.position -= mouseDelta;
-            LevelGrid level = LevelGrid.Instance;
-            transform.position = new Vector3(
-                transform.position.x, //Mathf.Clamp(transform.position.x, HALF_WIDTH - BOUNDS_EXTENDS, level.Width + BOUNDS_EXTENDS - HALF_WIDTH),
-                Mathf.Clamp(transform.position.y, HALF_HEIGHT - BOUNDS_EXTENDS, level.Height + BOUNDS_EXTENDS - HALF_HEIGHT),
-                transform.position.z
-            );
+            transform.position = ClampToLevel(transform.position);
         }
     }
 
-    private void AIUpdate() {
-
+    public Vector3 ClampToLevel(Vector3 point) {
+        LevelGrid level = LevelGrid.Instance;
+        return new Vector3(
+            level.Width / 2f, //Mathf.Clamp(transform.position.x, HALF_WIDTH - BOUNDS_EXTENDS, level.Width + BOUNDS_EXTENDS - HALF_WIDTH),
+            Mathf.Clamp(point.y, HALF_HEIGHT - BOUNDS_EXTENDS, level.Height + BOUNDS_EXTENDS - HALF_HEIGHT),
+            point.z
+        );
     }
 }

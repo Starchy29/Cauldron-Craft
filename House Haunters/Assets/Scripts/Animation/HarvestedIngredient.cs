@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class HarvestedIngredient : MonoBehaviour
 {
-    private const float DURATION = 1f;
+    public const float DURATION = 1f;
     private const float THREE_SPINS = 360f * 3f;
 
     private Vector3 startPos;

@@ -45,7 +45,11 @@ public class ResourcePile : GridEntity
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
-        if(Contested || turnStarter == Controller) {
+        if(Contested) {
+            turnStarter.Resources[type] += 1;
+            AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
+        }
+        else if(turnStarter == Controller) {
             turnStarter.Resources[type] += 2;
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);

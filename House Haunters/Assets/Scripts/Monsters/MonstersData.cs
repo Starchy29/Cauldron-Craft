@@ -32,8 +32,8 @@ public class MonstersData
 
         monsterTypes[(int)MonsterName.Demon] = new MonsterType(MonsterName.Demon, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             25, 4,
-            new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 8 damage to the target and 5 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 5); }),
-            new StatusMove("Ritual", 2, new StatusAilment(StatusEffect.Power, 2, prefabs.demonStrength), SelfSelector.Instance, null, "Lose 4 life to gain power next turn", (user, tile) => user.TakeDamage(4))
+            new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 8 damage to the target and 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); }),
+            new StatusMove("Ritual", 2, new StatusAilment(StatusEffect.Power, 2, prefabs.demonStrength), SelfSelector.Instance, null, "Lose 3 life to gain power next turn", (user, tile) => user.TakeDamage(3))
         );
 
         monsterTypes[(int)MonsterName.Cactus] = new MonsterType(MonsterName.Cactus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },

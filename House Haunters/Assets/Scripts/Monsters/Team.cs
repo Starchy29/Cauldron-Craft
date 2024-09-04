@@ -28,7 +28,7 @@ public class Team
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(String name, Color color, bool isAI) {
+    public Team(String name, Color color, Ingredient startResource, bool isAI) {
         Name = name;
         TeamColor = color;
         Teammates = new List<Monster>();
@@ -40,10 +40,12 @@ public class Team
         }
 
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
-            Resources[type] = 3;
+            Resources[type] = 0;
         }
+        Resources[startResource] = 6;
+        Resources[Ingredient.Mineral] = 3;
 
-        if(isAI) {
+        if (isAI) {
             AI = new AIController(this);
         }
     }

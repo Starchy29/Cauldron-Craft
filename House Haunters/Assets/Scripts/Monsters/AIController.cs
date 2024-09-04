@@ -49,18 +49,7 @@ public class AIController
 
     // enacts every move in the turn immediately. The AnimationsManager makes the visuals play out in the correct order
     public void TakeTurn() {
-        // cache where the monsters can move to avoid repeated pathfinding
-        pathedPositions.Clear();
-        walkOptions.Clear();
-        foreach(Monster monster in controlTarget.Teammates) {
-            pathedPositions[monster] = monster.Tile;
-            if(monster.WalkAvailable) {
-                walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false)
-                    .ConvertAll((Selection tileContainter) => tileContainter.Unfiltered[0]);
-            } else {
-                walkOptions[monster] = new List<Vector2Int>();
-            }
-        }
+        FindWalkableTiles();
 
         // find center of conflict for zone placement
         Vector2 allyCenter = controlTarget.Teammates
@@ -157,12 +146,32 @@ public class AIController
                     choice.user.UseMove(choice.abilitySlot, choice.abilityTargets);
                 }
             }
+
+            if(choice.user.Stats.Moves[choice.abilitySlot].Name == "Vine Grasp") {
+                // since an enemy moved, paths must be updated
+                FindWalkableTiles();
+            }
         }
 
         AttemptCraft();
 
         // end turn after animations play out
         AnimationsManager.Instance.QueueFunction(() => { controlTarget.EndTurn(); });
+    }
+
+    // caches each tile each teammate can walk to this turn to avoid repeated pathfinding
+    private void FindWalkableTiles() {
+        pathedPositions.Clear();
+        walkOptions.Clear();
+        foreach(Monster monster in controlTarget.Teammates) {
+            pathedPositions[monster] = monster.Tile;
+            if(monster.WalkAvailable) {
+                walkOptions[monster] = monster.GetMoveOptions(MonsterType.WALK_INDEX, false)
+                    .ConvertAll((Selection tileContainter) => tileContainter.Unfiltered[0]);
+            } else {
+                walkOptions[monster] = new List<Vector2Int>();
+            }
+        }
     }
 
     // determines the best sequence of walk and ability to use this turn
@@ -318,6 +327,10 @@ public class AIController
         if(move is StatusMove) {
             StatusAilment effect = ((StatusMove)move).Condition;
             Monster hit = targets[0] == userPosition ? user : level.GetMonster(targets[0]);
+            if(hit.HasStatus(effect.effect)) {
+                return -0.2f; // don't use a status on a monster that already has that status
+            }
+
             if(move.TargetType == Move.Targets.Enemies) {
                 if(effect.effect == StatusEffect.Fear && !(hit.Stats.Moves[MonsterType.PRIMARY_INDEX] is Attack)) {
                     return -1f; // dont weaken an enemy that has no attacks
@@ -329,9 +342,9 @@ public class AIController
                     return -1f; // dont strengthen an ally that has no attacks
                 }
 
-                float value = -0.3f;
+                float value = -0.2f;
                 foreach(Monster enemy in GameManager.Instance.OpponentOf(controlTarget).Teammates) {
-                    value += 0.4f * Mathf.Max(0f, Global.CalcTileDistance(hit.Tile, enemy.Tile) / 6f);
+                    value += 0.4f * Mathf.Max(0f, 1f - Global.CalcTileDistance(hit.Tile, enemy.Tile) / 6f);
                 }
                 return value;
             }

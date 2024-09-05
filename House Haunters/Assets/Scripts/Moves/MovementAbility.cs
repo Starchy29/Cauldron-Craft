@@ -15,7 +15,7 @@ public class MovementAbility : Move
     }
 
     private static void AnimateWalk(Monster user, Selection targets) {
-        List<Vector3> pathWorldLocations = user.FindPath(targets.Filtered[0]).Map((Vector2Int tile) => { return LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile); });
+        List<Vector3> pathWorldLocations = user.FindPath(targets.Filtered[0]).ConvertAll((Vector2Int tile) => { return LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile); });
         AnimationsManager.Instance.QueueAnimation(new PathAnimator(user, pathWorldLocations, 2f * user.CurrentSpeed));
     }
 }

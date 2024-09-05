@@ -38,6 +38,6 @@ public class PathSelector : ISelector
         }
 
         // put each tile in its own list
-        return navigableTiles.Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; });
+        return navigableTiles.ConvertAll((Vector2Int tile) => { return new List<Vector2Int>() { tile }; });
     }
 }

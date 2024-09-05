@@ -29,7 +29,7 @@ public class ResourcePile : GridEntity
         GameManager.Instance.AllResources.Add(this);
 
         // place particles on the ground around this tile
-        List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
+        List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, 1, true).FindAll((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
         foreach(Vector2Int tile in openAdjTiles) {
             GameObject floorCover = Instantiate(floorCoverPrefab);
             floorCover.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
@@ -75,8 +75,8 @@ public class ResourcePile : GridEntity
     private void CheckCapture(Monster mover) {
         LevelGrid level = LevelGrid.Instance;
         List<Monster> capturers = level.GetTilesInRange(Tile, 1, true)
-            .Map((Vector2Int tile) => { return level.GetMonster(tile); })
-            .Filter((Monster monster) => monster != null);
+            .ConvertAll((Vector2Int tile) => { return level.GetMonster(tile); })
+            .FindAll((Monster monster) => monster != null);
 
         if(capturers.Count == 0 && !Contested) {
             // players retain control when they leave the capture area

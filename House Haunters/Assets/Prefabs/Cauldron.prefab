@@ -236,10 +236,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 2594689547502008985}
-  startTeam: 0
+  controlledByLeft: 0
   cookIndicator: {fileID: 1976895540559380421}
-  fullSprite: {fileID: 21300000, guid: e96ba73d6f26fa94f8b5c1d5781c6e8e, type: 3}
-  emptySprite: {fileID: 21300000, guid: cd49e8be77f159f449619914d2c7402a, type: 3}
 --- !u!1 &5203643447583019061
 GameObject:
   m_ObjectHideFlags: 0
@@ -380,7 +378,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: acedec3ceb529eb4fa626874ccda6210, type: 2}
+  - {fileID: 2100000, guid: 396d9dad6f1bcf74aafacc8bbf714895, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

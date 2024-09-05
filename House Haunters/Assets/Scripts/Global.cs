@@ -15,18 +15,7 @@ public static class Global
     #region Extension Functions
     public delegate bool CheckCondition<T>(T data);
     public delegate float GetValue<T>(T data);
-    public delegate EndType MapValue<StartValue, EndType>(StartValue value);
     public delegate T ValueCombiner<T>(T current, T next);
-
-    public static List<T> Filter<T>(this List<T> list, CheckCondition<T> conditionFunc) {
-        List<T> result = new List<T>();
-        foreach(T item in list) {
-            if(conditionFunc(item)) {
-                result.Add(item);
-            }
-        }
-        return result;
-    }
 
     public static T Max<T>(this T[] array, GetValue<T> valueCalculator) {
         if(array.Length == 0) {
@@ -86,22 +75,6 @@ public static class Global
             }
         }
 
-        return result;
-    }
-
-    public static List<EndType> Map<StartType, EndType>(this List<StartType> list, MapValue<StartType, EndType> mapFunction) {
-        List<EndType> result = new List<EndType>();
-        foreach(StartType element in list) {
-            result.Add(mapFunction(element));
-        }
-        return result;
-    }
-
-    public static List<EndType> Map<StartType, EndType>(this StartType[] arr, MapValue<StartType, EndType> mapFunction) {
-        List<EndType> result = new List<EndType>();
-        foreach(StartType element in arr) {
-            result.Add(mapFunction(element));
-        }
         return result;
     }
 

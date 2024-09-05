@@ -19,8 +19,8 @@ public class RangeSelector : ISelector
 
     public List<List<Vector2Int>> GetSelectionGroups(Monster user) {
         return LevelGrid.Instance.GetTilesInRange(user.Tile, Range, false)
-            .Filter((Vector2Int tile) => { return (SelfSelectable || tile != user.Tile) && (!NeedsLineOfSight || HasLineOfSight(user.Tile, tile)); })
-            .Map((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
+            .FindAll((Vector2Int tile) => { return (SelfSelectable || tile != user.Tile) && (!NeedsLineOfSight || HasLineOfSight(user.Tile, tile)); })
+            .ConvertAll((Vector2Int tile) => { return new List<Vector2Int>() { tile }; }); // put each tile in its own list
     }
 
     public static bool HasLineOfSight(Vector2Int startTile, Vector2Int endTile) {

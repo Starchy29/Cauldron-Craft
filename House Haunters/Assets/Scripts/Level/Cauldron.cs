@@ -45,7 +45,7 @@ public class Cauldron : GridEntity
         // find the spot to spawn on
         LevelGrid level = LevelGrid.Instance;
         Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
-        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).Filter((Vector2Int tile) => { return level.IsOpenTile(tile); });
+        List<Vector2Int> options = level.GetTilesInRange(Tile, 1, true).FindAll((Vector2Int tile) => { return level.IsOpenTile(tile); });
         if(options.Count == 0) {
             return;
         }

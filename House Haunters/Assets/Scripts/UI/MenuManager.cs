@@ -281,7 +281,7 @@ public class MenuManager : MonoBehaviour
         Move move = selected.Stats.Moves[selectedMoveSlot];
         filterTargets = move.TargetType == Move.Targets.ZonePlaceable || move.TargetType == Move.Targets.StandableSpot;
         targetOptions = options;
-        targetCenters = targetOptions.Map((Selection tileGroup) => { return Global.DetermineCenter(filterTargets ? tileGroup.Filtered : tileGroup.Unfiltered); });
+        targetCenters = targetOptions.ConvertAll((Selection tileGroup) => { return Global.DetermineCenter(filterTargets ? tileGroup.Filtered : tileGroup.Unfiltered); });
         SetState(SelectionTarget.Targets);
 
         List<Vector2Int> targetableTiles = new List<Vector2Int>();
@@ -293,7 +293,7 @@ public class MenuManager : MonoBehaviour
         if(move.Type == MoveType.Attack || move.Type == MoveType.Attack || move.Type == MoveType.Heal || move.Type == MoveType.Decay) {
             bool checkAllies = move.Type == MoveType.Heal;
             targetedHealthBars = new List<HealthBarScript>();
-            List<Vector2Int> tilesWithMonsters = targetableTiles.Filter((Vector2Int tile) => { return level.GetMonster(tile) != null; });
+            List<Vector2Int> tilesWithMonsters = targetableTiles.FindAll((Vector2Int tile) => { return level.GetMonster(tile) != null; });
             foreach(Vector2Int tile in tilesWithMonsters) {
                 Monster healthBarHaver = level.GetMonster(tile);
                 if((healthBarHaver.Controller == controller) == checkAllies) {

@@ -97,7 +97,7 @@ public class MenuManager : MonoBehaviour
 
                     Vector2Int hoveredTile = targetOptions[hoveredTargetIndex].Filtered[0];
                     if(resource.IsInCaptureRange(hoveredTile)) {
-                        level.ColorTiles(level.GetTilesInRange(resource.Tile, 1, true), TileHighlighter.State.Highlighted);
+                        level.ColorTiles(level.GetTilesInRange(resource.Tile, ResourcePile.CAPTURE_SIZE, true), TileHighlighter.State.Highlighted);
                         highlighted = true;
                     }
                 }
@@ -167,7 +167,7 @@ public class MenuManager : MonoBehaviour
         }
 
         if(input.SelectPressed()) {
-            if(hoveredEntity is Cauldron/*hoveredEntity == controller.Spawnpoint && controller.Spawnpoint.CookState == Cauldron.State.Ready*/) {
+            if(hoveredEntity is Cauldron) {
                 SetState(SelectionTarget.CraftChoice);
                 buyMenu.Open(hoveredEntity.Controller);
             }

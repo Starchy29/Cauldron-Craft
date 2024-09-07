@@ -3,9 +3,33 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
+public struct TeamPreset {
+    public string name;
+    public Color teamColor;
+    public MonsterName[] teamComp;
+}
+
 // represents one team of monsters
 public class Team
 {
+    public static TeamPreset Alchemists = new TeamPreset {
+        name = "Alchemists",
+        teamColor = new Color(0.1f, 0.5f, 0.9f),
+        teamComp = new MonsterName[3] { MonsterName.Sludge, MonsterName.Amalgamation, MonsterName.Golem }
+    };
+
+    public static TeamPreset Witchcrafters = new TeamPreset {
+        name = "Witchcrafters",
+        teamColor = new Color(0.5f, 0.8f, 0.1f),
+        teamComp = new MonsterName[3] { MonsterName.Beast, MonsterName.Flytrap, MonsterName.Fungus }
+    };
+
+    public static TeamPreset Occultists = new TeamPreset {
+        name = "Occultists",
+        teamColor = new Color(0.9f, 0.3f, 0.1f),
+        teamComp = new MonsterName[3] { MonsterName.Demon, MonsterName.Fossil, MonsterName.Jackolantern }
+    };
+
     public String Name { get; private set; }
     public Color TeamColor { get; private set; }
     public List<Monster> Teammates { get; private set; }
@@ -25,12 +49,15 @@ public class Team
     private int totalCrafted;
     private static int CRAFT_GOAL = Enum.GetValues(typeof(MonsterName)).Length;
 
+    private MonsterName[] startTeam;
+
     public event Trigger OnTurnEnd;
     public event Trigger OnTurnStart;
 
-    public Team(String name, Color color, Ingredient startResource, bool isAI) {
-        Name = name;
-        TeamColor = color;
+    public Team(TeamPreset preset, bool isAI) {
+        Name = preset.name;
+        TeamColor = preset.teamColor;
+        startTeam = preset.teamComp;
         Teammates = new List<Monster>();
         Resources = new Dictionary<Ingredient, int>(Enum.GetValues(typeof(Ingredient)).Length);
 
@@ -42,11 +69,19 @@ public class Team
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
             Resources[type] = 0;
         }
-        Resources[startResource] = 6;
-        Resources[Ingredient.Mineral] = 3;
 
-        if (isAI) {
+        if(isAI) {
             AI = new AIController(this);
+        }
+    }
+
+    public void SpawnStartTeam() {
+        LevelGrid level = LevelGrid.Instance;
+        Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
+        List<Vector2Int> spawnTiles = level.GetTilesInRange(Spawnpoint.Tile, 1, true);
+        spawnTiles.Sort((Vector2Int cur, Vector2Int next) => Global.CalcTileDistance(cur, levelMid) - Global.CalcTileDistance(next, levelMid));
+        for(int i = 0; i < startTeam.Length; i++) {
+            GameManager.Instance.SpawnMonster(startTeam[i], spawnTiles[i], this);
         }
     }
 

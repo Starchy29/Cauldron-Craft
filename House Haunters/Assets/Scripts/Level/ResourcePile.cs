@@ -17,8 +17,9 @@ public class ResourcePile : GridEntity
     [SerializeField] public GameObject productionIndicator;
     [SerializeField] private CaptureVFX captureVisual;
     
-    public Ingredient Type { get { return type; } }
+    public const int CAPTURE_SIZE = 2;
 
+    public Ingredient Type { get { return type; } }
     public bool Contested { get; private set; } // both teams present
 
     protected override void Start() {
@@ -29,7 +30,7 @@ public class ResourcePile : GridEntity
         GameManager.Instance.AllResources.Add(this);
 
         // place particles on the ground around this tile
-        List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, 1, true).FindAll((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
+        List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, CAPTURE_SIZE, true).FindAll((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
         foreach(Vector2Int tile in openAdjTiles) {
             GameObject floorCover = Instantiate(floorCoverPrefab);
             floorCover.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
@@ -41,7 +42,7 @@ public class ResourcePile : GridEntity
     }
 
     public bool IsInCaptureRange(Vector2Int tile) {
-        return Mathf.Abs(tile.x - Tile.x) <= 1 && Mathf.Abs(tile.y - Tile.y) <= 1;
+        return Mathf.Abs(tile.x - Tile.x) <= CAPTURE_SIZE && Mathf.Abs(tile.y - Tile.y) <= CAPTURE_SIZE;
     }
 
     private void GrantResource(Team turnEnder, Team turnStarter) {
@@ -74,14 +75,14 @@ public class ResourcePile : GridEntity
 
     private void CheckCapture(Monster mover) {
         LevelGrid level = LevelGrid.Instance;
-        List<Monster> capturers = level.GetTilesInRange(Tile, 1, true)
+        List<Monster> capturers = level.GetTilesInRange(Tile, CAPTURE_SIZE, true)
             .ConvertAll((Vector2Int tile) => { return level.GetMonster(tile); })
             .FindAll((Monster monster) => monster != null);
 
-        if(capturers.Count == 0 && !Contested) {
-            // players retain control when they leave the capture area
-            return;
-        }
+        //if(capturers.Count == 0 && !Contested) {
+        //    // players retain control when they leave the capture area
+        //    return;
+        //}
 
         bool nowContested = false;
         Team newController = null;

@@ -1,0 +1,17 @@
+#pragma kernel Update
+
+struct TileInfo {
+
+};
+
+float2 pixelDims;
+int2 tileDims;
+float t;
+
+RWTexture2D<float4> _Texture;
+
+[numthreads(8,8,1)]
+void Update(uint3 id : SV_DispatchThreadID) {
+    
+    _Texture[id.xy] = float4(1, 0, 0, id.x / pixelDims.x);
+}

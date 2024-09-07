@@ -26,15 +26,17 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        leftTeam = new Team("Alchemists", new Color(0.1f, 0.5f, 0.9f), Ingredient.Flora, Mode == GameMode.Auto);
-        rightTeam = new Team("Witchcrafters", new Color(0.5f, 0.8f, 0.1f), Ingredient.Flora, Mode != GameMode.PVP);
+        leftTeam = new Team(Team.Occultists, Mode == GameMode.Auto);
+        rightTeam = new Team(Team.Witchcrafters, Mode != GameMode.PVP);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
     }
 
     // runs after everything else because of script execution order
     void Start() {
-        QueueIntro();
+        leftTeam.SpawnStartTeam();
+        rightTeam.SpawnStartTeam();
+        //QueueIntro();
         AnimationsManager.Instance.QueueAnimation(new CameraAnimator(CurrentTurn.Spawnpoint.transform.position));
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         CurrentTurn.StartTurn();

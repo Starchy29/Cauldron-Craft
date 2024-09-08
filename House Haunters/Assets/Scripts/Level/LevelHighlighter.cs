@@ -10,8 +10,8 @@ public class LevelHighlighter : MonoBehaviour
     private MeshFilter filter;
     private RenderTexture texture;
 
-    private const int RESOLUTION_HEIGHT = 900;
-    private int RESOLUTION_WIDTH;
+    private Vector2Int resolution;
+    private const int TILE_PIXEL_WIDTH = 80;
 
     private ComputeBuffer tileBuffer;
     private Vector3Int groupCounts;
@@ -20,8 +20,7 @@ public class LevelHighlighter : MonoBehaviour
 
     void Start() {
         LevelGrid level = LevelGrid.Instance;
-        float aspectRatio = (float)level.Width / level.Height;
-        RESOLUTION_WIDTH = (int)(RESOLUTION_HEIGHT * aspectRatio);
+        resolution = new Vector2Int(level.Width * TILE_PIXEL_WIDTH, level.Height * TILE_PIXEL_WIDTH);
 
         SetUpTexture();
         SetUpShader();
@@ -74,7 +73,7 @@ public class LevelHighlighter : MonoBehaviour
         filter.mesh = mesh;
 
         // Create texture
-        texture = new RenderTexture(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, 1);
+        texture = new RenderTexture(resolution.x, resolution.y, 1);
         texture.filterMode = FilterMode.Point;
         texture.enableRandomWrite = true;
         texture.Create();
@@ -91,13 +90,13 @@ public class LevelHighlighter : MonoBehaviour
 
         computeShader.SetTexture(0, "_Texture", texture);
         computeShader.SetInts("tileDims", level.Width, level.Height);
-        computeShader.SetFloats("pixelDims", RESOLUTION_WIDTH, RESOLUTION_HEIGHT);
+        computeShader.SetInt("pixPerTile", TILE_PIXEL_WIDTH);
 
         uint sizeX, sizeY, sizeZ;
         computeShader.GetKernelThreadGroupSizes(0, out sizeX, out sizeY, out sizeZ);
         groupCounts = new Vector3Int(
-            Mathf.CeilToInt((float)RESOLUTION_WIDTH / sizeX), 
-            Mathf.CeilToInt((float)RESOLUTION_HEIGHT / sizeY),
+            Mathf.CeilToInt((float)resolution.x / sizeX), 
+            Mathf.CeilToInt((float)resolution.y / sizeY),
             1
         );
     }

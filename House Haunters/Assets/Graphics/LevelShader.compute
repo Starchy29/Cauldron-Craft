@@ -4,7 +4,7 @@ struct TileInfo {
 
 };
 
-float2 pixelDims;
+int pixPerTile;
 int2 tileDims;
 float t;
 
@@ -12,6 +12,13 @@ RWTexture2D<float4> _Texture;
 
 [numthreads(8,8,1)]
 void Update(uint3 id : SV_DispatchThreadID) {
-    
-    _Texture[id.xy] = float4(1, 0, 0, id.x / pixelDims.x);
+    int2 tile = id.xy / pixPerTile;
+    float2 tileUV = float2(id.xy - tile * pixPerTile) / pixPerTile;
+
+    float4 color = float4(0, 0, 0, 0);
+    if(tileUV.x < 0.03 || tileUV.x > 0.97 || tileUV.y < 0.03 || tileUV.y > 0.97) {
+        color = float4(1, 1, 1, 0.2);
+    }
+
+    _Texture[id.xy] = color;
 }

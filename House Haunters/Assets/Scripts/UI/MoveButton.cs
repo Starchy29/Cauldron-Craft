@@ -73,12 +73,12 @@ public class MoveButton : AutoButton
     }
 
     private void HighlightArea() {
-        LevelGrid.Instance.ColorTiles(CoveredArea, TileHighlighter.State.Highlighted);
-        LevelGrid.Instance.ColorTiles(CoveredAreaAfterWalk, TileHighlighter.State.WeakHighlight);
+        LevelHighlighter.Instance.ColorTiles(CoveredArea, HighlightType.Highlight);
+        LevelHighlighter.Instance.ColorTiles(CoveredAreaAfterWalk, HighlightType.AreaVisual);
     }
 
     private void HideHighlight() {
-        LevelGrid.Instance.ColorTiles(null, TileHighlighter.State.Highlighted);
-        LevelGrid.Instance.ColorTiles(null, TileHighlighter.State.WeakHighlight);
+        LevelHighlighter.Instance.ColorTiles(null, HighlightType.Highlight);
+        LevelHighlighter.Instance.ColorTiles(null, HighlightType.AreaVisual);
     }
 }

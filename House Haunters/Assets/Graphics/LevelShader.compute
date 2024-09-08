@@ -1,23 +1,77 @@
 #pragma kernel Update
 
 struct TileInfo {
-
+    int floorType; // 0: ground, 1: wall, 2: pit
+    int highlightType;
 };
+
+#define AREA_VISUAL 1
+#define HIGHLIGHT 2
+#define OPTION 3
+#define HOVERED 4
+#define SELECTED 5
+#define CRAFT_USABLE 6
+#define WALK_USABLE 7
+#define WALK_AND_ABILITY 8
 
 int pixPerTile;
 int2 tileDims;
 float t;
 
+RWStructuredBuffer<TileInfo> _TileData;
 RWTexture2D<float4> _Texture;
+
+TileInfo getTile(int x, int y) {
+    return _TileData[x + tileDims.x * y];
+}
 
 [numthreads(8,8,1)]
 void Update(uint3 id : SV_DispatchThreadID) {
     int2 tile = id.xy / pixPerTile;
     float2 tileUV = float2(id.xy - tile * pixPerTile) / pixPerTile;
-
+    TileInfo tileData = getTile(tile.x, tile.y);
+    
     float4 color = float4(0, 0, 0, 0);
-    if(tileUV.x < 0.03 || tileUV.x > 0.97 || tileUV.y < 0.03 || tileUV.y > 0.97) {
-        color = float4(1, 1, 1, 0.2);
+
+    // fill in highlight
+    switch(tileData.highlightType) {
+    case AREA_VISUAL:
+        color = float4(0.4, 0.4, 0.4, 0.5);
+        break;
+    case HIGHLIGHT:
+        color = float4(0.8, 0.8, 0.2, 0.5);
+        break;
+    case OPTION:
+        color = float4(0, 0.8, 0.8, 0.5);
+        break;
+    case HOVERED:
+        color = float4(0, 0.2, 0.8, 0.5);
+        break;
+    case SELECTED:
+        color = float4(0, 0.8, 0.2, 0.5);
+        break;
+    case CRAFT_USABLE:
+        color = float4(0.6, 0, 0.8, 0.5);
+        break;
+    case WALK_USABLE:
+        color = float4(0.6, 0.8, 0.6, 0.5);
+        break;
+    case WALK_AND_ABILITY:
+        //color = float4(0.4, 0.4, 0.4, 0.5);
+        break;
+    }
+
+    if(tileData.floorType == 0) {
+        // add grid lines
+        float lineThickness = 0.015;
+        if(tileUV.x < lineThickness || tileUV.x > 1 - lineThickness || tileUV.y < lineThickness || tileUV.y > 1 - lineThickness) {
+            float edgeSpot = tileUV.x < lineThickness || tileUV.x > 1 - lineThickness ? tileUV.y : tileUV.x; // 0 - 1 along the edge
+            int edgeSegments = 7;
+            int edgeIndex = edgeSpot * edgeSegments;
+            if(edgeIndex % 2 == 0) {
+                color = color.a > 0 ? color + float4(0.1, 0.1, 0.1, 0) : float4(1, 1, 1, 0.1);
+            }
+        }
     }
 
     _Texture[id.xy] = color;

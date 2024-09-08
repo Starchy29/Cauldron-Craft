@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 using UnityEngine.InputSystem;
 
 // manages player input in regards to menus during gameplay
@@ -77,14 +78,14 @@ public class MenuManager : MonoBehaviour
 
         if(state == SelectionTarget.Targets) {
             if(backButton.isActiveAndEnabled && Global.GetObjectArea(backButton.gameObject).Contains(mousePos)) {
-                level.ColorTiles(null, TileHighlighter.State.Hovered);
+                LevelHighlighter.Instance.ColorTiles(null, HighlightType.Hovered);
                 return;
             }
 
             // find the target group that the mouse is closest to
             Vector2 closestMidpoint = targetCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
             int hoveredTargetIndex = targetCenters.IndexOf(closestMidpoint);
-            level.ColorTiles(filterTargets ? targetOptions[hoveredTargetIndex].Filtered : targetOptions[hoveredTargetIndex].Unfiltered, TileHighlighter.State.Hovered);
+            LevelHighlighter.Instance.ColorTiles(filterTargets ? targetOptions[hoveredTargetIndex].Filtered : targetOptions[hoveredTargetIndex].Unfiltered, HighlightType.Hovered);
 
             // if moving into a capture point, highlight the capture point
             if(selected.Stats.Moves[selectedMoveSlot] is MovementAbility) {
@@ -97,13 +98,13 @@ public class MenuManager : MonoBehaviour
 
                     Vector2Int hoveredTile = targetOptions[hoveredTargetIndex].Filtered[0];
                     if(resource.IsInCaptureRange(hoveredTile)) {
-                        level.ColorTiles(level.GetTilesInRange(resource.Tile, ResourcePile.CAPTURE_SIZE, true), TileHighlighter.State.Highlighted);
+                        LevelHighlighter.Instance.ColorTiles(level.GetTilesInRange(resource.Tile, ResourcePile.CAPTURE_SIZE, true), HighlightType.Highlight);
                         highlighted = true;
                     }
                 }
 
                 if(!highlighted) {
-                    level.ColorTiles(null, TileHighlighter.State.Highlighted);
+                    LevelHighlighter.Instance.ColorTiles(null, HighlightType.Highlight);
                 }
             }
 
@@ -118,7 +119,7 @@ public class MenuManager : MonoBehaviour
 
         TileSelector.SetActive(false);
         terrainInfo.gameObject.SetActive(false);
-        level.ColorTiles(null, TileHighlighter.State.Hovered);
+        LevelHighlighter.Instance.ColorTiles(null, HighlightType.Hovered);
         if(hoveredHealthbar != null) {
             hoveredHealthbar.gameObject.SetActive(false);
             hoveredHealthbar = null;
@@ -160,10 +161,10 @@ public class MenuManager : MonoBehaviour
         if(hoveredEntity is Monster) {
             hoveredHealthbar = ((Monster)hoveredEntity).healthBar;
             hoveredHealthbar.gameObject.SetActive(true);
-            level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
+            LevelHighlighter.Instance.ColorTile(hoveredEntity.Tile, HighlightType.Hovered);
         }
         else if(hoveredEntity is Cauldron) {
-            level.ColorTiles(hoveredEntity.Tile, TileHighlighter.State.Hovered);
+            LevelHighlighter.Instance.ColorTile(hoveredEntity.Tile, HighlightType.Hovered);
         }
 
         if(input.SelectPressed()) {
@@ -215,11 +216,10 @@ public class MenuManager : MonoBehaviour
             targetedHealthBars = null;
         }
 
-        level.ColorTiles(null, TileHighlighter.State.WeakHighlight);
-        level.ColorTiles(null, TileHighlighter.State.Highlighted);
-        level.ColorTiles(null, TileHighlighter.State.Hovered);
-        level.ColorTiles(null, TileHighlighter.State.Selectable);
-        level.ColorTiles(null, TileHighlighter.State.Selected);
+        LevelHighlighter highlighter = LevelHighlighter.Instance;
+        foreach(HighlightType highlight in Enum.GetValues(typeof(HighlightType))) {
+            highlighter.ColorTiles(null, highlight);
+        }
 
         switch(state) {
             case SelectionTarget.Monster:
@@ -236,12 +236,12 @@ public class MenuManager : MonoBehaviour
                         selectableTiles.Add(controller.Spawnpoint.Tile);
                     }
 
-                    level.ColorTiles(selectableTiles, TileHighlighter.State.Selectable);
+                    highlighter.ColorTiles(selectableTiles, HighlightType.Option);
                 }
                 break;
             case SelectionTarget.Move:
                 moveMenu.Open(selected, controller);
-                level.ColorTiles(new List<Vector2Int>() { selected.Tile }, TileHighlighter.State.Selected);
+                highlighter.ColorTiles(new List<Vector2Int>() { selected.Tile }, HighlightType.Selected);
                 break;
             case SelectionTarget.Targets:
                 backButton.gameObject.SetActive(true);
@@ -303,8 +303,8 @@ public class MenuManager : MonoBehaviour
             }
         }
 
-        level.ColorTiles(targetableTiles, TileHighlighter.State.Selectable);
-        level.ColorTiles(null, TileHighlighter.State.Highlighted);
+        LevelHighlighter.Instance.ColorTiles(targetableTiles, HighlightType.Option);
+        LevelHighlighter.Instance.ColorTiles(null, HighlightType.Highlight);
     }
 
     public void BuyMonster(MonsterName type) {

@@ -7,11 +7,8 @@ using UnityEngine.Tilemaps;
 // Must be attached to the tilemap. Vector2Ints store x as the column and y as the row
 public class LevelGrid : MonoBehaviour
 {
-    [SerializeField] private GameObject TileHighlightPrefab;
-
     private GridEntity[,] entityGrid;
     private WorldTile[,] environmentGrid;
-    private TileHighlighter[,] tileHighlights;
 
     public static LevelGrid Instance { get; private set; }
     public Tilemap Tiles { get; private set; }
@@ -31,7 +28,6 @@ public class LevelGrid : MonoBehaviour
         Monster.pathDistances = new Monster.PathData[Height, Width];
         entityGrid = new GridEntity[Height, Width];
         environmentGrid = new WorldTile[Height, Width];
-        tileHighlights = new TileHighlighter[Height, Width];
 
         Dictionary<TileType, WorldTile> typeToData = new Dictionary<TileType, WorldTile>() {
             { TileType.Ground, new WorldTile(true, false, 1) },
@@ -43,15 +39,7 @@ public class LevelGrid : MonoBehaviour
             for(int x = 0; x < Width; x++) {
                 TypedTile tile = Tiles.GetTile<TypedTile>(new Vector3Int(x, y, 0));
                 environmentGrid[y, x] = typeToData[tile == null ? TileType.Ground : tile.Type];
-
-                tileHighlights[y, x] = Instantiate(TileHighlightPrefab).GetComponent<TileHighlighter>();
-                tileHighlights[y, x].transform.SetParent(transform);
-                tileHighlights[y, x].transform.position = Tiles.GetCellCenterWorld(new Vector3Int(x, y, 0));
             }
-        }
-
-        foreach(TileHighlighter.State highlightType in Enum.GetValues(typeof(TileHighlighter.State))) {
-            TileHighlighter.InstructionCache[highlightType] = null;
         }
     }
 
@@ -130,32 +118,5 @@ public class LevelGrid : MonoBehaviour
 
     public void ClearEntity(Vector2Int tile) {
         entityGrid[tile.y, tile.x] = null;
-    }
-
-    // lights up notable tiles for the player
-    public void ColorTiles(List<Vector2Int> tiles, TileHighlighter.State colorType) {
-        List<Vector2Int> lastInstruction = TileHighlighter.InstructionCache[colorType];
-        if(lastInstruction == null && tiles == null || lastInstruction != null && lastInstruction.Equals(tiles)) {
-            return;
-        }
-        TileHighlighter.InstructionCache[colorType] = tiles;
-
-        for(int y = 0; y < Height; y++) {
-            for(int x = 0; x < Width; x++) {
-                tileHighlights[y, x].SetState(colorType, false);
-            }
-        }
-
-        if(tiles == null) {
-            return;
-        }
-
-        for(int i = 0; i < tiles.Count; i++) {
-            tileHighlights[tiles[i].y, tiles[i].x].SetState(colorType, true);
-        }
-    }
-
-    public void ColorTiles(Vector2Int tile, TileHighlighter.State colorType) {
-        ColorTiles(new List<Vector2Int>() { tile }, colorType);
     }
 }

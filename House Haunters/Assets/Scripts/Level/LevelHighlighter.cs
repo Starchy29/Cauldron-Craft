@@ -1,6 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
+
+public enum HighlightType {
+    AreaVisual,
+    Highlight,
+    Option,
+    Hovered,
+    Selected,
+
+    WalkUsable,
+    CraftUsable,
+}
 
 public class LevelHighlighter : MonoBehaviour
 {
@@ -18,9 +30,40 @@ public class LevelHighlighter : MonoBehaviour
 
     private float t;
 
+    private struct TileTraits {
+        public bool areaVisual;
+        public bool highlight;
+        public bool option;
+        public bool hovered;
+        public bool selected;
+
+        public bool walkUsable;
+        public bool craftUsable;
+    }
+
+    private struct TileInfo {
+        public const int STRIDE = 2 * sizeof(int);
+
+        public int floorType; // 0: ground, 1: wall, 2: pit
+        public int highlightType;
+    }
+
+    private TileTraits[,] traitArray;
+    private TileInfo[] infoArray;
+
+    private Dictionary<HighlightType, List<Vector2Int>> highlightedTiles;
+
+    public static LevelHighlighter Instance { get; private set; }
+
     void Start() {
+        Instance = this;
         LevelGrid level = LevelGrid.Instance;
         resolution = new Vector2Int(level.Width * TILE_PIXEL_WIDTH, level.Height * TILE_PIXEL_WIDTH);
+
+        highlightedTiles = new Dictionary<HighlightType, List<Vector2Int>>();
+        foreach(HighlightType type in Enum.GetValues(typeof(HighlightType))) {
+            highlightedTiles[type] = null;
+        }
 
         SetUpTexture();
         SetUpShader();
@@ -36,8 +79,58 @@ public class LevelHighlighter : MonoBehaviour
         t %= 1f;
         computeShader.SetFloat("t", t);
 
-        UpdateTileData();
+        UpdateData();
+        tileBuffer.SetData(infoArray);
+        computeShader.SetBuffer(0, "_TileData", tileBuffer);
         computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
+    }
+
+    public void ColorTiles(List<Vector2Int> tiles, HighlightType type) {
+        if(highlightedTiles[type] != null) {
+            foreach(Vector2Int tile in highlightedTiles[type]) {
+                SetState(tile, type, false);
+            }
+        }
+
+        highlightedTiles[type] = tiles;
+
+        if(tiles != null) {
+            foreach(Vector2Int tile in tiles) {
+                SetState(tile, type, true);
+            }
+        }
+    }
+
+    public void ColorTile(Vector2Int tile, HighlightType type) {
+        ColorTiles(new List<Vector2Int> { tile }, type);
+    }
+
+    private void SetState(Vector2Int tile, HighlightType type, bool active) {
+        TileTraits traits = traitArray[tile.x, tile.y];
+        switch(type) {
+            case HighlightType.AreaVisual:
+                traits.areaVisual = active;
+                break;
+            case HighlightType.Highlight:
+                traits.highlight = active;
+                break;
+            case HighlightType.Option:
+                traits.option = active;
+                break;
+            case HighlightType.Hovered:
+                traits.hovered = active;
+                break;
+            case HighlightType.Selected:
+                traits.selected = active;
+                break;
+            case HighlightType.WalkUsable:
+                traits.walkUsable = active;
+                break;
+            case HighlightType.CraftUsable:
+                traits.craftUsable = active;
+                break;
+        }
+        traitArray[tile.x, tile.y] = traits;
     }
 
     private void SetUpTexture() {
@@ -84,9 +177,25 @@ public class LevelHighlighter : MonoBehaviour
 
     private void SetUpShader() {
         LevelGrid level = LevelGrid.Instance;
-        tileBuffer = new ComputeBuffer(level.Width * level.Height, 4);
-        //tileBuffer.SetData();
-        //computeShader.SetBuffer(0, "");
+        traitArray = new TileTraits[level.Width, level.Height];
+        tileBuffer = new ComputeBuffer(level.Width * level.Height, TileInfo.STRIDE);
+        infoArray = new TileInfo[level.Width * level.Height];
+        for(int y = 0; y < level.Height; y++) {
+            for(int x = 0; x < level.Width; x++) {
+                byte groundType = 2;
+                WorldTile tile = level.GetTile(new Vector2Int(x, y));
+                if(tile.Walkable) {
+                    groundType = 0;
+                }
+                else if(tile.IsWall) {
+                    groundType = 1;
+                }
+
+                infoArray[x + y * level.Width] = new TileInfo {
+                    floorType = groundType
+                };
+            }
+        }
 
         computeShader.SetTexture(0, "_Texture", texture);
         computeShader.SetInts("tileDims", level.Width, level.Height);
@@ -101,7 +210,42 @@ public class LevelHighlighter : MonoBehaviour
         );
     }
 
-    private void UpdateTileData() {
+    private void UpdateData() {
+        for(int y = 0; y < traitArray.GetLength(1); y++) {
+            for(int x = 0; x < traitArray.GetLength(0); x++) {
+                int index = x + traitArray.GetLength(0) * y;
+                TileTraits traits = traitArray[x, y];
+                TileInfo data = infoArray[index];
 
+                int highlightCode = 0;
+                if(traits.walkUsable && traits.option) {
+                    highlightCode = 8;
+                }
+                else if(traits.walkUsable) {
+                    highlightCode = 7;
+                }
+                else if(traits.craftUsable) {
+                    highlightCode = 6;
+                }
+                else if(traits.selected) {
+                    highlightCode = 5;
+                }
+                else if(traits.hovered) {
+                    highlightCode = 4;
+                }
+                else if(traits.option) {
+                    highlightCode = 3;
+                }
+                else if(traits.highlight) {
+                    highlightCode = 2;
+                }
+                else if(traits.areaVisual) {
+                    highlightCode = 1;
+                }
+
+                data.highlightType = highlightCode;
+                infoArray[index] = data;
+            }
+        }
     }
 }

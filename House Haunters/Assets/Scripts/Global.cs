@@ -196,4 +196,35 @@ public static class Global
         
         return coveredArea.center;
     }
+
+    public static Rect GetWorldBoundingBox(List<Vector2Int> tileGroup) {
+        int left = tileGroup[0].x;
+        int right = tileGroup[0].x;
+        int top = tileGroup[0].y;
+        int bottom = tileGroup[0].y;
+
+        foreach(Vector2Int tile in tileGroup) {
+            if(tile.x > right) {
+                right = tile.x;
+            }
+            if(tile.x < left) {
+                left = tile.x;
+            }
+            if(tile.y > top) {
+                top = tile.y;
+            }
+            if(tile.y < bottom) {
+                bottom = tile.y;
+            }
+        }
+
+        Vector2 topRight = LevelGrid.Instance.Tiles.GetCellCenterWorld(new Vector3Int(right, top, 0));
+        Vector2 bottomLeft = LevelGrid.Instance.Tiles.GetCellCenterWorld(new Vector3Int(left, bottom, 0));
+
+        float halfTile = LevelGrid.TILE_WIDTH / 2f;
+        topRight += new Vector2(halfTile, halfTile);
+        bottomLeft -= new Vector2(halfTile, halfTile);
+
+        return new Rect(bottomLeft, topRight - bottomLeft); 
+    }
 }

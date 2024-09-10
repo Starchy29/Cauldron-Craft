@@ -52,12 +52,12 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Golem] = new MonsterType(MonsterName.Golem, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             22, 5,
             new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.crystalShield), new RangeSelector(2, false, true), null, "Increases damage by 1.5x for 1 turn."),
-            new StatusMove("Crystals", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.spikeShieldPrefab), new RangeSelector(1, false, true), null, "Halves damage received for 2 turns.")
+            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.spikeShieldPrefab), RangeSelector.MeleeSelector, null, "Halves damage received for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Automaton] = new MonsterType(MonsterName.Automaton, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
-            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 3f, 1f), "Deals 9 damage."),
+            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 3f, 1f), "Deals 9 damage. Cannot be used if the user has moved this turn."),
             new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, "Receive half damage for a turn.")
         );
         monsterTypes[(int)MonsterName.Automaton].Moves[MonsterType.PRIMARY_INDEX].CantWalkFirst = true;

@@ -7,6 +7,8 @@ using UnityEngine.Tilemaps;
 // Must be attached to the tilemap. Vector2Ints store x as the column and y as the row
 public class LevelGrid : MonoBehaviour
 {
+    public const float TILE_WIDTH = 1f;
+
     private GridEntity[,] entityGrid;
     private WorldTile[,] environmentGrid;
 

@@ -76,7 +76,7 @@ public class GameManager : MonoBehaviour
     // removes the monster from the game state. Destroying the game object is handled by the DeathAnimator
     public void DefeatMonster(Monster defeated) {
         // check for loss due to no remaining monsters
-        if(defeated.Controller.Teammates.Count == 1 && defeated.Controller.TotalIngredients < 3) {
+        if(defeated.Controller.Teammates.Count == 1 && defeated.Controller.TotalIngredients < 3 && defeated.Controller.Spawnpoint.CookState == Cauldron.State.Ready) {
             GameOverviewDisplayer.Instance.ShowWinner(OpponentOf(defeated.Controller));
             return;
         }

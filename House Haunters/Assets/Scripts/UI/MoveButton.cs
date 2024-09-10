@@ -57,8 +57,8 @@ public class MoveButton : AutoButton
         }
 
         nameLabel.text = move.Name;
-        cooldown.text = user.Cooldowns[moveSlot] <= 1 ? "" : "" + (user.Cooldowns[moveSlot] - 1);
-        hourglass.SetActive(user.Cooldowns[moveSlot] > 1);
+        cooldown.text = user.Cooldowns[moveSlot] == 0 ? "" : "" + user.Cooldowns[moveSlot];
+        hourglass.SetActive(user.Cooldowns[moveSlot] > 0);
 
         typeIcon.sprite = PrefabContainer.Instance.moveTypeToSprite[move.Type];
 

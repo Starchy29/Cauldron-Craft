@@ -9,7 +9,6 @@ public class MenuManager : MonoBehaviour
 {
     [SerializeField] private MoveMenu moveMenu;
     [SerializeField] private AutoButton endTurnButton;
-    [SerializeField] private AutoButton backButton;
     [SerializeField] private BuyMenu buyMenu;
     [SerializeField] private TerrainDisplay terrainInfo;
     [SerializeField] private GameObject pauseMenu;
@@ -76,14 +75,18 @@ public class MenuManager : MonoBehaviour
         }
 
         if(state == SelectionTarget.Targets) {
-            if(backButton.isActiveAndEnabled && Global.GetObjectArea(backButton.gameObject).Contains(mousePos)) {
-                LevelHighlighter.Instance.ColorTiles(null, HighlightType.Hovered);
-                return;
-            }
-
             // find the target group that the mouse is closest to
             Vector2 closestMidpoint = targetCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
             int hoveredTargetIndex = targetCenters.IndexOf(closestMidpoint);
+
+            if(!Global.GetWorldBoundingBox(targetOptions[hoveredTargetIndex].Filtered).Contains(mousePos)) {
+                LevelHighlighter.Instance.ColorTiles(null, HighlightType.Hovered);
+                if(input.SelectPressed()) {
+                    BackMenu();
+                }
+                return;
+            }
+
             LevelHighlighter.Instance.ColorTiles(filterTargets ? targetOptions[hoveredTargetIndex].Filtered : targetOptions[hoveredTargetIndex].Unfiltered, HighlightType.Hovered);
 
             // if moving into a capture point, highlight the capture point
@@ -127,8 +130,7 @@ public class MenuManager : MonoBehaviour
         // check if the mouse is over an open menu or button
         if(moveMenu.isActiveAndEnabled && Global.GetObjectArea(moveMenu.Background).Contains(mousePos) ||
             buyMenu.isActiveAndEnabled && Global.GetObjectArea(buyMenu.Background).Contains(mousePos) ||
-            endTurnButton.isActiveAndEnabled && Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos) ||
-            backButton.isActiveAndEnabled && Global.GetObjectArea(backButton.gameObject).Contains(mousePos)
+            endTurnButton.isActiveAndEnabled && Global.GetObjectArea(endTurnButton.gameObject).Contains(mousePos)
         ) {
             return;
         }
@@ -189,7 +191,6 @@ public class MenuManager : MonoBehaviour
         Vector3 endPos = endTurnButton.transform.localPosition;
         endPos.x = (player.OnLeft ? -1 : 1) * Mathf.Abs(endPos.x);
         endTurnButton.transform.localPosition = endPos;
-        backButton.transform.localPosition = endPos;
     }
 
     private void SetState(SelectionTarget state) {
@@ -199,7 +200,6 @@ public class MenuManager : MonoBehaviour
         moveMenu.gameObject.SetActive(false);
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);
-        backButton.gameObject.SetActive(false);
         pauseMenu.SetActive(false);
 
         if(hoveredHealthbar != null) {
@@ -244,12 +244,10 @@ public class MenuManager : MonoBehaviour
                 moveMenu.Open(selected, controller);
                 highlighter.ColorTiles(new List<Vector2Int>() { selected.Tile }, HighlightType.Selected);
                 break;
-            case SelectionTarget.Targets:
-                backButton.gameObject.SetActive(true);
-                break;
             case SelectionTarget.Paused:
                 pauseMenu.SetActive(true);
                 break;
+            case SelectionTarget.Targets:
             case SelectionTarget.CraftChoice:
             case SelectionTarget.None:
                 break;

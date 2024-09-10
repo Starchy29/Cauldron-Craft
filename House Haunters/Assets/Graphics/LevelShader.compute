@@ -4,7 +4,7 @@ struct TileInfo {
     int floorType; // 0: ground, 1: wall, 2: pit
     int highlightType;
     int terrainController;
-    int capturer; // 0: not a capture point, -1: none, 1: left team, 2: right team, 3: both teams
+    int capturer; // 0: not a capture point, -1: no team, 1: left team, 2: right team, 3: both teams
 };
 
 // NONE: 0
@@ -20,6 +20,7 @@ float4 team2Color;
 int pixPerTile;
 int2 tileDims;
 float t;
+#define PI 3.14159
 
 int2 cursorTile;
 RWStructuredBuffer<TileInfo> _TileData;
@@ -29,6 +30,7 @@ TileInfo getTile(int x, int y) {
     if(x < 0 || y < 0 || x >= tileDims.x || y >= tileDims.y) {
         TileInfo junk;
         junk.terrainController = -1;
+        junk.highlightType = -1;
         return junk;
     }
 
@@ -43,13 +45,14 @@ void Update(uint3 id : SV_DispatchThreadID) {
     
     float4 color = float4(0, 0, 0, 0);
 
+    TileInfo leftTile = getTile(tile.x - 1, tile.y);
+    TileInfo rightTile = getTile(tile.x + 1, tile.y);
+    TileInfo aboveTile = getTile(tile.x, tile.y + 1);
+    TileInfo belowTile = getTile(tile.x, tile.y - 1);
+
     // outline with controller
     if(tileData.terrainController != 0) {
-        TileInfo leftTile = getTile(tile.x - 1, tile.y);
-        TileInfo rightTile = getTile(tile.x + 1, tile.y);
-        TileInfo aboveTile = getTile(tile.x, tile.y + 1);
-        TileInfo belowTile = getTile(tile.x, tile.y - 1);
-
+        // terrain controller
         float lineThickness = 0.05;
         if(leftTile.terrainController != tileData.terrainController && tileUV.x < lineThickness
             || rightTile.terrainController != tileData.terrainController && tileUV.x > 1.0 - lineThickness
@@ -60,11 +63,7 @@ void Update(uint3 id : SV_DispatchThreadID) {
         }
     }
     else if(tileData.capturer != 0) {
-        TileInfo leftTile = getTile(tile.x - 1, tile.y);
-        TileInfo rightTile = getTile(tile.x + 1, tile.y);
-        TileInfo aboveTile = getTile(tile.x, tile.y + 1);
-        TileInfo belowTile = getTile(tile.x, tile.y - 1);
-
+        // capture point controller
         float lineThickness = 0.25;
         if(leftTile.capturer != tileData.capturer && tileUV.x < lineThickness
             || rightTile.capturer != tileData.capturer && tileUV.x > 1.0 - lineThickness
@@ -107,20 +106,37 @@ void Update(uint3 id : SV_DispatchThreadID) {
 
     // fill in highlight
     switch(tileData.highlightType) {
-    case AREA_VISUAL:
-        color = float4(0.4, 0.4, 0.4, 0.5);
-        break;
     case HIGHLIGHT:
-        color = float4(0.8, 0.8, 0.2, 0.5);
+        color = float4(0.9, 0.9, 0.7, 0.5);
         break;
     case OPTION:
-        color = float4(0, 0.8, 0.8, 0.5);
+        color = float4(0, 0.8, 0.8, 0.5 + 0.1 * sin(t * 4 * PI));
         break;
     case HOVERED:
-        color = float4(0, 0.2, 0.8, 0.5);
+        color = float4(0, 0.2, 0.8, 0.5 + 0.2 * sin(t * 8 * PI));
         break;
     case SELECTED:
-        color = float4(0, 0.8, 0.2, 0.5);
+        color = float4(0.5, 0.9, 0.5, 0.5 + 0.2 * sin(t * 2 * PI));
+        break;
+    case AREA_VISUAL:
+        //color = float4(0.9, 0.9, 0.7, 0.1);
+        float diagonalLength = tileUV.x + tileUV.y;
+        float diagonalFreq = 0.25;
+        float stripeWidth = 0.03;
+        float distToStripe = min(diagonalLength % diagonalFreq, .25 - diagonalLength % diagonalFreq);
+        if(distToStripe < stripeWidth) {
+            float centerValue = 1 - distToStripe / stripeWidth;
+            color = float4(0.9, 0.9, 0.7, 0.5 * min(1, centerValue + 0.5));
+        }
+
+        float lineThickness = 0.05;
+        if(leftTile.highlightType != HIGHLIGHT && leftTile.highlightType != AREA_VISUAL && tileUV.x < lineThickness
+            || rightTile.highlightType != HIGHLIGHT && rightTile.highlightType != AREA_VISUAL && tileUV.x > 1.0 - lineThickness
+            || belowTile.highlightType != HIGHLIGHT && belowTile.highlightType != AREA_VISUAL && tileUV.y < lineThickness
+            || aboveTile.highlightType != HIGHLIGHT && aboveTile.highlightType != AREA_VISUAL && tileUV.y > 1.0 - lineThickness
+        ) {
+            color = float4(0.9, 0.9, 0.7, 0.5);
+        }
         break;
     }
 

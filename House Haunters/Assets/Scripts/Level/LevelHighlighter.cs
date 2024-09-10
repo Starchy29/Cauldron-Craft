@@ -73,7 +73,7 @@ public class LevelHighlighter : MonoBehaviour
     }
 
     void Update() {
-        t += Time.deltaTime;
+        t += Time.deltaTime / 2f;
         t %= 1f;
         computeShader.SetFloat("t", t);
 

@@ -7,7 +7,6 @@ using UnityEngine.InputSystem;
 // manages player input in regards to menus during gameplay
 public class MenuManager : MonoBehaviour
 {
-    [SerializeField] private GameObject TileSelector;
     [SerializeField] private MoveMenu moveMenu;
     [SerializeField] private AutoButton endTurnButton;
     [SerializeField] private AutoButton backButton;
@@ -117,7 +116,7 @@ public class MenuManager : MonoBehaviour
             return;
         }
 
-        TileSelector.SetActive(false);
+        LevelHighlighter.Instance.CursorTile = null;
         terrainInfo.gameObject.SetActive(false);
         LevelHighlighter.Instance.ColorTiles(null, HighlightType.Hovered);
         if(hoveredHealthbar != null) {
@@ -143,8 +142,7 @@ public class MenuManager : MonoBehaviour
             return;
         }
 
-        TileSelector.SetActive(true);
-        TileSelector.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)tile);
+        LevelHighlighter.Instance.CursorTile = tile;
 
         // check hovered terrain
         WorldTile terrain = level.GetTile(tile);
@@ -197,7 +195,7 @@ public class MenuManager : MonoBehaviour
     private void SetState(SelectionTarget state) {
         LevelGrid level = LevelGrid.Instance; // this function runs in Start()
         this.state = state;
-        TileSelector.SetActive(false);
+        LevelHighlighter.Instance.CursorTile = null;
         moveMenu.gameObject.SetActive(false);
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);
@@ -225,18 +223,21 @@ public class MenuManager : MonoBehaviour
             case SelectionTarget.Monster:
                 endTurnButton.gameObject.SetActive(true);
                 if(controller != null) {
-                    List<Vector2Int> selectableTiles = new List<Vector2Int>();
+                    List<Vector2Int> selectable = new List<Vector2Int>();
+                    List<Vector2Int> walkTiles = new List<Vector2Int>();
                     foreach(Monster teammate in controller.Teammates) {
-                        if(HasUsableMove(teammate)) {
-                            selectableTiles.Add(teammate.Tile);
+                        for(int i = 0; i < 3; i++) {
+                            if(teammate.CanUse(i)) {
+                                selectable.Add(teammate.Tile);
+                            }
                         }
                     }
 
                     if(controller.CanCraft()) {
-                        selectableTiles.Add(controller.Spawnpoint.Tile);
+                        selectable.Add(controller.Spawnpoint.Tile);
                     }
 
-                    highlighter.ColorTiles(selectableTiles, HighlightType.Option);
+                    highlighter.ColorTiles(selectable, HighlightType.Option);
                 }
                 break;
             case SelectionTarget.Move:
@@ -310,14 +311,5 @@ public class MenuManager : MonoBehaviour
     public void BuyMonster(MonsterName type) {
         controller.BuyMonster(type);
         SetState(SelectionTarget.None);
-    }
-
-    private bool HasUsableMove(Monster monster) {
-        for(int i = 0; i < monster.Stats.Moves.Length; i++) {
-            if(monster.CanUse(i)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

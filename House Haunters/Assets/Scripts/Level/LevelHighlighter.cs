@@ -8,10 +8,7 @@ public enum HighlightType {
     Highlight,
     Option,
     Hovered,
-    Selected,
-
-    WalkUsable,
-    CraftUsable,
+    Selected
 }
 
 public class LevelHighlighter : MonoBehaviour
@@ -23,7 +20,7 @@ public class LevelHighlighter : MonoBehaviour
     private RenderTexture texture;
 
     private Vector2Int resolution;
-    private const int TILE_PIXEL_WIDTH = 80;
+    private const int TILE_PIXEL_WIDTH = 100;
 
     private ComputeBuffer tileBuffer;
     private Vector3Int groupCounts;
@@ -36,24 +33,25 @@ public class LevelHighlighter : MonoBehaviour
         public bool option;
         public bool hovered;
         public bool selected;
-
-        public bool walkUsable;
-        public bool craftUsable;
     }
 
     private struct TileInfo {
-        public const int STRIDE = 2 * sizeof(int);
+        public const int STRIDE = 4 * sizeof(int);
 
         public int floorType; // 0: ground, 1: wall, 2: pit
         public int highlightType;
+        public int terrainController;
+        public int capturer;
     }
 
+    private Team[] teams;
     private TileTraits[,] traitArray;
     private TileInfo[] infoArray;
 
     private Dictionary<HighlightType, List<Vector2Int>> highlightedTiles;
 
     public static LevelHighlighter Instance { get; private set; }
+    public Vector2Int? CursorTile;
 
     void Start() {
         Instance = this;
@@ -81,6 +79,11 @@ public class LevelHighlighter : MonoBehaviour
 
         UpdateData();
         tileBuffer.SetData(infoArray);
+        if(CursorTile.HasValue) {
+            computeShader.SetInts("cursorTile", CursorTile.Value.x, CursorTile.Value.y);
+        } else {
+            computeShader.SetInts("cursorTile", -1, -1);
+        }
         computeShader.SetBuffer(0, "_TileData", tileBuffer);
         computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
     }
@@ -105,6 +108,24 @@ public class LevelHighlighter : MonoBehaviour
         ColorTiles(new List<Vector2Int> { tile }, type);
     }
 
+    public void UpdateCapture(ResourcePile resource) {
+        foreach(Vector2Int tile in LevelGrid.Instance.GetTilesInRange(resource.Tile, 2, true)) {
+            int index = tile.x + traitArray.GetLength(0) * tile.y;
+            int captureCode = -1;
+            if(resource.Contested) {
+                captureCode = 3;
+            }
+            else if(resource.Controller != null) {
+                captureCode = resource.Controller == teams[0] ? 1 : 2;
+            }
+
+            //infoArray[index].capturer = captureCode;
+            TileInfo info = infoArray[index];
+            info.capturer = captureCode;
+            infoArray[index] = info;
+        }
+    }
+
     private void SetState(Vector2Int tile, HighlightType type, bool active) {
         TileTraits traits = traitArray[tile.x, tile.y];
         switch(type) {
@@ -122,12 +143,6 @@ public class LevelHighlighter : MonoBehaviour
                 break;
             case HighlightType.Selected:
                 traits.selected = active;
-                break;
-            case HighlightType.WalkUsable:
-                traits.walkUsable = active;
-                break;
-            case HighlightType.CraftUsable:
-                traits.craftUsable = active;
                 break;
         }
         traitArray[tile.x, tile.y] = traits;
@@ -197,6 +212,9 @@ public class LevelHighlighter : MonoBehaviour
             }
         }
 
+        teams = GameManager.Instance.AllTeams;
+        computeShader.SetVector("team1Color", teams[0].TeamColor);
+        computeShader.SetVector("team2Color", teams[1].TeamColor);
         computeShader.SetTexture(0, "_Texture", texture);
         computeShader.SetInts("tileDims", level.Width, level.Height);
         computeShader.SetInt("pixPerTile", TILE_PIXEL_WIDTH);
@@ -211,23 +229,16 @@ public class LevelHighlighter : MonoBehaviour
     }
 
     private void UpdateData() {
+        LevelGrid level = LevelGrid.Instance;
         for(int y = 0; y < traitArray.GetLength(1); y++) {
             for(int x = 0; x < traitArray.GetLength(0); x++) {
+                // transfer highlight data
                 int index = x + traitArray.GetLength(0) * y;
                 TileTraits traits = traitArray[x, y];
                 TileInfo data = infoArray[index];
 
                 int highlightCode = 0;
-                if(traits.walkUsable && traits.option) {
-                    highlightCode = 8;
-                }
-                else if(traits.walkUsable) {
-                    highlightCode = 7;
-                }
-                else if(traits.craftUsable) {
-                    highlightCode = 6;
-                }
-                else if(traits.selected) {
+                if(traits.selected) {
                     highlightCode = 5;
                 }
                 else if(traits.hovered) {
@@ -244,6 +255,15 @@ public class LevelHighlighter : MonoBehaviour
                 }
 
                 data.highlightType = highlightCode;
+
+                // check zone controller
+                WorldTile levelTile = level.GetTile(new Vector2Int(x, y));
+                if(levelTile.CurrentEffect == null) {
+                    data.terrainController = 0;
+                } else {
+                    data.terrainController = levelTile.CurrentEffect.Controller == teams[0] ? 1 : 2;
+                }
+
                 infoArray[index] = data;
             }
         }

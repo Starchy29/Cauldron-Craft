@@ -11,7 +11,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.VSAI;
+    public static GameMode Mode = GameMode.PVP;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
 
     private Team leftTeam;
     private Team rightTeam;
+    public Team[] AllTeams { get { return new Team[] { leftTeam, rightTeam }; } }
 
     public delegate void TurnEndEvent(Team lastTurn, Team nextTurn);
     public event TurnEndEvent OnTurnChange;
@@ -27,7 +28,7 @@ public class GameManager : MonoBehaviour
     void Awake() {
         Instance = this;
         leftTeam = new Team(Team.Occultists, Mode == GameMode.Auto);
-        rightTeam = new Team(Team.Witchcrafters, Mode != GameMode.PVP);
+        rightTeam = new Team(Team.Alchemists, Mode != GameMode.PVP);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
     }
@@ -36,6 +37,10 @@ public class GameManager : MonoBehaviour
     void Start() {
         leftTeam.SpawnStartTeam();
         rightTeam.SpawnStartTeam();
+        foreach(ResourcePile resource in AllResources) {
+            LevelHighlighter.Instance.UpdateCapture(resource);
+        }
+
         //QueueIntro();
         AnimationsManager.Instance.QueueAnimation(new CameraAnimator(CurrentTurn.Spawnpoint.transform.position));
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);

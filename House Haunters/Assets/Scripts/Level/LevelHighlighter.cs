@@ -52,6 +52,7 @@ public class LevelHighlighter : MonoBehaviour
 
     public static LevelHighlighter Instance { get; private set; }
     public Vector2Int? CursorTile;
+    public ResourcePile HoveredResource;
 
     void Start() {
         Instance = this;
@@ -77,13 +78,19 @@ public class LevelHighlighter : MonoBehaviour
         t %= 1f;
         computeShader.SetFloat("t", t);
 
-        UpdateData();
-        tileBuffer.SetData(infoArray);
         if(CursorTile.HasValue) {
             computeShader.SetInts("cursorTile", CursorTile.Value.x, CursorTile.Value.y);
         } else {
             computeShader.SetInts("cursorTile", -1, -1);
         }
+        if(HoveredResource == null) {
+            computeShader.SetInts("hoveredZoneCenter", -20, -20);
+        } else {
+            computeShader.SetInts("hoveredZoneCenter", HoveredResource.Tile.x, HoveredResource.Tile.y);
+        }
+
+        UpdateData();
+        tileBuffer.SetData(infoArray);
         computeShader.SetBuffer(0, "_TileData", tileBuffer);
         computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
     }
@@ -119,7 +126,6 @@ public class LevelHighlighter : MonoBehaviour
                 captureCode = resource.Controller == teams[0] ? 1 : 2;
             }
 
-            //infoArray[index].capturer = captureCode;
             TileInfo info = infoArray[index];
             info.capturer = captureCode;
             infoArray[index] = info;

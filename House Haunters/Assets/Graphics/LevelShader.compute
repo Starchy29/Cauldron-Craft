@@ -23,6 +23,7 @@ float t;
 #define PI 3.14159
 
 int2 cursorTile;
+int2 hoveredZoneCenter;
 RWStructuredBuffer<TileInfo> _TileData;
 RWTexture2D<float4> _Texture;
 
@@ -37,75 +38,32 @@ TileInfo getTile(int x, int y) {
     return _TileData[x + tileDims.x * y];
 }
 
+float getDistFromEdge(float2 tileUV, bool checkLeft, bool checkRight, bool checkDown, bool checkUp) {
+    float distance = 1;
+    if(checkLeft) {
+        distance = min(distance, tileUV.x);
+    }
+    if(checkRight) {
+        distance = min(distance, 1 - tileUV.x);
+    }
+    if(checkDown) {
+        distance = min(distance, tileUV.y);
+    }
+    if(checkUp) {
+        distance = min(distance, 1 - tileUV.y);
+    }
+    return distance;
+}
+
 [numthreads(8,8,1)]
 void Update(uint3 id : SV_DispatchThreadID) {
     int2 tile = id.xy / pixPerTile;
     float2 tileUV = float2(id.xy - tile * pixPerTile) / pixPerTile;
     TileInfo tileData = getTile(tile.x, tile.y);
     
-    float4 color = float4(0, 0, 0, 0);
-
-    TileInfo leftTile = getTile(tile.x - 1, tile.y);
-    TileInfo rightTile = getTile(tile.x + 1, tile.y);
-    TileInfo aboveTile = getTile(tile.x, tile.y + 1);
-    TileInfo belowTile = getTile(tile.x, tile.y - 1);
-
-    // outline with controller
-    if(tileData.terrainController != 0) {
-        // terrain controller
-        float lineThickness = 0.05;
-        if(leftTile.terrainController != tileData.terrainController && tileUV.x < lineThickness
-            || rightTile.terrainController != tileData.terrainController && tileUV.x > 1.0 - lineThickness
-            || belowTile.terrainController != tileData.terrainController && tileUV.y < lineThickness
-            || aboveTile.terrainController != tileData.terrainController && tileUV.y > 1.0 - lineThickness
-        ) {
-            color = tileData.terrainController == 1 ? team1Color : team2Color;
-        }
-    }
-    else if(tileData.capturer != 0) {
-        // capture point controller
-        float lineThickness = 0.25;
-        if(leftTile.capturer != tileData.capturer && tileUV.x < lineThickness
-            || rightTile.capturer != tileData.capturer && tileUV.x > 1.0 - lineThickness
-            || belowTile.capturer != tileData.capturer && tileUV.y < lineThickness
-            || aboveTile.capturer != tileData.capturer && tileUV.y > 1.0 - lineThickness
-        ) {
-            switch (tileData.capturer) {
-            case -1:
-                color = float4(1, 1, 1, 1);
-                break;
-            case 1:
-                color = team1Color;
-                break;
-            case 2:
-                color = team2Color;
-                break;
-            case 3:
-                color = (team1Color + team2Color) / 2;
-                break;
-            }
-
-            float distFromEdge = 1;
-            if(leftTile.capturer != tileData.capturer) {
-                distFromEdge = min(distFromEdge, tileUV.x);
-            }
-            if(rightTile.capturer != tileData.capturer) {
-                distFromEdge = min(distFromEdge, 1 - tileUV.x);
-            }
-            if(belowTile.capturer != tileData.capturer) {
-                distFromEdge = min(distFromEdge, tileUV.y);
-            }
-            if(aboveTile.capturer != tileData.capturer) {
-                distFromEdge = min(distFromEdge, 1 - tileUV.y);
-            }
-
-            float root = (1 - distFromEdge / lineThickness);
-            color.a = 0.7 * root * root;
-        }
-    }
-
     // fill in highlight
-    switch(tileData.highlightType) {
+    float4 color = float4(0, 0, 0, 0);
+    switch (tileData.highlightType) {
     case HIGHLIGHT:
         color = float4(0.9, 0.9, 0.7, 0.5);
         break;
@@ -119,25 +77,91 @@ void Update(uint3 id : SV_DispatchThreadID) {
         color = float4(0.5, 0.9, 0.5, 0.5 + 0.2 * sin(t * 2 * PI));
         break;
     case AREA_VISUAL:
-        //color = float4(0.9, 0.9, 0.7, 0.1);
-        float diagonalLength = tileUV.x + tileUV.y;
-        float diagonalFreq = 0.25;
-        float stripeWidth = 0.03;
-        float distToStripe = min(diagonalLength % diagonalFreq, .25 - diagonalLength % diagonalFreq);
-        if(distToStripe < stripeWidth) {
-            float centerValue = 1 - distToStripe / stripeWidth;
-            color = float4(0.9, 0.9, 0.7, 0.5 * min(1, centerValue + 0.5));
-        }
-
-        float lineThickness = 0.05;
-        if(leftTile.highlightType != HIGHLIGHT && leftTile.highlightType != AREA_VISUAL && tileUV.x < lineThickness
-            || rightTile.highlightType != HIGHLIGHT && rightTile.highlightType != AREA_VISUAL && tileUV.x > 1.0 - lineThickness
-            || belowTile.highlightType != HIGHLIGHT && belowTile.highlightType != AREA_VISUAL && tileUV.y < lineThickness
-            || aboveTile.highlightType != HIGHLIGHT && aboveTile.highlightType != AREA_VISUAL && tileUV.y > 1.0 - lineThickness
-        ) {
-            color = float4(0.9, 0.9, 0.7, 0.5);
-        }
+        color = float4(0.9, 0.9, 0.7, 0.1);
         break;
+    }
+
+    TileInfo leftTile = getTile(tile.x - 1, tile.y);
+    TileInfo rightTile = getTile(tile.x + 1, tile.y);
+    TileInfo aboveTile = getTile(tile.x, tile.y + 1);
+    TileInfo belowTile = getTile(tile.x, tile.y - 1);
+
+    // apply outline
+    int2 zoneCenterDiff = hoveredZoneCenter - tile;
+    int zoneSize = 2;
+    if(abs(zoneCenterDiff.x) <= zoneSize && abs(zoneCenterDiff.y) <= zoneSize
+        && (abs(zoneCenterDiff.x) == zoneSize || abs(zoneCenterDiff.y) == zoneSize)
+    ) {
+        // outline hovered capture zone
+        float lineThickness = 0.6;
+        float distFromEdge = getDistFromEdge(tileUV,
+            zoneCenterDiff.x == zoneSize,
+            zoneCenterDiff.x == -zoneSize,
+            zoneCenterDiff.y == zoneSize,
+            zoneCenterDiff.y == -zoneSize
+        );
+
+        if(distFromEdge <= lineThickness) {
+            float4 outlineColor = float4(0.9, 0.8, 0.1, 1);
+            float root = (1 - distFromEdge / lineThickness);
+            outlineColor.a = 0.7 * root * root;
+
+            if(color.a > 0) {
+                outlineColor = outlineColor.a * float4(outlineColor.x, outlineColor.y, outlineColor.z, 0);
+                color += outlineColor;
+            } else {
+                color = outlineColor;
+            }
+        }
+    }
+    else if(tileData.terrainController != 0) {
+        // terrain controller
+        float distFromEdge = getDistFromEdge(tileUV, 
+            leftTile.terrainController != tileData.terrainController,
+            rightTile.terrainController != tileData.terrainController,
+            belowTile.terrainController != tileData.terrainController,
+            aboveTile.terrainController != tileData.terrainController
+        );
+        if(distFromEdge <= 0.05) {
+            color = tileData.terrainController == 1 ? team1Color : team2Color;
+        }
+    }
+    else if(tileData.capturer != 0) {
+        // capture point controller
+        float lineThickness = 0.25;
+        float distFromEdge = getDistFromEdge(tileUV,
+            leftTile.capturer != tileData.capturer,
+            rightTile.capturer != tileData.capturer,
+            belowTile.capturer != tileData.capturer,
+            aboveTile.capturer != tileData.capturer
+        );
+        float4 outlineColor = float4(0, 0, 0, 0);
+        if(distFromEdge <= lineThickness) {
+            switch (tileData.capturer) {
+            case -1:
+                outlineColor = float4(1, 1, 1, 1);
+                break;
+            case 1:
+                outlineColor = team1Color;
+                break;
+            case 2:
+                outlineColor = team2Color;
+                break;
+            case 3:
+                outlineColor = (team1Color + team2Color) / 2;
+                break;
+            }
+
+            float root = (1 - distFromEdge / lineThickness);
+            outlineColor.a = 0.7 * root * root;
+
+            if(color.a > 0) {
+                outlineColor = outlineColor.a * float4(outlineColor.x, outlineColor.y, outlineColor.z, 0);
+                color += outlineColor;
+            } else {
+                color = outlineColor;
+            }
+        }
     }
 
     if(tileData.floorType == 0) {

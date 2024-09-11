@@ -76,6 +76,7 @@ public class MenuManager : MonoBehaviour
 
         if(state == SelectionTarget.Targets) {
             // find the target group that the mouse is closest to
+            LevelHighlighter.Instance.HoveredResource = null;
             Vector2 closestMidpoint = targetCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
             int hoveredTargetIndex = targetCenters.IndexOf(closestMidpoint);
 
@@ -91,22 +92,17 @@ public class MenuManager : MonoBehaviour
 
             // if moving into a capture point, highlight the capture point
             if(selected.Stats.Moves[selectedMoveSlot] is MovementAbility) {
-                bool highlighted = false;
                 foreach(ResourcePile resource in gameManager.AllResources) {
                     // make sure not already on the capture point and not already owned
-                    if(resource.IsInCaptureRange(selected.Tile) || resource.Controller == controller) {
+                    if(resource.IsInCaptureRange(selected.Tile) || resource.Controller == controller || resource.Contested) {
                         continue;
                     }
 
                     Vector2Int hoveredTile = targetOptions[hoveredTargetIndex].Filtered[0];
                     if(resource.IsInCaptureRange(hoveredTile)) {
-                        LevelHighlighter.Instance.ColorTiles(level.GetTilesInRange(resource.Tile, ResourcePile.CAPTURE_SIZE, true), HighlightType.Highlight);
-                        highlighted = true;
+                        LevelHighlighter.Instance.HoveredResource = resource;
+                        break;
                     }
-                }
-
-                if(!highlighted) {
-                    LevelHighlighter.Instance.ColorTiles(null, HighlightType.Highlight);
                 }
             }
 
@@ -197,6 +193,7 @@ public class MenuManager : MonoBehaviour
         LevelGrid level = LevelGrid.Instance; // this function runs in Start()
         this.state = state;
         LevelHighlighter.Instance.CursorTile = null;
+        LevelHighlighter.Instance.HoveredResource = null;
         moveMenu.gameObject.SetActive(false);
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);

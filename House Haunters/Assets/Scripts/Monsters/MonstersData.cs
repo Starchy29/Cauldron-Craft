@@ -45,19 +45,19 @@ public class MonstersData
         tangledStatus = new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines);
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(MonsterName.Flytrap, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
-            new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 12 damage to the target."),
+            new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 12 damage."),
             new Move("Vine Grasp", 2, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target to the user and slows it for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Golem] = new MonsterType(MonsterName.Golem, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             22, 5,
-            new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.crystalShield), new RangeSelector(2, false, true), null, "Increases damage by 1.5x for 1 turn."),
-            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.spikeShieldPrefab), RangeSelector.MeleeSelector, null, "Halves damage received for 2 turns.")
+            new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.crystalShield), new RangeSelector(2, false, true), null, "Increases an ally's damage by 1.5x for 1 turn."),
+            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.spikeShieldPrefab), RangeSelector.MeleeSelector, null, "Halves the damage an ally receives for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Automaton] = new MonsterType(MonsterName.Automaton, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
-            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 3f, 1f), "Deals 9 damage. Cannot be used if the user has moved this turn."),
+            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 3f, 1f), "Deals 9 damage in a 2x2 square. Cannot be used if the user has moved this turn."),
             new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, "Receive half damage for a turn.")
         );
         monsterTypes[(int)MonsterName.Automaton].Moves[MonsterType.PRIMARY_INDEX].CantWalkFirst = true;
@@ -90,18 +90,18 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Phantom] = new MonsterType(MonsterName.Phantom, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             20, 5,
             new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, null, "Deals 11 damage."),
-            new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "Shifts forward and deals 9 damage to enemies passed through.")
+            new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "Moves to the target tile and deals 9 damage to enemies passed through.")
         );
 
         monsterTypes[(int)MonsterName.Beast] = new MonsterType(MonsterName.Beast, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
             25, 4,
-            new Attack("Claw", 1, 9, new ZoneSelector(1, 2), null, "Deals 9 damage."),
-            new StatusMove("Battle Cry", 5, new StatusAilment(StatusEffect.Swift, 2, prefabs.beastSpeed), ZoneSelector.AOESelector, null, "Increases speed for 2 turns.")
+            new Attack("Claw", 1, 9, new ZoneSelector(1, 2), null, "Deals 9 damage in an arc."),
+            new StatusMove("Battle Cry", 5, new StatusAilment(StatusEffect.Swift, 2, prefabs.beastSpeed), ZoneSelector.AOESelector, null, "Increases speed of all nearby allies for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(MonsterName.Amalgamation, new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
             30, 3,
-            new Attack("Lash Out", 1, 7, new ZoneSelector(1, 3), null, "Deals 7 damage."),
+            new Attack("Lash Out", 1, 7, new ZoneSelector(1, 3), null, "Deals 7 damage to all adjacent enemies."),
             new Move("Mend Flesh", 2, MoveType.Heal, Move.Targets.Allies, SelfSelector.Instance, (user, tile) => user.Heal(4), null, "Heal 4 health")
         );
     }

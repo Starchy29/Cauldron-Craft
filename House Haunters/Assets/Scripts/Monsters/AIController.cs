@@ -152,9 +152,11 @@ public class AIController
             foreach(TurnOption.MoveOrdering action in choice.GetSequence()) {
                 if(action == TurnOption.MoveOrdering.WalkOnly) {
                     choice.user.UseMove(MonsterType.WALK_INDEX, new Selection(choice.walkDestination));
+                    AnimationsManager.Instance.QueueAnimation(new PauseAnimator(0.2f));
                 }
                 else if(action == TurnOption.MoveOrdering.AbilityOnly) {
                     choice.user.UseMove(choice.abilitySlot, choice.abilityTargets);
+                    AnimationsManager.Instance.QueueAnimation(new PauseAnimator(0.5f));
                 }
             }
 
@@ -362,7 +364,6 @@ public class AIController
         }
 
         if(move is ZoneMove) {
-            return 200f;
             if(GameManager.Instance.OpponentOf(controlTarget).Teammates.Count == 0) {
                 return -1f;
             }

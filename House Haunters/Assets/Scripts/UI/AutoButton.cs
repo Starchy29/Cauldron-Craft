@@ -37,7 +37,7 @@ public class AutoButton : MonoBehaviour
     protected Color disabledColor = new Color(0.3f, 0.3f, 0.3f);
     protected Color hoveredColor = new Color(0.2f, 0.9f, 0.8f);
     private float tooltipTimer;
-    private const float TOOL_TIP_WAIT = 0.6f;
+    protected float tooltipWait = 0.6f;
 
     void Start() {
         //SetBackColor(baseColor);
@@ -81,9 +81,9 @@ public class AutoButton : MonoBehaviour
 
         hovered = nowHovered;
 
-        if(tooltip != null && hovered && tooltipTimer < TOOL_TIP_WAIT) {
+        if(tooltip != null && hovered && tooltipTimer <= tooltipWait) {
             tooltipTimer += Time.deltaTime;
-            if(tooltipTimer >= TOOL_TIP_WAIT) {
+            if(tooltipTimer >= tooltipWait) {
                 tooltip.SetActive(true);
             }
         }

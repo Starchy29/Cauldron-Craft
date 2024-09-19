@@ -34,6 +34,7 @@ public class MoveButton : AutoButton
         OnMouseLeave = HideHighlight;
         OnClick = () => { MenuManager.Instance.SelectMove(moveSlot, TargetOptions); };
         CoveredAreaAfterWalk = new List<Vector2Int>();
+        tooltipWait = 0f;
     }
 
     public void SetMove(Monster user, int moveSlot) {

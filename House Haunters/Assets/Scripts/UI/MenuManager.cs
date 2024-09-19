@@ -82,7 +82,7 @@ public class MenuManager : MonoBehaviour
             Vector2 closestMidpoint = targetCenters.Min((Vector2 spot) => { return Vector2.Distance(mousePos, spot); });
             int hoveredTargetIndex = targetCenters.IndexOf(closestMidpoint);
 
-            if(!Global.GetWorldBoundingBox(targetOptions[hoveredTargetIndex].Filtered).Contains(mousePos)) {
+            if(!Global.GetWorldBoundingBox(filterTargets ? targetOptions[hoveredTargetIndex].Filtered : targetOptions[hoveredTargetIndex].Unfiltered).Contains(mousePos)) {
                 LevelHighlighter.Instance.ColorTiles(null, HighlightType.Hovered);
                 if(input.SelectPressed()) {
                     BackMenu();

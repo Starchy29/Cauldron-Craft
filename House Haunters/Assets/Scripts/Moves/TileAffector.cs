@@ -70,6 +70,7 @@ public class TileAffector
     private void ApplyTurnEndEffect() {
         Monster occupant = LevelGrid.Instance.GetMonster(tile);
         if(endTurnEffect != null && occupant != null && occupant.Controller != Controller) {
+            AnimationsManager.Instance.QueueAnimation(new CameraAnimator(occupant.transform.position));
             endTurnEffect(occupant);
         }
     }

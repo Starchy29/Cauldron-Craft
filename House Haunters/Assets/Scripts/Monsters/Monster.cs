@@ -188,6 +188,7 @@ public class Monster : GridEntity
 
     private void CheckStatuses() {
         if(HasStatus(StatusEffect.Poison)) {
+            AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
             TakeDamage(5);
         }
 

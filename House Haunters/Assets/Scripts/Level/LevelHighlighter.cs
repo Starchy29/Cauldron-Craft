@@ -89,7 +89,7 @@ public class LevelHighlighter : MonoBehaviour
             computeShader.SetInts("hoveredZoneCenter", HoveredResource.Tile.x, HoveredResource.Tile.y);
         }
 
-        UpdateData();
+        UpdateHighlightData();
         tileBuffer.SetData(infoArray);
         computeShader.SetBuffer(0, "_TileData", tileBuffer);
         computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
@@ -234,7 +234,7 @@ public class LevelHighlighter : MonoBehaviour
         );
     }
 
-    private void UpdateData() {
+    private void UpdateHighlightData() {
         LevelGrid level = LevelGrid.Instance;
         for(int y = 0; y < traitArray.GetLength(1); y++) {
             for(int x = 0; x < traitArray.GetLength(0); x++) {
@@ -261,17 +261,23 @@ public class LevelHighlighter : MonoBehaviour
                 }
 
                 data.highlightType = highlightCode;
-
-                // check zone controller
-                WorldTile levelTile = level.GetTile(new Vector2Int(x, y));
-                if(levelTile.CurrentEffect == null) {
-                    data.terrainController = 0;
-                } else {
-                    data.terrainController = levelTile.CurrentEffect.Controller == teams[0] ? 1 : 2;
-                }
-
                 infoArray[index] = data;
             }
         }
+    }
+
+    // needs to be queued in the animation manager to appear and disappear at the correct times
+    public void UpdateZoneController(Vector2Int tile, Team controller) {
+        int index = tile.x + traitArray.GetLength(0) * tile.y;
+        TileInfo data = infoArray[index];
+
+        // check zone controller
+        if(controller == null) {
+            data.terrainController = 0;
+        } else {
+            data.terrainController = controller == teams[0] ? 1 : 2;
+        }
+
+        infoArray[index] = data;
     }
 }

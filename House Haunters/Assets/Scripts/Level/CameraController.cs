@@ -5,10 +5,10 @@ using UnityEngine.InputSystem;
 
 public class CameraController : MonoBehaviour
 {
-    private const float BOUNDS_EXTENDS = 0.8f;
+    private const float BOUNDS_EXTENDS = 1f;
     private const float HALF_HEIGHT = 5.625f;
     private const float HALF_WIDTH = HALF_HEIGHT * 16f/9f;
-    private Vector2 mouseAnchor;
+    private Vector2? mouseAnchor;
 
     public static CameraController Instance { get; private set; }
     private void Awake() {
@@ -21,16 +21,17 @@ public class CameraController : MonoBehaviour
         }
     }
     private void PlayerUpdate() {
-        if(Mouse.current == null) {
+        if(Mouse.current == null || CameraAnimator.CameraLocked) {
+            mouseAnchor = null;
             return;
         }
-
-        if(Mouse.current.rightButton.wasPressedThisFrame) {
+        
+        if(Mouse.current.rightButton.wasPressedThisFrame || Mouse.current.rightButton.isPressed && !mouseAnchor.HasValue) {
             mouseAnchor = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         }
         else if(Mouse.current.rightButton.isPressed) {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            Vector3 mouseDelta = mousePos - mouseAnchor;
+            Vector3 mouseDelta = mousePos - mouseAnchor.Value;
             mouseDelta.x = 0;
             transform.position -= mouseDelta;
             transform.position = ClampToLevel(transform.position);

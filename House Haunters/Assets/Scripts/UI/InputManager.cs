@@ -35,4 +35,9 @@ public class InputManager
     public bool PausePressed() {
         return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
     }
+
+    public bool SkipHeld() {
+        return Mouse.current != null && Mouse.current.rightButton.isPressed
+            || Keyboard.current != null && Keyboard.current.spaceKey.isPressed;
+    }
 }

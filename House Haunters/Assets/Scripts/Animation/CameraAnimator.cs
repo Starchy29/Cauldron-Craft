@@ -7,6 +7,7 @@ public class CameraAnimator : IMoveAnimator
 {
     private const float MIN_SPEED = 1f;
 
+    public static bool CameraLocked;
     public bool Completed { get; private set; }
 
     private Vector2 targetPosition;
@@ -17,7 +18,9 @@ public class CameraAnimator : IMoveAnimator
         this.targetPosition = camera.ClampToLevel(targetPosition);
     }
 
-    public void Start() {}
+    public void Start() {
+        CameraLocked = true;    
+    }
 
     public void Update(float deltaTime) {
         Vector2 toGoal = targetPosition - (Vector2)camera.transform.position;
@@ -28,6 +31,7 @@ public class CameraAnimator : IMoveAnimator
             newPos.z = camera.transform.position.z;
             camera.transform.position = newPos;
             Completed = true;
+            CameraLocked = false;
             return;
         }
 

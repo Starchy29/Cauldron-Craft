@@ -25,6 +25,8 @@ public class MenuManager : MonoBehaviour
     private GameManager gameManager;
     private Team controller;
 
+    private float terrainTimer;
+
     // target selection data
     private List<Selection> targetOptions;
     private List<Vector2> targetCenters;
@@ -145,10 +147,15 @@ public class MenuManager : MonoBehaviour
         // check hovered terrain
         WorldTile terrain = level.GetTile(tile);
         if(terrain.CurrentEffect != null) {
-            terrainInfo.gameObject.SetActive(true);
-            terrainInfo.gameObject.transform.position = level.Tiles.GetCellCenterWorld((Vector3Int)tile) + new Vector3(0, 1.5f, 0);
-            terrainInfo.ColorBack.color = terrain.CurrentEffect.Controller.TeamColor;
-            terrainInfo.DurationLabel.text = "" + terrain.CurrentEffect.Duration;
+            terrainTimer += Time.deltaTime;
+            if(terrainTimer > 0.5f) {
+                terrainInfo.gameObject.SetActive(true);
+                terrainInfo.transform.parent.position = level.Tiles.GetCellCenterWorld((Vector3Int)tile) + new Vector3(0, 1.5f, 0);
+                terrainInfo.ColorBack.color = terrain.CurrentEffect.Controller.TeamColor;
+                terrainInfo.DurationLabel.text = "" + terrain.CurrentEffect.Duration;
+            }
+        } else {
+            terrainTimer = 0f;
         }
 
         // check hovered entity

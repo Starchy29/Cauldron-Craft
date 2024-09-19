@@ -6,6 +6,7 @@ using UnityEngine;
 public struct TeamPreset {
     public string name;
     public Color teamColor;
+    public Ingredient startResource;
     public MonsterName[] teamComp;
 }
 
@@ -15,18 +16,21 @@ public class Team
     public static TeamPreset Alchemists = new TeamPreset {
         name = "Alchemists",
         teamColor = new Color(0.1f, 0.5f, 0.9f),
+        startResource = Ingredient.Mineral,
         teamComp = new MonsterName[3] { MonsterName.Sludge, MonsterName.Amalgamation, MonsterName.Golem }
     };
 
     public static TeamPreset Witchcrafters = new TeamPreset {
         name = "Witchcrafters",
         teamColor = new Color(0.5f, 0.8f, 0.1f),
+        startResource = Ingredient.Flora,
         teamComp = new MonsterName[3] { MonsterName.Beast, MonsterName.Flytrap, MonsterName.Fungus }
     };
 
     public static TeamPreset Occultists = new TeamPreset {
         name = "Occultists",
         teamColor = new Color(0.9f, 0.3f, 0.1f),
+        startResource = Ingredient.Decay,
         teamComp = new MonsterName[3] { MonsterName.Demon, MonsterName.Fossil, MonsterName.Jackolantern }
     };
 
@@ -69,6 +73,7 @@ public class Team
         foreach(Ingredient type in Enum.GetValues(typeof(Ingredient))) {
             Resources[type] = 0;
         }
+        Resources[preset.startResource] = 2;
 
         if(isAI) {
             AI = new AIController(this);
@@ -115,6 +120,7 @@ public class Team
         }
 
         MonsterType data = MonstersData.Instance.GetMonsterData(type);
+        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(Spawnpoint.transform.position));
         AnimationsManager animator = AnimationsManager.Instance;
         foreach(Ingredient ingredient in data.Recipe) {
             Resources[ingredient]--;

@@ -76,6 +76,7 @@ public class LevelGrid : MonoBehaviour
 
     public void SetTileAffect(Vector2Int tile, TileAffector effect) {
         environmentGrid[tile.y, tile.x].CurrentEffect = effect;
+        AnimationsManager.Instance.QueueFunction(() => { LevelHighlighter.Instance.UpdateZoneController(tile, effect == null ? null : effect.Controller); });
     }
 
     public bool IsInGrid(Vector2Int tile) {

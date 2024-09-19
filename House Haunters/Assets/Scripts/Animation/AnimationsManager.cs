@@ -20,7 +20,7 @@ public class AnimationsManager : MonoBehaviour
             return;
         }
 
-        animationQueue.Peek().Update(Time.deltaTime);
+        animationQueue.Peek().Update(Time.deltaTime * (InputManager.Instance.SkipHeld() ? 2f : 1f));
         if(animationQueue.Peek().Completed) {
             animationQueue.Dequeue();
             if(animationQueue.Count > 0) {

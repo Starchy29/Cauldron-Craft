@@ -75,19 +75,19 @@ public class MoveMenu : MonoBehaviour
         // set up monster health
         HealthMarker.text = monster.Health + "/" + monster.Stats.Health;
         float healthPercent = (float)monster.Health / monster.Stats.Health;
-        Heart.color = new Color(0f, 0.6f, 0f);
-        if(healthPercent <= 0.1f) {
-            Heart.color = new Color(0.5f, 0.0f, 0.0f);
-        }
-        else if(healthPercent <= 0.25f) {
-            Heart.color = new Color(0.8f, 0.0f, 0.0f);
-        }
-        else if(healthPercent <= 0.5f) {
-            Heart.color = new Color(0.8f, 0.8f, 0.2f);
-        }
-        else if(healthPercent < 1.0f) {
-            Heart.color = new Color(0.3f, 0.8f, 0.2f);
-        }
+        Heart.color = monster.Controller.TeamColor; //healthPercent * new Color(0f, 0.6f, 0f) + (1f - healthPercent) * new Color(0.5f, 0.0f, 0.0f);
+        //if(healthPercent <= 0.1f) {
+        //    Heart.color = new Color(0.5f, 0.0f, 0.0f);
+        //}
+        //else if(healthPercent <= 0.25f) {
+        //    Heart.color = new Color(0.8f, 0.0f, 0.0f);
+        //}
+        //else if(healthPercent <= 0.5f) {
+        //    Heart.color = new Color(0.8f, 0.8f, 0.2f);
+        //}
+        //else if(healthPercent < 1.0f) {
+        //    Heart.color = new Color(0.3f, 0.8f, 0.2f);
+        //}
 
         // find which status icons to show
         foreach(StatusIcon oldStatus in activeStatusIcons) {

@@ -86,7 +86,8 @@ public class AIController
                     leaver = assignees[UnityEngine.Random.Range(0, assignees.Count)];
                 }
                 plan.Assign(leaver, null);
-            } else if(info.Advantage <= -2f) {
+            }
+            else if(info.Advantage <= -2f) {
                 // abandon this attack
                 for(int i = assignees.Count - 1; i >= 0; i--) {
                     plan.Assign(assignees[i], null);
@@ -140,7 +141,12 @@ public class AIController
             TurnOption choice = ChooseAction(teammate);
 
             if(choice.ordering != TurnOption.MoveOrdering.None) {
-                AnimationsManager.Instance.QueueAnimation(new CameraAnimator(choice.user.transform.position));
+                Vector2 focus = choice.user.transform.position;
+                if(choice.UsesAbility) {
+                    Vector2 targetPos = Global.DetermineCenter(choice.abilityTargets.Filtered);
+                    focus = (focus + targetPos) / 2f;
+                }
+                AnimationsManager.Instance.QueueAnimation(new CameraAnimator(focus));
             }
 
             foreach(TurnOption.MoveOrdering action in choice.GetSequence()) {
@@ -356,6 +362,7 @@ public class AIController
         }
 
         if(move is ZoneMove) {
+            return 200f;
             if(GameManager.Instance.OpponentOf(controlTarget).Teammates.Count == 0) {
                 return -1f;
             }
@@ -545,7 +552,6 @@ public class AIController
             return;
         }
 
-        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(controlTarget.Spawnpoint.transform.position));
         controlTarget.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);
     }
 

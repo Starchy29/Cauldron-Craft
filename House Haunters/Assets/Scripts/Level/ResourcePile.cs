@@ -15,7 +15,7 @@ public class ResourcePile : GridEntity
     [SerializeField] private Ingredient type;
     [SerializeField] private GameObject floorCoverPrefab;
     [SerializeField] public GameObject productionIndicator;
-    [SerializeField] private CaptureVFX captureVisual;
+    [SerializeField] private RadialParticle captureVisual;
     
     public const int CAPTURE_SIZE = 2;
 

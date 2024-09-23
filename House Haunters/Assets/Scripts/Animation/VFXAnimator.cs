@@ -6,10 +6,10 @@ public class VFXAnimator : IMoveAnimator
 {
     public bool Completed { get { return time > 1f; } }
 
-    private CaptureVFX visual;
+    private RadialParticle visual;
     private float time;
 
-    public VFXAnimator(CaptureVFX visual, Color color) {
+    public VFXAnimator(RadialParticle visual, Color color) {
         this.visual = visual;
         visual.SetColor(color);
     }

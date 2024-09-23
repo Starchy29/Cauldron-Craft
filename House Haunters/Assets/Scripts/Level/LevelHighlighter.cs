@@ -20,7 +20,7 @@ public class LevelHighlighter : MonoBehaviour
     private RenderTexture texture;
 
     private Vector2Int resolution;
-    private const int TILE_PIXEL_WIDTH = 100;
+    private const int TILE_PIXEL_WIDTH = 96;
 
     private ComputeBuffer tileBuffer;
     private Vector3Int groupCounts;

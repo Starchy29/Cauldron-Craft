@@ -107,6 +107,13 @@ public class PrefabContainer : MonoBehaviour
     public Sprite curseIcon;
     #endregion
 
+    [Header("Common Effects")]
+    #region Common Effects
+    public GameObject glowParticle;
+    public GameObject pierceParticle;
+    public GameObject healParticle;
+    #endregion
+
     [Header("Lost Soul")]
     #region
     public Sprite soulSprite;
@@ -134,7 +141,7 @@ public class PrefabContainer : MonoBehaviour
     #region
     public Sprite flytrapSprite;
     public GameObject tangleVines;
-    public GameObject regeneration;
+    public GameObject pullVines;
     public GameObject chompTeeth;
     #endregion
 
@@ -195,6 +202,7 @@ public class PrefabContainer : MonoBehaviour
     public Sprite beastSprite;
     public GameObject beastSlash;
     public GameObject beastSpeed;
+    public GameObject beastShout;
     #endregion
 
     [Header("Amalgamation")]

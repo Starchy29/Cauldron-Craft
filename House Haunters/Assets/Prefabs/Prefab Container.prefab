@@ -80,6 +80,9 @@ MonoBehaviour:
   witherIcon: {fileID: 21300000, guid: 4951339eb730bb7488512e017de69663, type: 3}
   thornsIcon: {fileID: 21300000, guid: feda6fb0e00694a4c8a52db778a888a8, type: 3}
   curseIcon: {fileID: 21300000, guid: 9d0223b3c7f6bcc4b9afe6b0b1b1d41d, type: 3}
+  glowParticle: {fileID: 6732728142473716491, guid: 0261975f6e878274784aa13ee7f23994, type: 3}
+  pierceParticle: {fileID: 5164441565935722498, guid: a25889da6437ee44db84ba3b24376182, type: 3}
+  healParticle: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
   spookHaunt: {fileID: 3049984156711576710, guid: 0e8ef0ba35ce5f149a58c207ba6c6bdf, type: 3}
   soulDrop: {fileID: 6846268628254101615, guid: 19060420541f99c4da3700f5dd32b933, type: 3}
@@ -93,7 +96,7 @@ MonoBehaviour:
   thornShot: {fileID: 8245164862100309878, guid: 5c47a9a8ffc195e428db06c764f9a623, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
   tangleVines: {fileID: 2272507394141505538, guid: 99f20a77d8d10c3449ad32b364700ae2, type: 3}
-  regeneration: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
+  pullVines: {fileID: 2329274030746489682, guid: f8bfd169ad94533488a44e59b6cb8247, type: 3}
   chompTeeth: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
   fungusSprite: {fileID: 21300000, guid: d02c3fcd707437845a668391b59d59b8, type: 3}
   leechSeed: {fileID: 8030383983686718888, guid: e8fa14b5afd934b4bb6a04f6af0bb038, type: 3}
@@ -110,7 +113,7 @@ MonoBehaviour:
   overdriveStatus: {fileID: 6910954531195394623, guid: e165e810c8601304189c939f0614cc45, type: 3}
   sludgeSprite: {fileID: 21300000, guid: 5531dcf25e8c5e443b80d4211827b02a, type: 3}
   sludgeZone: {fileID: 8682491145182721602, guid: 37b395ce17ce39e4b8a5c5ab4c9cf358, type: 3}
-  sludgeLob: {fileID: 5325959576777769889, guid: e5e40ed135d6c37439e95452478355c3, type: 3}
+  sludgeLob: {fileID: 4399608713775608110, guid: 79fde787f20545d4d9618fb9d8793497, type: 3}
   sludgeBubble: {fileID: 3062908169156878489, guid: e175f83d00e70664f9ab4aa3216a0bbe, type: 3}
   fossilSprite: {fileID: 21300000, guid: e1b3f818633c0444e9d6c6bf9f971905, type: 3}
   boneShot: {fileID: 7739928640664878823, guid: b3ebdeeabdcca2643ae7ae5910cad4c4, type: 3}
@@ -122,4 +125,5 @@ MonoBehaviour:
   beastSprite: {fileID: 21300000, guid: 02e15213a5ed02a489f2f6489dbc33f6, type: 3}
   beastSlash: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
   beastSpeed: {fileID: 6910954531195394623, guid: e165e810c8601304189c939f0614cc45, type: 3}
+  beastShout: {fileID: 6940281569127650807, guid: 0671bc790ad977f47bf80122390713ae, type: 3}
   amalgamationSprite: {fileID: 21300000, guid: 897b822c4c1f8bb46b29e55d97aa1521, type: 3}

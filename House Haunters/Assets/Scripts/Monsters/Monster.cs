@@ -55,7 +55,7 @@ public class Monster : GridEntity
             Health = Stats.Health;
         }
         AnimationsManager.Instance.QueueFunction(() => { 
-            GameObject particle = Instantiate(PrefabContainer.Instance.regeneration);
+            GameObject particle = Instantiate(PrefabContainer.Instance.healParticle);
             particle.transform.position = transform.position;
         });
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
@@ -159,11 +159,6 @@ public class Monster : GridEntity
         }
         else if(selectionMid.x < transform.position.x) {
             AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(true); });
-        }
-
-        // lunge at the target if melee attacking
-        if(move.TargetType == Move.Targets.Enemies && move.Range == 1) {
-            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(gameObject, Global.DetermineCenter(targets.Filtered)));
         }
 
         Stats.Moves[moveSlot].Use(this, targets);

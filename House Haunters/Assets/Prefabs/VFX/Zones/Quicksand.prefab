@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4398865573441389842}
   - component: {fileID: 2518976243041619449}
+  - component: {fileID: 7267009689230189245}
   m_Layer: 0
   m_Name: Quicksand
   m_TagString: Untagged
@@ -75,8 +76,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.5698112, g: 0.45270678, b: 0.21394792, a: 1}
+  m_Sprite: {fileID: 21300000, guid: 3267469040ed7204fab91af1207b6aad, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -86,3 +87,21 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &7267009689230189245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8796343949080538550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 643f44806508a5d4ebd5e62937129d25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sprites:
+  - {fileID: 21300000, guid: 3267469040ed7204fab91af1207b6aad, type: 3}
+  - {fileID: 21300000, guid: a40aa7efad6e9704fb01d4e5cf1fbdab, type: 3}
+  - {fileID: 21300000, guid: 6e6a2b7083b07b340b1363bcffa102c2, type: 3}
+  mode: 2
+  framesPerSprite: 15

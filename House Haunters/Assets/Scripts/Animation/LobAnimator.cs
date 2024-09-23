@@ -36,8 +36,11 @@ public class LobAnimator : IMoveAnimator
             return;
         }
 
+        Vector3 prevPos = visual.transform.position;
         Vector3 groundPos = start * (1f - t) + t * end;
         Vector3 heightBoost = new Vector3(0f, quadraticA * t * t -quadraticA * t, 0f);
         visual.transform.position = groundPos + heightBoost;
+        Vector3 direction = visual.transform.position - prevPos;
+        visual.transform.rotation = Quaternion.Euler(0, 0, Mathf.Rad2Deg * Mathf.Atan2(direction.y, direction.x));
     }
 }

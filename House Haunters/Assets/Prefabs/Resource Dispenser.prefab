@@ -370,3 +370,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 318296ed3892fa04bbeef9903e0d4104, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShaderName: WaveParticleShader

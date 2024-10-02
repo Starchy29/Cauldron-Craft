@@ -7,6 +7,7 @@ public class Particle : MonoBehaviour
     [SerializeField] private Sprite[] sprites;
     [SerializeField] private AnimationMode mode;
     [SerializeField] private int framesPerSprite;
+    [SerializeField] private bool destroyAtEnd;
     private SpriteRenderer renderer;
 
     private SpriteAnimation spriteAnimation;
@@ -25,7 +26,7 @@ public class Particle : MonoBehaviour
 
         spriteAnimation.Update(Time.deltaTime);
         renderer.sprite = spriteAnimation.CurrentSprite;
-        if(spriteAnimation.Finished) {
+        if(spriteAnimation.Finished && destroyAtEnd) {
             Destroy(gameObject);
         }
     }

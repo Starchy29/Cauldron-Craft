@@ -70,9 +70,6 @@ public class PrefabContainer : MonoBehaviour
     public Sprite fullCircle;
 
     public GameObject BaseMonsterPrefab;
-    public GameObject TempMonsterProjectile;
-    public GameObject ExampleZone;
-    public GameObject SpawnSpeedPrefab;
     public GameObject IngredientVFX;
     public GameObject HarvestParticle;
 
@@ -112,6 +109,8 @@ public class PrefabContainer : MonoBehaviour
     public GameObject glowParticle;
     public GameObject pierceParticle;
     public GameObject healParticle;
+    public GameObject poisonParticle;
+    public GameObject fireball;
     #endregion
 
     [Header("Lost Soul")]
@@ -133,7 +132,6 @@ public class PrefabContainer : MonoBehaviour
     #region
     public Sprite cactusSprite;
     public GameObject spikeTrapPrefab;
-    public GameObject spikeShieldPrefab;
     public GameObject thornShot;
     #endregion
 
@@ -148,16 +146,16 @@ public class PrefabContainer : MonoBehaviour
     [Header("Fungus")]
     #region
     public Sprite fungusSprite;
-    public GameObject leechSeed;
-    public GameObject drowsySpores;
+    public GameObject sporeShot;
+    public GameObject poisonSpores;
     public GameObject fearStatus;
-    public GameObject psychicBurst;
     #endregion
 
     [Header("Jackolantern")]
     #region Jackolantern
     public Sprite jackolanternSprite;
-    public GameObject hexBlast;
+    public GameObject willOWisps;
+    public GameObject hexStatus;
     #endregion
 
     [Header("Golem")]

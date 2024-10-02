@@ -20,6 +20,7 @@ public class Monster : GridEntity
     public bool AbilityAvailable { get; private set; }
     public bool WalkAvailable { get { return Cooldowns[MonsterType.WALK_INDEX] == 0 && CurrentSpeed > 0; } }
     public int CurrentSpeed { get { return Stats.Speed + (HasStatus(StatusEffect.Swift) ? 1 : 0) + (HasStatus(StatusEffect.Slowness) ? -2 : 0); } }
+    public GameObject SpriteModel { get { return spriteRenderer.gameObject; } }
 
     public static PathData[,] pathDistances; // set by level grid in Start()
 
@@ -56,7 +57,9 @@ public class Monster : GridEntity
         }
         AnimationsManager.Instance.QueueFunction(() => { 
             GameObject particle = Instantiate(PrefabContainer.Instance.healParticle);
-            particle.transform.position = transform.position;
+            particle.transform.position = SpriteModel.transform.position;
+            particle = Instantiate(PrefabContainer.Instance.healParticle);
+            particle.transform.position = SpriteModel.transform.position;
         });
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
     }
@@ -111,7 +114,7 @@ public class Monster : GridEntity
         }
 
         GameObject visual = Instantiate(blueprint.visual);
-        visual.transform.SetParent(transform);
+        visual.transform.SetParent(spriteRenderer.transform);
         visual.transform.localPosition = Vector3.zero;
         visual.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
@@ -184,6 +187,12 @@ public class Monster : GridEntity
     private void CheckStatuses() {
         if(HasStatus(StatusEffect.Poison)) {
             AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
+            AnimationsManager.Instance.QueueFunction(() => {
+                GameObject particle = Instantiate(PrefabContainer.Instance.poisonParticle);
+                particle.transform.position = SpriteModel.transform.position;
+                particle = Instantiate(PrefabContainer.Instance.poisonParticle);
+                particle.transform.position = SpriteModel.transform.position;
+            });
             TakeDamage(5);
         }
 

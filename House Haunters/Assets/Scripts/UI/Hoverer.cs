@@ -6,6 +6,7 @@ public class Hoverer : MonoBehaviour
 {
     [SerializeField] private float range;
     [SerializeField] private float speedMultiplier;
+    [SerializeField] private float cycleOffset;
 
     private float time;
     private float startY;
@@ -13,6 +14,7 @@ public class Hoverer : MonoBehaviour
     void Start()
     {
         startY = transform.localPosition.y;
+        time = cycleOffset;
     }
 
     void Update() {

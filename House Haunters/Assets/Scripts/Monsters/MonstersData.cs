@@ -26,14 +26,14 @@ public class MonstersData
 
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(MonsterName.LostSoul, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             25, 4,
-            new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(6); }, AnimateLobber(prefabs.soulDrop, 1.5f, 0.5f), "Heals an ally for 6 health."),
+            new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(6); }, AnimateGlow(2f, new Color(0.2f, 0.7f, 0.9f)), "Heals an ally for 6 health."),
             new StatusMove("Haunt", 2, new StatusAilment(StatusEffect.Haunt, 2, prefabs.spookHaunt), RangeSelector.MeleeSelector, 
                 (user, targets) => { AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered), true)); }, "The target takes 1.5x damage for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Demon] = new MonsterType(MonsterName.Demon, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             25, 4,
-            new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.TempMonsterProjectile, prefabs.fireballBlast, 10f), "Deals 8 damage to the target and 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); }),
+            new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.fireball, prefabs.fireballBlast, 10f), "Deals 8 damage to the target and 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); }),
             new StatusMove("Ritual", 2, new StatusAilment(StatusEffect.Power, 2, prefabs.demonStrength), SelfSelector.Instance, AnimateGlow(1.5f, Color.red), "Lose 3 life to gain power next turn", (user, tile) => user.TakeDamage(3))
         );
 
@@ -47,58 +47,57 @@ public class MonstersData
         tangledStatus = new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines);
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(MonsterName.Flytrap, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
-            new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateParticle(prefabs.chompTeeth), "Deals 12 damage."),
+            new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateMeleeWithParticle(prefabs.chompTeeth), "Deals 12 damage."),
             new Move("Vine Grasp", 2, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target to the user and slows it for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Golem] = new MonsterType(MonsterName.Golem, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             22, 5,
-            new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.crystalShield), new RangeSelector(2, false, true), AnimateGlow(1.5f, Color.cyan), "Increases an ally's damage by 1.5x for 1 turn."),
-            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.spikeShieldPrefab), RangeSelector.MeleeSelector, meleeAnimation, "Halves the damage an ally receives for 2 turns.")
+            new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.auraStatus), new RangeSelector(2, false, true), AnimateGlow(1.5f, Color.cyan), "Increases an ally's damage by 1.5x for 1 turn."),
+            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.crystalShield), RangeSelector.MeleeSelector, meleeAnimation, "Halves the damage an ally receives for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Automaton] = new MonsterType(MonsterName.Automaton, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
-            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.TempMonsterProjectile, 3f, 1f), "Deals 9 damage in a 2x2 square. Cannot be used if the user has moved this turn."),
+            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.fireball, 3f, 1f, prefabs.fireballBlast), "Deals 9 damage in a 2x2 square. Cannot be used if the user has moved this turn."),
             new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, "Receive half damage for a turn.")
         );
         monsterTypes[(int)MonsterName.Automaton].Moves[MonsterType.PRIMARY_INDEX].CantWalkFirst = true;
 
         monsterTypes[(int)MonsterName.Fungus] = new MonsterType(MonsterName.Fungus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Decay },
             28, 3,
-            new StatusMove("Infect", 1, new StatusAilment(StatusEffect.Poison, 3, prefabs.leechSeed), new RangeSelector(2, false, true), null, "Deals 5 damage for 3 turns."),
+            new StatusMove("Infect", 1, new StatusAilment(StatusEffect.Poison, 3, prefabs.poisonSpores), new RangeSelector(2, false, true), AnimateLobber(prefabs.sporeShot, 0.8f, 0.7f), "Deals 5 damage for 3 turns."),
             new StatusMove("Psychic Spores", 1, new StatusAilment(StatusEffect.Fear, 2, prefabs.fearStatus), RangeSelector.MeleeSelector, meleeAnimation, "Halves the target's damage for 2 turns.")
         );
 
-        hexedStatus = new StatusAilment(StatusEffect.Slowness, 1, prefabs.hexBlast);
         monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(MonsterName.Jackolantern, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Mineral },
             22, 4,
-            new StatusMove("Will o' Wisp", 1, new StatusAilment(StatusEffect.Haunt, 1, prefabs.spookHaunt), new RangeSelector(3, false, true), null, "The target receives 1.5x damage this turn."),
-            new StatusMove("Hex", 2, new StatusAilment(StatusEffect.Cursed, 3, prefabs.hexBlast), new RangeSelector(2, false, true), AnimateGlow(1.5f, new Color(0.5f, 0.1f, 0.8f)), "Makes an ally deal 4 revenge damage for 3 turns.")
+            new StatusMove("Will o' Wisp", 1, new StatusAilment(StatusEffect.Haunt, 1, prefabs.willOWisps), new RangeSelector(3, false, true), AnimateProjectile(prefabs.willOWisps, null, 5f, false, false), "The target receives 1.5x damage this turn."),
+            new StatusMove("Hex", 2, new StatusAilment(StatusEffect.Cursed, 3, prefabs.hexStatus), new RangeSelector(2, false, true), AnimateGlow(1.5f, new Color(0.5f, 0.1f, 0.8f)), "Makes an ally deal 4 revenge damage for 3 turns.")
         );
 
         monsterTypes[(int)MonsterName.Sludge] = new MonsterType(MonsterName.Sludge, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
             25, 4,
             new Attack("Blob Lob", 1, 8, new RangeSelector(4, false, true), AnimateLobber(prefabs.sludgeLob, 2.0f, 0.6f), "Deals 8 damage."),
-            new ZoneMove("Toxic Puddle", 3, ZoneSelector.AdjacentSelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, 0, null, false, false, (Monster occupant) => { occupant.TakeDamage(5); }),
+            new ZoneMove("Toxic Puddle", 3, ZoneSelector.AdjacentSelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, 0, null, false, false, DealPuddleDamage),
                 AnimateStretching(new List<StretchType> { StretchType.Horizontal }, 1.5f, 1f), "Places a zone that deals 5 damage to enemies that stand on it.")
         );
 
         monsterTypes[(int)MonsterName.Fossil] = new MonsterType(MonsterName.Fossil, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Decay },
             22, 3,
-            new Attack("Bone Shot", 1, 10, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, null, 16f), "Deals 10 damage."),
+            new Attack("Bone Shot", 1, 10, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, 16f), "Deals 10 damage."),
             new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, 1, null), meleeAnimation, "Places an area that slows enemies passing through.")
         );
 
         monsterTypes[(int)MonsterName.Phantom] = new MonsterType(MonsterName.Phantom, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             20, 5,
-            new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, null, "Deals 11 damage."),
+            new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, AnimateMeleeWithParticle(prefabs.phantomSlash), "Deals 11 damage."),
             new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "Moves to the target tile and deals 9 damage to enemies passed through.")
         );
 
         monsterTypes[(int)MonsterName.Beast] = new MonsterType(MonsterName.Beast, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
             25, 4,
-            new Attack("Claw", 1, 9, new ZoneSelector(1, 2), null, "Deals 9 damage in an arc."),
+            new Attack("Claw", 1, 9, new ZoneSelector(1, 2), AnimateClaw, "Deals 9 damage in an arc."),
             new StatusMove("Battle Cry", 5, new StatusAilment(StatusEffect.Swift, 2, prefabs.beastSpeed), ZoneSelector.AOESelector, AnimateBattleCry, "Increases speed of all nearby allies for 2 turns.")
         );
 
@@ -114,8 +113,23 @@ public class MonstersData
         return monsterTypes[(int)name];
     }
 
+    private static Move.AnimationFunction meleeAnimation = (Monster user, Selection targets) => {
+        AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered)));
+    };
+
     #region Animation Helpers
     // these create objects that queue animations
+    private static Move.AnimationFunction AnimateMeleeWithParticle(GameObject particlePrefab) {
+        return (Monster user, Selection targets) => {
+            GameObject particle = GameObject.Instantiate(particlePrefab);
+            particle.transform.position = LevelGrid.Instance.GetMonster(targets.Filtered[0]).SpriteModel.transform.position;
+            particle.SetActive(false);
+            AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(particle, true));
+            AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered)));
+
+        };
+    }
+
     private static Move.AnimationFunction AnimateParticle(GameObject particlePrefab) {
         return (Monster user, Selection targets) => {
             GameObject particle = GameObject.Instantiate(particlePrefab);
@@ -125,32 +139,44 @@ public class MonstersData
         };
     }
 
-    private static Move.AnimationFunction AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, bool reversed = false) {
+    private static Move.AnimationFunction AnimateProjectile(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed, bool reversed = false, bool rotate = true) {
         return (Monster user, Selection targets) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)targets.Filtered[0]);
-            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, reversed ? end : start, reversed ? start : end, speed));
+            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, reversed ? end : start, reversed ? start : end, speed, rotate));
+            if(destroyParticlePrefab != null) {
+                GameObject particle = GameObject.Instantiate(destroyParticlePrefab);
+                particle.transform.position = end;
+                particle.SetActive(false);
+                AnimationsManager.Instance.QueueFunction(() => { particle.SetActive(true); });
+            }
         };
     }
 
-    private static Move.AnimationFunction AnimateLobber(GameObject prefab, float height, float duration) {
+    private static Move.AnimationFunction AnimateLobber(GameObject prefab, float height, float duration, GameObject destroyParticle = null) {
         return (Monster user, Selection targets) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 end = Global.DetermineCenter(targets.Unfiltered);
             AnimationsManager.Instance.QueueAnimation(new LobAnimator(prefab, start, end, height, duration));
+            if(destroyParticle != null) {
+                GameObject particle = GameObject.Instantiate(destroyParticle);
+                particle.transform.position = end;
+                particle.SetActive(false);
+                AnimationsManager.Instance.QueueFunction(() => { particle.SetActive(true); });
+            }
         };
     }
 
-    private static Move.AnimationFunction AnimateLinearShot(GameObject projectilePrefab, GameObject destroyParticlePrefab, float speed) {
+    private static Move.AnimationFunction AnimateLinearShot(GameObject projectilePrefab, float speed) {
         return (Monster user, Selection targets) => {
             LevelGrid level = LevelGrid.Instance;
             Vector3 start = level.Tiles.GetCellCenterWorld((Vector3Int)user.Tile);
             Vector3 direction = ((Vector2)(targets.Unfiltered[0] - user.Tile)).normalized;
             Vector2Int furthestTile = targets.Unfiltered.Max((Vector2Int tile) => { return Global.CalcTileDistance(tile, user.Tile); });
             Vector3 end = level.Tiles.GetCellCenterWorld((Vector3Int)furthestTile);
-            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, destroyParticlePrefab, start, end, speed));
+            AnimationsManager.Instance.QueueAnimation(new ProjectileAnimator(projectilePrefab, start, end, speed));
         };
     }
 
@@ -162,21 +188,37 @@ public class MonstersData
 
     private static Move.AnimationFunction AnimateGlow(float duration, Color color) {
         return (Monster user, Selection targets) => {
-            AnimationsManager.Instance.QueueAnimation(new RadialAnimator(PrefabContainer.Instance.glowParticle, user.transform.position + new Vector3(0, 0.5f, 0), duration, true, color));
+            AnimationsManager.Instance.QueueAnimation(new RadialAnimator(PrefabContainer.Instance.glowParticle, user, duration, true, color));
         };
     }
-
-    private static Move.AnimationFunction meleeAnimation = (Monster user, Selection targets) => {
-        AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered)));
-    };
     #endregion
 
     #region Specific Move Animations
     private static void AnimateBattleCry(Monster user, Selection targets) {
         GameObject prefab = PrefabContainer.Instance.beastShout;
-        AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user.transform.position, 0.25f, false));
-        AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user.transform.position, 0.25f, false));
-        AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user.transform.position, 0.25f, false));
+        AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user, 0.25f, false));
+        AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user, 0.25f, false));
+        AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user, 0.25f, false));
+    }
+
+    private static void AnimateClaw(Monster user, Selection targets) {
+        GameObject particle = GameObject.Instantiate(PrefabContainer.Instance.beastSlash);
+        Vector3 target = Global.DetermineCenter(targets.Unfiltered);
+        particle.transform.position = target;
+        particle.SetActive(false);
+        Vector3 direction = target - user.transform.position;
+        if(direction.y < 0 && direction.x < 0) {
+            particle.transform.rotation = Quaternion.Euler(0, 0, 90);
+            particle.GetComponent<SpriteRenderer>().flipX = true;
+        }
+        else if(direction.y < 0) {
+            particle.transform.rotation = Quaternion.Euler(0, 0, -90);
+        }
+        else if(direction.x < 0) {
+            particle.GetComponent<SpriteRenderer>().flipX = true;
+        }
+        AnimationsManager.Instance.QueueFunction(() => { particle.SetActive(true); });
+        AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, target));
     }
 
     private static void AnimateLashOut(Monster user, Selection targets) {
@@ -186,7 +228,7 @@ public class MonstersData
     }
 
     private static void AnimateBarbBullet(Monster user, Selection targets) {
-        AnimateLinearShot(PrefabContainer.Instance.thornShot, null, 30f)(user, targets);
+        AnimateLinearShot(PrefabContainer.Instance.thornShot, 30f)(user, targets);
         foreach(Vector2Int tile in targets.Filtered) {
             AnimationsManager.Instance.QueueFunction(() => { SpawnPierceParticle(tile); });
         }
@@ -267,8 +309,14 @@ public class MonstersData
         target.ApplyStatus(tangledStatus);
     }
 
-    private static void StealHealth(Monster user, Monster target, int healthLost) {
-        user.Heal(healthLost);
+    private static void DealPuddleDamage(Monster occupant) {
+        AnimationsManager.Instance.QueueFunction(() => {
+            GameObject particle = GameObject.Instantiate(PrefabContainer.Instance.poisonParticle);
+            particle.transform.position = occupant.SpriteModel.transform.position;
+            particle = GameObject.Instantiate(PrefabContainer.Instance.poisonParticle);
+            particle.transform.position = occupant.SpriteModel.transform.position;
+        });
+        occupant.TakeDamage(5);
     }
 
     /* deprecated :(

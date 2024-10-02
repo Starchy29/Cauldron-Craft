@@ -52,9 +52,6 @@ MonoBehaviour:
   emptyCircle: {fileID: 21300000, guid: d1ad41ce0aaddf241b6594d39e10cae7, type: 3}
   fullCircle: {fileID: 21300000, guid: 256dd6046f62c3e4bba650d172fc335e, type: 3}
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
-  TempMonsterProjectile: {fileID: 6883107917798074458, guid: 2272a1f15d545f945aae352bffa221eb, type: 3}
-  ExampleZone: {fileID: 2417021062471671172, guid: 468ff357f98b5a545b3717a9c42adda9, type: 3}
-  SpawnSpeedPrefab: {fileID: 6302334804222086484, guid: efc22b2cd0ce75f4ca1d6cbb064b22ec, type: 3}
   IngredientVFX: {fileID: 7712678480373355417, guid: 6da443e11232dbd4ba60f4a252a5ae90, type: 3}
   HarvestParticle: {fileID: 4660850984691057048, guid: b15f3e81518625b4d9311ff090bd564f, type: 3}
   meleeIcon: {fileID: 21300000, guid: 1db5c7313ba87944681a5ce12f9e37c7, type: 3}
@@ -82,31 +79,32 @@ MonoBehaviour:
   curseIcon: {fileID: 21300000, guid: 9d0223b3c7f6bcc4b9afe6b0b1b1d41d, type: 3}
   glowParticle: {fileID: 6732728142473716491, guid: 0261975f6e878274784aa13ee7f23994, type: 3}
   pierceParticle: {fileID: 5164441565935722498, guid: a25889da6437ee44db84ba3b24376182, type: 3}
-  healParticle: {fileID: 7503446877589778441, guid: 880bac89ce9f6eb4192e04c12b5f38d2, type: 3}
+  healParticle: {fileID: 6924238101127613007, guid: 964e1aa8aa443f04ea9319ea60f6c47c, type: 3}
+  poisonParticle: {fileID: 6334593914044228289, guid: dc5412196beff6a49a86596d45371afe, type: 3}
+  fireball: {fileID: 9215018040933110480, guid: b7be5503f1b62a846bc21fd6f5dd776f, type: 3}
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
-  spookHaunt: {fileID: 3049984156711576710, guid: 0e8ef0ba35ce5f149a58c207ba6c6bdf, type: 3}
+  spookHaunt: {fileID: 6463998669846429200, guid: 139d078fdfdabde41a75cc94fb8b58f2, type: 3}
   soulDrop: {fileID: 6846268628254101615, guid: 19060420541f99c4da3700f5dd32b933, type: 3}
   demonSprite: {fileID: 21300000, guid: 7de7a439873ee0a4eabc17eaeaf277b0, type: 3}
   demonStrength: {fileID: 2558898771775421549, guid: 2ad4ec7a1a5045643bd28a59485c4939, type: 3}
-  fireballBlast: {fileID: 6354854305594624939, guid: c3495ba7b2773e945aa8b4da9237c5ea, type: 3}
+  fireballBlast: {fileID: 5760085252327259934, guid: 351d743a2dfdc774aa8c529a96105659, type: 3}
   demonCurse: {fileID: 8509943955392034232, guid: f640d6297da60c04d9ef5562d3b792eb, type: 3}
   cactusSprite: {fileID: 21300000, guid: b3747e2ffc587154087853a08f6c9e0a, type: 3}
   spikeTrapPrefab: {fileID: 8310442494393957005, guid: a74f52805bbb3fd4dbe3a5c408cf3d34, type: 3}
-  spikeShieldPrefab: {fileID: 4864488922578185088, guid: c812e527930d41348bd422d4d0a219ea, type: 3}
   thornShot: {fileID: 8245164862100309878, guid: 5c47a9a8ffc195e428db06c764f9a623, type: 3}
   flytrapSprite: {fileID: 21300000, guid: 0900c200867cb7e4e8a3f8e479a94f13, type: 3}
   tangleVines: {fileID: 2272507394141505538, guid: 99f20a77d8d10c3449ad32b364700ae2, type: 3}
   pullVines: {fileID: 2329274030746489682, guid: f8bfd169ad94533488a44e59b6cb8247, type: 3}
   chompTeeth: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
   fungusSprite: {fileID: 21300000, guid: d02c3fcd707437845a668391b59d59b8, type: 3}
-  leechSeed: {fileID: 8030383983686718888, guid: e8fa14b5afd934b4bb6a04f6af0bb038, type: 3}
-  drowsySpores: {fileID: 8233400920672778888, guid: 4e6b889b7ea8dd145ab0d44b116a8769, type: 3}
-  fearStatus: {fileID: 867175141187624726, guid: 559f44e367abef14aa941f00c845bc7a, type: 3}
-  psychicBurst: {fileID: 692373174144819729, guid: dc44b39a221c8b94f8c5e69fa7ac68b0, type: 3}
+  sporeShot: {fileID: 7207450414678581104, guid: 2ad775568f61a274fa40130733c68daa, type: 3}
+  poisonSpores: {fileID: 4952311247176142382, guid: 5aa71b63b1ad26d4ebf2ace858012955, type: 3}
+  fearStatus: {fileID: 440044685583728902, guid: 559f44e367abef14aa941f00c845bc7a, type: 3}
   jackolanternSprite: {fileID: 21300000, guid: 69016b95560370e48b769880b801ce4f, type: 3}
-  hexBlast: {fileID: 1957257125145424289, guid: e5212601687663c48bf7f9e289dffd0a, type: 3}
+  willOWisps: {fileID: 184069682565448650, guid: 8055708d1ede32944a519a64fe241d46, type: 3}
+  hexStatus: {fileID: 8192229477811552408, guid: ec3846a593fccfd429c25f983f94de48, type: 3}
   golemSprite: {fileID: 21300000, guid: 83d32868ced4456408251b721a984570, type: 3}
-  crystalShield: {fileID: 4069939322191747121, guid: 5d0881c7034b0b34f8ad947a6f0ce6b0, type: 3}
+  crystalShield: {fileID: 3665705297723811173, guid: 40db46c88a716c447a42a9585cbd3713, type: 3}
   auraStatus: {fileID: 4680809331482075624, guid: 5c8f4601f530b7c4a94c34454fa814a9, type: 3}
   automatonSprite: {fileID: 21300000, guid: acea7add14d9ab143b86c730338e7277, type: 3}
   bastionShield: {fileID: 7690297186571397032, guid: 99491c9aa1b295a4196bf6597ea909a2, type: 3}
@@ -120,10 +118,10 @@ MonoBehaviour:
   boneShield: {fileID: 4265488659706721328, guid: ea64b4314f79b0a488ba4cb247c7cc74, type: 3}
   quicksand: {fileID: 8796343949080538550, guid: e91278a3633471d4d941af105f44ed61, type: 3}
   phantomSprite: {fileID: 21300000, guid: e08cafd7f84cf874b9f2ddfeb1a7344f, type: 3}
-  phantomSlash: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
+  phantomSlash: {fileID: 624805845960692293, guid: e41ebefc7c76d954cbb416feabe2c59e, type: 3}
   nightmareStatus: {fileID: 8509943955392034232, guid: f640d6297da60c04d9ef5562d3b792eb, type: 3}
   beastSprite: {fileID: 21300000, guid: 02e15213a5ed02a489f2f6489dbc33f6, type: 3}
-  beastSlash: {fileID: 4401640758297892692, guid: d2c40612241dc684bad329e93122bbc4, type: 3}
-  beastSpeed: {fileID: 6910954531195394623, guid: e165e810c8601304189c939f0614cc45, type: 3}
+  beastSlash: {fileID: 578210155899571682, guid: c8f7b8990a42f3d4ca6bc7a258222a13, type: 3}
+  beastSpeed: {fileID: 2377152402190658643, guid: 87468868d72e03f41bfd591fe89c4354, type: 3}
   beastShout: {fileID: 6940281569127650807, guid: 0671bc790ad977f47bf80122390713ae, type: 3}
   amalgamationSprite: {fileID: 21300000, guid: 897b822c4c1f8bb46b29e55d97aa1521, type: 3}

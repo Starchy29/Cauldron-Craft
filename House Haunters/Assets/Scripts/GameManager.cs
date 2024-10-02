@@ -27,8 +27,8 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        leftTeam = new Team(Team.Witchcrafters, Mode == GameMode.Auto);
-        rightTeam = new Team(Team.Alchemists, Mode != GameMode.PVP);
+        leftTeam = new Team(Team.Alchemists, Mode == GameMode.Auto);
+        rightTeam = new Team(Team.Occultists, Mode != GameMode.PVP);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
     }

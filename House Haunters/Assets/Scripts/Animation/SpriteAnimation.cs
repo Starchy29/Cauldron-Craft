@@ -26,6 +26,7 @@ public class SpriteAnimation
         this.sprites = sprites;
         this.mode = mode;
         this.framesPerSprite = framesPerSprite;
+        spriteIndex = -1;
     }
 
     public void Update(float deltaTime) {

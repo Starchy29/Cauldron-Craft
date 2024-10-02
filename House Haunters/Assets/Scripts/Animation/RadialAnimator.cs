@@ -6,21 +6,24 @@ public class RadialAnimator : IMoveAnimator
 {
     public bool Completed { get; private set; }
 
+    private Monster user;
     private RadialParticle particle;
     private float t;
     private float duration;
     private bool oscillate;
 
-    public RadialAnimator(GameObject particlePrefab, Vector2 position, float duration, bool oscillate, Color color = new Color()) {
+    public RadialAnimator(GameObject particlePrefab, Monster user, float duration, bool oscillate, Color color = new Color()) {
         particle = GameObject.Instantiate(particlePrefab).GetComponent<RadialParticle>();
-        particle.transform.position = position;
+        this.user = user;
         this.duration = duration;
         this.oscillate = oscillate;
         particle.SetColor(color);
+        particle.gameObject.SetActive(false);
     }
 
     public void Start() {
-        
+        particle.transform.position = user.SpriteModel.transform.position;
+        particle.gameObject.SetActive(true);
     }
 
     public void Update(float deltaTime) {

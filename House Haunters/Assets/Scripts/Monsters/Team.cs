@@ -87,6 +87,8 @@ public class Team
         spawnTiles.Sort((Vector2Int cur, Vector2Int next) => Global.CalcTileDistance(cur, levelMid) - Global.CalcTileDistance(next, levelMid));
         for(int i = 0; i < startTeam.Length; i++) {
             GameManager.Instance.SpawnMonster(startTeam[i], spawnTiles[i], this);
+            CraftedMonsters[startTeam[i]] = true;
+            totalCrafted++;
         }
     }
 

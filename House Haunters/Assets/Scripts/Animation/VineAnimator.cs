@@ -10,6 +10,7 @@ public class VineAnimator : IMoveAnimator
 
     private Monster user;
     private Monster grabbed;
+    private StatusAilment slowness;
     private SpriteRenderer renderer;
 
     private Vector2 direction;
@@ -20,9 +21,10 @@ public class VineAnimator : IMoveAnimator
 
     private const int MAX_RANGE = 4;
 
-    public VineAnimator(Monster user, Monster grabbed, Vector2Int endTile) {
+    public VineAnimator(Monster user, Monster grabbed, Vector2Int endTile, StatusAilment slowness) {
         this.user = user;
         this.grabbed = grabbed;
+        this.slowness = slowness;
 
         GameObject created = GameObject.Instantiate(PrefabContainer.Instance.pullVines);
         renderer = created.GetComponent<SpriteRenderer>();
@@ -51,8 +53,10 @@ public class VineAnimator : IMoveAnimator
             length -= 2f * deltaTime;
             if(GetVineLocation() > releaseDist) {
                 grabbed.transform.position = user.transform.position + GetVineLocation() * (Vector3)direction;
+                grabbed.UpdateSortingOrder();
             } else {
                 grabbed.transform.position = user.transform.position + releaseDist * (Vector3)direction;
+                grabbed.UpdateSortingOrder();
             }
 
             if(length < 0) {
@@ -65,6 +69,9 @@ public class VineAnimator : IMoveAnimator
             if(GetVineLocation() > grabDist) {
                 length = grabDist / MAX_RANGE;
                 returning = true;
+
+                // apply slowness effect in the middle
+                grabbed.ApplyStatus(slowness).SetActive(true);
             }
         }
         

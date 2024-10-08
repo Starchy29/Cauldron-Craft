@@ -206,6 +206,12 @@ public class MenuManager : MonoBehaviour
         buyMenu.gameObject.SetActive(false);
         pauseMenu.SetActive(false);
 
+        if(controller != null) {
+            foreach(Monster teammate in controller.Teammates) {
+                teammate.moveIndicator.gameObject.SetActive(false);
+            }
+        }
+
         if(hoveredHealthbar != null) {
             hoveredHealthbar.gameObject.SetActive(false);
             hoveredHealthbar = null;
@@ -230,10 +236,22 @@ public class MenuManager : MonoBehaviour
                     List<Vector2Int> selectable = new List<Vector2Int>();
                     List<Vector2Int> walkTiles = new List<Vector2Int>();
                     foreach(Monster teammate in controller.Teammates) {
+                        bool usableMove = false;
                         for(int i = 0; i < 3; i++) {
                             if(teammate.CanUse(i)) {
                                 selectable.Add(teammate.Tile);
+                                usableMove = true;
+                                break;
                             }
+                        }
+
+                        if(teammate.WalkAvailable) {
+                            teammate.moveIndicator.gameObject.SetActive(true);
+                            teammate.moveIndicator.sprite = PrefabContainer.Instance.walkAvailable;
+                        }
+                        else if(!usableMove && teammate.AbilityAvailable) {
+                            teammate.moveIndicator.gameObject.SetActive(true);
+                            teammate.moveIndicator.sprite = PrefabContainer.Instance.abilityAvailable;
                         }
                     }
 

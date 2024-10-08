@@ -54,7 +54,7 @@ public class PrefabContainer : MonoBehaviour
             { StatusEffect.Fear, fearIcon },
             { StatusEffect.Slowness, slowIcon },
             { StatusEffect.Haunt, hauntedIcon },
-            { StatusEffect.Sturdy, strengthIcon },
+            { StatusEffect.Sturdy, sturdyIcon },
             { StatusEffect.Cursed, curseIcon }
         };
     }
@@ -68,6 +68,10 @@ public class PrefabContainer : MonoBehaviour
 
     public Sprite emptyCircle;
     public Sprite fullCircle;
+
+    public Sprite walkAvailable;
+    public Sprite abilityAvailable;
+    public Sprite movesAvailable;
 
     public GameObject BaseMonsterPrefab;
     public GameObject IngredientVFX;
@@ -87,21 +91,15 @@ public class PrefabContainer : MonoBehaviour
 
     [Header("Status Effect")]
     #region statuses
-    public Sprite regenIcon;
     public Sprite strengthIcon;
     public Sprite hasteIcon;
-    public Sprite energyIcon;
 
     public Sprite poisonIcon;
     public Sprite fearIcon;
     public Sprite slowIcon;
-    public Sprite drowsinessIcon;
     public Sprite hauntedIcon;
-
-    public Sprite infectedIcon;
-    public Sprite witherIcon;
-    public Sprite thornsIcon;
     public Sprite curseIcon;
+    public Sprite sturdyIcon;
     #endregion
 
     [Header("Common Effects")]
@@ -111,6 +109,8 @@ public class PrefabContainer : MonoBehaviour
     public GameObject healParticle;
     public GameObject poisonParticle;
     public GameObject fireball;
+    public GameObject spawnSmoke;
+    public GameObject deathParticle;
     #endregion
 
     [Header("Lost Soul")]

@@ -5,7 +5,7 @@ using UnityEngine;
 // pans the camera to a certain point of focus
 public class CameraAnimator : IMoveAnimator
 {
-    private const float MIN_SPEED = 1f;
+    private const float MIN_SPEED = 1.2f;
 
     public static bool CameraLocked;
     public bool Completed { get; private set; }

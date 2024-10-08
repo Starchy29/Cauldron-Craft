@@ -99,3 +99,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99a0ec24962559c43995779c717eae3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SplashPrefab: {fileID: 5617051462194161551, guid: f434c989f877e224eb26d8a295c19619, type: 3}

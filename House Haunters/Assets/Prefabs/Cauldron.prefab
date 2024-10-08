@@ -102,6 +102,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   range: 0.05
   speedMultiplier: 4
+  cycleOffset: 0
 --- !u!1 &2102336178557980548
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,6 +335,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8912193917514038924}
   - component: {fileID: 2594689547502008985}
+  - component: {fileID: 3782077227921342016}
   m_Layer: 0
   m_Name: Sprite
   m_TagString: Untagged
@@ -410,3 +412,23 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &3782077227921342016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7139877820062372234}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 643f44806508a5d4ebd5e62937129d25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sprites:
+  - {fileID: 21300000, guid: 7177bef3cd757614e9f8f093356c1d7b, type: 3}
+  - {fileID: 21300000, guid: 1144a2906c9050e4686b0925a93b07f7, type: 3}
+  - {fileID: 21300000, guid: 0280ee5bcbd7345468b89796bc8e3cfe, type: 3}
+  - {fileID: 21300000, guid: e25f1681e2c29a349bb64fdd92f9d9e8, type: 3}
+  mode: 2
+  framesPerSprite: 6
+  destroyAtEnd: 0

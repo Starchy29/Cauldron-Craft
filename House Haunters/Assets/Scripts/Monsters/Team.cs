@@ -24,7 +24,7 @@ public class Team
         name = "Witchcrafters",
         teamColor = new Color(0.5f, 0.8f, 0.1f),
         startResource = Ingredient.Flora,
-        teamComp = new MonsterName[3] { MonsterName.Beast, MonsterName.Flytrap, MonsterName.Fungus }
+        teamComp = new MonsterName[3] { MonsterName.Flytrap,  MonsterName.Fungus, MonsterName.Beast }
     };
 
     public static TeamPreset Occultists = new TeamPreset {
@@ -80,13 +80,27 @@ public class Team
         }
     }
 
+    struct TileWithDistance {
+        public Vector2Int tile;
+        public int distance;
+    }
+
     public void SpawnStartTeam() {
         LevelGrid level = LevelGrid.Instance;
         Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
         List<Vector2Int> spawnTiles = level.GetTilesInRange(Spawnpoint.Tile, 1, true);
+
         spawnTiles.Sort((Vector2Int cur, Vector2Int next) => Global.CalcTileDistance(cur, levelMid) - Global.CalcTileDistance(next, levelMid));
+        spawnTiles = new List<Vector2Int> { spawnTiles[0], spawnTiles[1], spawnTiles[2] };
+
+        List<TileWithDistance> distances = spawnTiles.ConvertAll((Vector2Int tile) => new TileWithDistance{ 
+            tile = tile,
+            distance = Monster.FindPath(tile, levelMid).Count
+        });
+        distances.Sort((TileWithDistance cur, TileWithDistance next) => cur.distance - next.distance);
+
         for(int i = 0; i < startTeam.Length; i++) {
-            GameManager.Instance.SpawnMonster(startTeam[i], spawnTiles[i], this);
+            GameManager.Instance.SpawnMonster(startTeam[i], distances[i].tile, this);
             CraftedMonsters[startTeam[i]] = true;
             totalCrafted++;
         }
@@ -122,14 +136,15 @@ public class Team
         }
 
         MonsterType data = MonstersData.Instance.GetMonsterData(type);
-        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(Spawnpoint.transform.position));
         AnimationsManager animator = AnimationsManager.Instance;
+        animator.QueueAnimation(new CameraAnimator(Spawnpoint.transform.position));
         foreach(Ingredient ingredient in data.Recipe) {
             Resources[ingredient]--;
         }
         animator.QueueAnimation(new IngredientAnimator(Spawnpoint, data.Recipe));
 
         Spawnpoint.StartCook(type);
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
 
         // check for victory
         if(!CraftedMonsters[type]) {

@@ -302,11 +302,8 @@ public class MonstersData
             }
         }
 
-        AnimationsManager.Instance.QueueAnimation(new VineAnimator(user, target, furthestPull));
+        AnimationsManager.Instance.QueueAnimation(new VineAnimator(user, target, furthestPull, tangledStatus));
         level.MoveEntity(target, furthestPull);
-
-        // apply slowness effect as well
-        target.ApplyStatus(tangledStatus);
     }
 
     private static void DealPuddleDamage(Monster occupant) {

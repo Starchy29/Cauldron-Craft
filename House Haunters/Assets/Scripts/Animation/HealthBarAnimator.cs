@@ -14,7 +14,7 @@ public class HealthBarAnimator : IMoveAnimator
     public HealthBarAnimator(HealthBarScript healthBar, int targetHealth) {
         this.healthBar = healthBar;
         this.targetHealth = targetHealth;
-        endPause = 0.4f;
+        endPause = 0.8f;
         movingBar = true;
     }
 
@@ -32,6 +32,7 @@ public class HealthBarAnimator : IMoveAnimator
             endPause -= deltaTime;
             if(endPause <= 0) {
                 healthBar.gameObject.SetActive(false);
+                healthBar.MarkTrace();
             }
         }
     }

@@ -8,6 +8,8 @@ public class Cauldron : GridEntity
     [SerializeField] private bool controlledByLeft;
     [SerializeField] private GameObject cookIndicator;
 
+    private Particle cookAnimator;
+    private Sprite defaultSprite;
     private MonsterName cookingMonster;
 
     public enum State {
@@ -19,6 +21,8 @@ public class Cauldron : GridEntity
 
     protected override void Start() {
         base.Start();
+        defaultSprite = spriteRenderer.sprite;
+        cookAnimator = spriteRenderer.gameObject.GetComponent<Particle>();
         Controller = GameManager.Instance.GetTeam(controlledByLeft);
         Controller.Spawnpoint = this;
         Controller.OnTurnStart += FinishCook;
@@ -34,6 +38,7 @@ public class Cauldron : GridEntity
         cookingMonster = monsterType;
         cookIndicator.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
         cookIndicator.SetActive(false);
+        AnimationsManager.Instance.QueueFunction(() => { SetCookVisual(true); });
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, true));
     }
 
@@ -56,8 +61,14 @@ public class Cauldron : GridEntity
         // spawn the monster
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         spawned.gameObject.SetActive(false);
+        AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(spawned.gameObject, true));
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, false));
+        AnimationsManager.Instance.QueueFunction(() => { 
+            SetCookVisual(false); 
+            Instantiate(PrefabContainer.Instance.spawnSmoke).transform.position = spawned.SpriteModel.transform.position + new Vector3(0, 0.2f, 0);
+        });
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1.0f));
     }
 
     private int DetermineSpawnSpotPriority(Vector2Int tile, Vector2Int levelMid) {
@@ -66,5 +77,14 @@ public class Cauldron : GridEntity
         return (Global.CalcTileDistance(tile, Tile) > 1 ? -100 : 0) // prioritize orthogonally adjacent over diagonal
             + -10 * (horizontal ? Mathf.Abs(tile.x - levelMid.x) : Mathf.Abs(tile.y - levelMid.y))
             + -1 * (horizontal ? Mathf.Abs(tile.y - levelMid.y) : Mathf.Abs(tile.x - levelMid.x));
+    }
+
+    private void SetCookVisual(bool cooking) {
+        if(cooking) {
+            cookAnimator.enabled = true;
+        } else {
+            cookAnimator.enabled = false;
+            spriteRenderer.sprite = defaultSprite;
+        }
     }
 }

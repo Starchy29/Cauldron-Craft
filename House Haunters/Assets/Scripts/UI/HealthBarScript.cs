@@ -6,6 +6,7 @@ public class HealthBarScript : MonoBehaviour
 {
     [SerializeField] private Monster tracked;
     [SerializeField] private GameObject VisualBar;
+    [SerializeField] private GameObject traceBar;
     private SpriteRenderer barColor;
     public bool IsAccurate { get { return currentWidth == DetermineWidth(tracked.Health); } }
     public int RepresentedHealth { get; private set; }
@@ -14,15 +15,12 @@ public class HealthBarScript : MonoBehaviour
     private float localLeft;
     private float currentWidth;
 
-    private static Color fullHue = Color.green;
-    private static Color midHue = Color.yellow;
-    private static Color lowHue = Color.red;
-
     void Awake() {
         maxWidth = VisualBar.transform.localScale.x;
         currentWidth = maxWidth;
         localLeft = VisualBar.transform.localPosition.x - maxWidth / 2f;
         barColor = VisualBar.GetComponent<SpriteRenderer>();
+        barColor.color = Color.cyan;
         RepresentedHealth = -1;
     }
 
@@ -43,24 +41,20 @@ public class HealthBarScript : MonoBehaviour
         }
 
         // update visual bar
-        Vector3 scale = VisualBar.transform.localScale;
-        scale.x = currentWidth;
-        VisualBar.transform.localScale = scale;
-        Vector3 position = VisualBar.transform.localPosition;
-        position.x = localLeft + currentWidth / 2f;
-        VisualBar.transform.localPosition = position;
+        SetWidth(VisualBar);
+    }
 
-        Color newColor = fullHue;
-        float percentLeft = currentWidth / maxWidth;
-        if(percentLeft < 0.66 && percentLeft > 0.33f) {
-            float percentFull = (percentLeft - 0.33f) * 3f;
-            newColor = percentFull * fullHue + (1f - percentFull) * midHue;
-        }
-        else if(percentLeft < 0.33f) {
-            float pecrentMid = percentLeft * 3f;
-            newColor = pecrentMid * midHue + (1f - pecrentMid) * lowHue;
-        }
-        barColor.color = newColor;
+    public void MarkTrace() {
+        SetWidth(traceBar);
+    }
+
+    private void SetWidth(GameObject bar) {
+        Vector3 scale = bar.transform.localScale;
+        scale.x = currentWidth;
+        bar.transform.localScale = scale;
+        Vector3 position = bar.transform.localPosition;
+        position.x = localLeft + currentWidth / 2f;
+        bar.transform.localPosition = position;
     }
 
     private float DetermineWidth(int health) {

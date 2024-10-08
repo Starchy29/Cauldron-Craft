@@ -6,6 +6,7 @@ using System;
 public class Monster : GridEntity
 {
     [SerializeField] public HealthBarScript healthBar;
+    [SerializeField] public SpriteRenderer moveIndicator;
 
     public MonsterType Stats { get; private set; }
     public int Health { get; private set; }
@@ -93,6 +94,10 @@ public class Monster : GridEntity
         }
 
         if(Health == 0) {
+            AnimationsManager.Instance.QueueFunction(() => {
+                GameObject deathParticle = Instantiate(PrefabContainer.Instance.deathParticle);
+                deathParticle.transform.position = SpriteModel.transform.position;
+            });
             AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(this.gameObject));
             GameManager.Instance.DefeatMonster(this);
             OnDeath?.Invoke();
@@ -106,11 +111,11 @@ public class Monster : GridEntity
         return Statuses.Exists((StatusAilment condition) => { return condition.effect == status; });
     }
 
-    public void ApplyStatus(StatusAilment blueprint) {
+    public GameObject ApplyStatus(StatusAilment blueprint) {
         StatusAilment duplicate = Statuses.Find((StatusAilment existing) => { return existing == blueprint; });
         if(duplicate != null) {
             duplicate.duration = blueprint.duration; // reset duration;
-            return;
+            return duplicate.visual;
         }
 
         GameObject visual = Instantiate(blueprint.visual);
@@ -121,6 +126,7 @@ public class Monster : GridEntity
 
         StatusAilment affliction = new StatusAilment(blueprint.effect, blueprint.duration, visual);
         Statuses.Add(affliction);
+        return visual;
     }
 
     public List<Selection> GetMoveOptions(int moveSlot, bool ignoreUseless = true) {

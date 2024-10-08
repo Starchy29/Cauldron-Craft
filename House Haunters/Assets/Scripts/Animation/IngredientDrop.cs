@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class IngredientDrop : MonoBehaviour
 {
+    [SerializeField] private GameObject SplashPrefab;
+
     private Vector3 startPos;
     private Vector3 endPos;
     private float startScale;
     private float endScale;
     private float endRot;
     private bool rotateBackwards;
+    private bool spawnedSplash;
 
     public void Setup(Cauldron cauldron, Ingredient type) {
         GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.ingredientToSprite[type];
@@ -23,6 +26,12 @@ public class IngredientDrop : MonoBehaviour
     }
 
     public void SetAnimation(float t) {
+        if(t >= 1f && !spawnedSplash) {
+            spawnedSplash = true;
+            GameObject splash = Instantiate(SplashPrefab);
+            splash.transform.position = transform.position + new Vector3(0, 0.35f, 0);
+        }
+
         if(t < 0f || t > 1f) {
             gameObject.SetActive(false);
             return;

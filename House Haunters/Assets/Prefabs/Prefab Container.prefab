@@ -51,6 +51,9 @@ MonoBehaviour:
   mineralLogo: {fileID: 21300000, guid: b656ca6764190a347b5f0711e6662236, type: 3}
   emptyCircle: {fileID: 21300000, guid: d1ad41ce0aaddf241b6594d39e10cae7, type: 3}
   fullCircle: {fileID: 21300000, guid: 256dd6046f62c3e4bba650d172fc335e, type: 3}
+  walkAvailable: {fileID: 21300000, guid: ad17174a7f3ddac4ab6e008f7f8bb640, type: 3}
+  abilityAvailable: {fileID: 21300000, guid: 817cb49216943d14faa730d673224ef5, type: 3}
+  movesAvailable: {fileID: 21300000, guid: ee0d7179486f75b4d843ca5dcf8c9cb9, type: 3}
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
   IngredientVFX: {fileID: 7712678480373355417, guid: 6da443e11232dbd4ba60f4a252a5ae90, type: 3}
   HarvestParticle: {fileID: 4660850984691057048, guid: b15f3e81518625b4d9311ff090bd564f, type: 3}
@@ -64,24 +67,21 @@ MonoBehaviour:
   supportIcon: {fileID: 21300000, guid: 52ba9c8999e5dfc40b90ea2e082ac58e, type: 3}
   decayMoveIcon: {fileID: 21300000, guid: 62923fab9a7ac82469db56c3cea0a4e5, type: 3}
   healIcon: {fileID: 21300000, guid: 360d2cbffcefb3740a4556e446e17606, type: 3}
-  regenIcon: {fileID: 21300000, guid: 2c1978ebdfa13294f8ecbe82a936eb11, type: 3}
   strengthIcon: {fileID: 21300000, guid: 49934fbc93640754899a2013fdc5533e, type: 3}
-  hasteIcon: {fileID: 21300000, guid: 233cfbf06c1a86c4a978d7d3d95236a1, type: 3}
-  energyIcon: {fileID: 21300000, guid: a652023734be6e443a91a187647c9128, type: 3}
+  hasteIcon: {fileID: 21300000, guid: a652023734be6e443a91a187647c9128, type: 3}
   poisonIcon: {fileID: 21300000, guid: 8e7d477d663a010408a6133875adf439, type: 3}
   fearIcon: {fileID: 21300000, guid: d82e4b8393b897446a7d5a17382411c2, type: 3}
   slowIcon: {fileID: 21300000, guid: 17a4376cbb3cead488687c7fd77b227b, type: 3}
-  drowsinessIcon: {fileID: 21300000, guid: 2cf27547aa141f04580292b5087abef5, type: 3}
   hauntedIcon: {fileID: 21300000, guid: 8e0e6f27d9bc3c24f82f13de06470596, type: 3}
-  infectedIcon: {fileID: 21300000, guid: 21e89046f1d4e884c920c28ef2d839df, type: 3}
-  witherIcon: {fileID: 21300000, guid: 4951339eb730bb7488512e017de69663, type: 3}
-  thornsIcon: {fileID: 21300000, guid: feda6fb0e00694a4c8a52db778a888a8, type: 3}
   curseIcon: {fileID: 21300000, guid: 9d0223b3c7f6bcc4b9afe6b0b1b1d41d, type: 3}
+  sturdyIcon: {fileID: 21300000, guid: 7344960ba7122df4d9b88b38dd2e24a3, type: 3}
   glowParticle: {fileID: 6732728142473716491, guid: 0261975f6e878274784aa13ee7f23994, type: 3}
   pierceParticle: {fileID: 5164441565935722498, guid: a25889da6437ee44db84ba3b24376182, type: 3}
   healParticle: {fileID: 6924238101127613007, guid: 964e1aa8aa443f04ea9319ea60f6c47c, type: 3}
   poisonParticle: {fileID: 6334593914044228289, guid: dc5412196beff6a49a86596d45371afe, type: 3}
   fireball: {fileID: 9215018040933110480, guid: b7be5503f1b62a846bc21fd6f5dd776f, type: 3}
+  spawnSmoke: {fileID: 6473633565755457492, guid: 0ff728b77e536844eaae08c94402fae0, type: 3}
+  deathParticle: {fileID: 1303367712842573749, guid: e8fb0036f8eb91042859ca00b4de3e4e, type: 3}
   soulSprite: {fileID: 21300000, guid: e13c2c2cd7c7f884a834a7c17d88de7b, type: 3}
   spookHaunt: {fileID: 6463998669846429200, guid: 139d078fdfdabde41a75cc94fb8b58f2, type: 3}
   soulDrop: {fileID: 6846268628254101615, guid: 19060420541f99c4da3700f5dd32b933, type: 3}

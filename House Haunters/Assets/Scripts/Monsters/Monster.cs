@@ -87,6 +87,20 @@ public class Monster : GridEntity
             Health = 0;
         }
 
+        int numChunks = 1;
+        if(amount >= 10) {
+            numChunks = 3;
+        }
+        else if(amount >= 5) {
+            numChunks = 2;
+        }
+
+        AnimationsManager.Instance.QueueFunction(() => { 
+            for(int i = 0; i < numChunks; i++) {
+                SpawnHurtParticle();
+            }
+        });
+
         AnimationsManager.Instance.QueueAnimation(new HealthBarAnimator(healthBar, Health));
 
         if(attacker != null && HasStatus(StatusEffect.Cursed)) {
@@ -94,9 +108,14 @@ public class Monster : GridEntity
         }
 
         if(Health == 0) {
-            AnimationsManager.Instance.QueueFunction(() => {
-                GameObject deathParticle = Instantiate(PrefabContainer.Instance.deathParticle);
-                deathParticle.transform.position = SpriteModel.transform.position;
+            //AnimationsManager.Instance.QueueFunction(() => {
+            //    GameObject deathParticle = Instantiate(PrefabContainer.Instance.deathParticle);
+            //    deathParticle.transform.position = SpriteModel.transform.position;
+            //});
+            AnimationsManager.Instance.QueueFunction(() => { 
+                for(int i = 0; i < 15; i++) {
+                    SpawnHurtParticle();
+                }
             });
             AnimationsManager.Instance.QueueAnimation(new DestructionAnimator(this.gameObject));
             GameManager.Instance.DefeatMonster(this);
@@ -234,6 +253,12 @@ public class Monster : GridEntity
     // asks a monster if it can get to the end tile in move, and finds that path while navigating around obstacle
     public List<Vector2Int> FindPath(Vector2Int endTile) {
         return FindPath(Tile, endTile, this);
+    }
+
+    private void SpawnHurtParticle() {
+        GameObject particle = Instantiate(PrefabContainer.Instance.HurtParticle);
+        particle.transform.position = SpriteModel.transform.position;
+        particle.GetComponent<HurtParticle>().Randomize(SpriteModel.GetComponent<SpriteRenderer>().sprite);
     }
 
     // finds the shortest path to the end tile. Returns null if there is no path. Does not matter if the end spot is occupied

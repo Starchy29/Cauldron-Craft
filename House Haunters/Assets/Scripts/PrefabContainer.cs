@@ -76,6 +76,7 @@ public class PrefabContainer : MonoBehaviour
     public GameObject BaseMonsterPrefab;
     public GameObject IngredientVFX;
     public GameObject HarvestParticle;
+    public GameObject HurtParticle;
 
     [Header("Move Type")]
     public Sprite meleeIcon;

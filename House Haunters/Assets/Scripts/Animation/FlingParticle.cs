@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HarvestedIngredient : MonoBehaviour
+public class FlingParticle : MonoBehaviour
 {
+    [SerializeField] private float heightDelta;
+    [SerializeField] private float drop;
+
     public const float DURATION = 1f;
     private const float THREE_SPINS = 360f * 3f;
 
@@ -16,9 +19,9 @@ public class HarvestedIngredient : MonoBehaviour
 
     void Start() {
         startPos = transform.position;
-        endPos = startPos + new Vector3(Random.value * 2f - 1f, 0, 0); // -1 to 1
+        endPos = startPos + new Vector3(Random.value * 2f - 1f, -drop, 0); // -1 to 1
         endRot = Random.value * 2 * THREE_SPINS - THREE_SPINS; // up to three spins in either direction
-        float maxHeight = Random.value + 0.7f; // 0.7 - 1.7f
+        float maxHeight = Random.value + heightDelta;
         quadA = -4 * maxHeight;
     }
 
@@ -30,7 +33,8 @@ public class HarvestedIngredient : MonoBehaviour
         }
 
         float x = startPos.x + t * (endPos.x - startPos.x);
-        float y = startPos.y + quadA * t * t - quadA * t; // (-4H)t^2 + (4H)t = y;
+        float y = startPos.y + t * (endPos.y - startPos.y);
+        y += quadA * t * t - quadA * t; // (-4H)t^2 + (4H)t = y;
         float r = t * endRot;
 
         transform.position = new Vector3(x, y, 0);

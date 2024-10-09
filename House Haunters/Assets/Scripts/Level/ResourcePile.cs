@@ -64,7 +64,7 @@ public class ResourcePile : GridEntity
         for(int i = 0; i < harvestCount; i ++) {
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
         }
-        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(HarvestedIngredient.DURATION));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(FlingParticle.DURATION));
     }
 
     private void SpawnHarvestParticle() {

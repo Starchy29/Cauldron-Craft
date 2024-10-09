@@ -57,6 +57,7 @@ MonoBehaviour:
   BaseMonsterPrefab: {fileID: 4158932524475762086, guid: eabb44ccb313b694f8310d6e1688e4c0, type: 3}
   IngredientVFX: {fileID: 7712678480373355417, guid: 6da443e11232dbd4ba60f4a252a5ae90, type: 3}
   HarvestParticle: {fileID: 4660850984691057048, guid: b15f3e81518625b4d9311ff090bd564f, type: 3}
+  HurtParticle: {fileID: 7198497676333492114, guid: 716c3848ab1885b459bab78f7ce54cd8, type: 3}
   meleeIcon: {fileID: 21300000, guid: 1db5c7313ba87944681a5ce12f9e37c7, type: 3}
   rangedIcon: {fileID: 21300000, guid: 038e2aeaedaebf341b761f9a6a4b8a10, type: 3}
   defendIcon: {fileID: 21300000, guid: 86be306a44c53374188c9ad92deb73c7, type: 3}

@@ -135,6 +135,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f6f523647333f649b173fbdbaa28d47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &114445688
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 114445690}
+  - component: {fileID: 114445689}
+  m_Layer: 0
+  m_Name: Hurt Particle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &114445689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 114445688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40ba5a0d587bcdb49a908903d14b0d35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testSprite: {fileID: 21300000, guid: 897b822c4c1f8bb46b29e55d97aa1521, type: 3}
+--- !u!4 &114445690
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 114445688}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8.65, y: 9, z: -3.89891}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &118337326
 GameObject:
   m_ObjectHideFlags: 0
@@ -3171,11 +3216,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1441488696228719936, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 7.4110208
+      value: 3.49
       objectReference: {fileID: 0}
     - target: {fileID: 1441488696228719936, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 12.516736
+      value: 10.43
       objectReference: {fileID: 0}
     - target: {fileID: 1441488696228719936, guid: 9dce887fcff303d469c2a526c9e9dbd7, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4563,3 +4608,4 @@ SceneRoots:
   - {fileID: 966836689}
   - {fileID: 1708174508}
   - {fileID: 151711925}
+  - {fileID: 114445690}

@@ -8,6 +8,14 @@ public struct TeamPreset {
     public Color teamColor;
     public Ingredient startResource;
     public MonsterName[] teamComp;
+
+    public static bool operator ==(TeamPreset self, TeamPreset other) {
+        return self.startResource == other.startResource;
+    }
+
+    public static bool operator !=(TeamPreset self, TeamPreset other) {
+        return self.startResource != other.startResource;
+    }
 }
 
 // represents one team of monsters

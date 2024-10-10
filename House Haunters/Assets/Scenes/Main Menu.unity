@@ -139,6 +139,14 @@ PrefabInstance:
       propertyPath: m_text
       value: Exit
       objectReference: {fileID: 0}
+    - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
+      propertyPath: m_fontSize
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 8233697647515853796, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: clickFunction
       value: 6
@@ -205,11 +213,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: m_text
-      value: PvP
+      value: 1 Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
+      propertyPath: m_fontSize
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8233697647515853796, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: clickFunction
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 9099022015949588201, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: m_RootOrder
@@ -277,11 +293,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: m_text
-      value: vs AI
+      value: 2 Players
+      objectReference: {fileID: 0}
+    - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
+      propertyPath: m_fontSize
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5152454042369374383, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8233697647515853796, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: clickFunction
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9099022015949588201, guid: 8fe46a82904de574b911e38fbfee1666, type: 3}
       propertyPath: m_RootOrder
@@ -665,7 +689,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1529555471}
-  - {fileID: 1229363935}
-  - {fileID: 546832516}
   - {fileID: 1496367698}
+  - {fileID: 546832516}
+  - {fileID: 1229363935}
   - {fileID: 51945307}

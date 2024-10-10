@@ -12,7 +12,8 @@ public class AutoButton : MonoBehaviour
         StartGameVAI,
         GameplayBack,
         QuitMatch,
-        CloseGame
+        CloseGame,
+        StartGame
     }
 
     [SerializeField] private ClickFunction clickFunction;
@@ -40,7 +41,6 @@ public class AutoButton : MonoBehaviour
     protected float tooltipWait = 0.6f;
 
     void Start() {
-        //SetBackColor(baseColor);
         switch(clickFunction) {
             case ClickFunction.EndTurn:
                 OnClick = MenuManager.Instance.EndTurn;
@@ -59,6 +59,16 @@ public class AutoButton : MonoBehaviour
                 break;
             case ClickFunction.CloseGame:
                 OnClick = () => { Application.Quit(); };
+                break;
+            case ClickFunction.StartGame:
+                OnClick = () => {
+                    if(GameManager.Mode == GameMode.VSAI) {
+                        List<TeamPreset> aiOptions = new List<TeamPreset> { Team.Alchemists, Team.Witchcrafters, Team.Occultists };
+                        aiOptions.Remove(GameManager.team1Choice);
+                        GameManager.team2Choice = aiOptions[Random.value < 0.5f ? 0 : 1];
+                    }
+                    SceneManager.LoadScene(2); 
+                };
                 break;
         }
     }

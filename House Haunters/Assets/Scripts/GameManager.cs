@@ -12,6 +12,8 @@ public enum GameMode {
 public class GameManager : MonoBehaviour
 {
     public static GameMode Mode = GameMode.PVP;
+    public static TeamPreset team1Choice = Team.Alchemists;
+    public static TeamPreset team2Choice = Team.Witchcrafters;
     public static GameManager Instance { get; private set; }
 
     public List<ResourcePile> AllResources { get; private set; }
@@ -27,8 +29,8 @@ public class GameManager : MonoBehaviour
 
     void Awake() {
         Instance = this;
-        leftTeam = new Team(Team.Occultists, Mode == GameMode.Auto);
-        rightTeam = new Team(Team.Witchcrafters, Mode != GameMode.PVP);
+        leftTeam = new Team(team1Choice, Mode == GameMode.Auto);
+        rightTeam = new Team(team2Choice, Mode != GameMode.PVP);
         AllResources = new List<ResourcePile>();
         CurrentTurn = leftTeam;
     }

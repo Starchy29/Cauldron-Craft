@@ -6,11 +6,14 @@ using System;
 public class Cauldron : GridEntity
 {
     [SerializeField] private bool controlledByLeft;
-    [SerializeField] private GameObject cookIndicator;
+    [SerializeField] private GameObject indicator;
+    [SerializeField] private SpriteRenderer cookIndicator;
+    [SerializeField] private TMPro.TextMeshPro craftCounter;
 
     private Particle cookAnimator;
     private Sprite defaultSprite;
     private MonsterName cookingMonster;
+    private bool newCraft;
 
     public enum State {
         Ready,
@@ -36,10 +39,13 @@ public class Cauldron : GridEntity
 
         CookState = State.Cooking;
         cookingMonster = monsterType;
-        cookIndicator.GetComponent<SpriteRenderer>().sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
-        cookIndicator.SetActive(false);
+        newCraft = !Controller.CraftedMonsters[monsterType];
+
+        cookIndicator.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
+        indicator.SetActive(false);
         AnimationsManager.Instance.QueueFunction(() => { SetCookVisual(true); });
-        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, true));
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(indicator, true));
+        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator.gameObject, true));
     }
 
     public void FinishCook() {
@@ -62,21 +68,29 @@ public class Cauldron : GridEntity
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         spawned.gameObject.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
-        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(spawned.gameObject, true));
-        AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator, false));
-        AnimationsManager.Instance.QueueFunction(() => { 
+        AnimationsManager.Instance.QueueFunction(() => {
+            spawned.gameObject.SetActive(true);
+            cookIndicator.gameObject.SetActive(false);
+            if(newCraft) {
+                craftCounter.gameObject.SetActive(true);
+                craftCounter.text = Controller.TotalCrafted + "/13";
+            } else {
+                indicator.SetActive(false);
+            }
             SetCookVisual(false); 
             Instantiate(PrefabContainer.Instance.spawnSmoke).transform.position = spawned.SpriteModel.transform.position + new Vector3(0, 0.2f, 0);
         });
-        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1.0f));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(2.0f));
+        AnimationsManager.Instance.QueueFunction(() => {
+            indicator.SetActive(false);
+            craftCounter.gameObject.SetActive(false);
+        });
     }
 
     private int DetermineSpawnSpotPriority(Vector2Int tile, Vector2Int levelMid) {
-        Vector2Int toCenter = levelMid - Tile;
-        bool horizontal = toCenter.x > toCenter.y;
         return (Global.CalcTileDistance(tile, Tile) > 1 ? -100 : 0) // prioritize orthogonally adjacent over diagonal
-            + -10 * (horizontal ? Mathf.Abs(tile.x - levelMid.x) : Mathf.Abs(tile.y - levelMid.y))
-            + -1 * (horizontal ? Mathf.Abs(tile.y - levelMid.y) : Mathf.Abs(tile.x - levelMid.x));
+            + -10 * Mathf.Abs(tile.x - levelMid.x)
+            + -1 * Mathf.Abs(tile.y - levelMid.y);
     }
 
     private void SetCookVisual(bool cooking) {

@@ -58,7 +58,7 @@ public class Team
     } }
 
     public Dictionary<MonsterName, bool> CraftedMonsters { get; private set; }
-    private int totalCrafted;
+    public int TotalCrafted { get; private set; }
     private static int CRAFT_GOAL = Enum.GetValues(typeof(MonsterName)).Length;
 
     private MonsterName[] startTeam;
@@ -110,7 +110,7 @@ public class Team
         for(int i = 0; i < startTeam.Length; i++) {
             GameManager.Instance.SpawnMonster(startTeam[i], distances[i].tile, this);
             CraftedMonsters[startTeam[i]] = true;
-            totalCrafted++;
+            TotalCrafted++;
         }
     }
 
@@ -157,8 +157,8 @@ public class Team
         // check for victory
         if(!CraftedMonsters[type]) {
             CraftedMonsters[type] = true;
-            totalCrafted++;
-            if(totalCrafted >= CRAFT_GOAL) {
+            TotalCrafted++;
+            if(TotalCrafted >= CRAFT_GOAL) {
                 AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
                 Spawnpoint.FinishCook();
                 AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));

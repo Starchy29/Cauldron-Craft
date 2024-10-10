@@ -33,8 +33,8 @@ public class ResourcePile : GridEntity
         List<Vector2Int> openAdjTiles = LevelGrid.Instance.GetTilesInRange(Tile, CAPTURE_SIZE, true).FindAll((Vector2Int tile) => { return tile != this.Tile && LevelGrid.Instance.GetTile(tile).Walkable; });
         foreach(Vector2Int tile in openAdjTiles) {
             GameObject floorCover = Instantiate(floorCoverPrefab);
-            floorCover.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile);
-            floorCover.transform.position = transform.position + 0.8f * (floorCover.transform.position - transform.position);
+            floorCover.transform.position = LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile) 
+                + new Vector3(Random.value < 0.5f ? -0.05f : 0.05f, Random.value < 0.5f ? -0.05f : 0.05f, 0);
 
             floorCover.transform.localScale = new Vector3(Random.value < 0.5f ? 1f : 1f, Random.value < 0.5f ? 1f : 1f, 1f);
             floorCover.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 4) * 90f);

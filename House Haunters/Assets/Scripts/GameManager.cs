@@ -40,7 +40,7 @@ public class GameManager : MonoBehaviour
         leftTeam.SpawnStartTeam();
         rightTeam.SpawnStartTeam();
         foreach(ResourcePile resource in AllResources) {
-            LevelHighlighter.Instance.UpdateCapture(resource);
+            LevelHighlighter.Instance.UpdateCapture(resource.Tile, resource.Controller, resource.Contested);
         }
 
         //QueueIntro();

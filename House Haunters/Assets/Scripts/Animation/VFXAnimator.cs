@@ -8,13 +8,15 @@ public class VFXAnimator : IMoveAnimator
 
     private RadialParticle visual;
     private float time;
+    private Color color;
 
     public VFXAnimator(RadialParticle visual, Color color) {
         this.visual = visual;
-        visual.SetColor(color);
+        this.color = color;
     }
 
     public void Start() {
+        visual.SetColor(color);
         visual.SetRadius(0f);
     }
 

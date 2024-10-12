@@ -115,15 +115,15 @@ public class LevelHighlighter : MonoBehaviour
         ColorTiles(new List<Vector2Int> { tile }, type);
     }
 
-    public void UpdateCapture(ResourcePile resource) {
-        foreach(Vector2Int tile in LevelGrid.Instance.GetTilesInRange(resource.Tile, 2, true)) {
+    public void UpdateCapture(Vector2Int resourceTile, Team controller, bool contested) {
+        foreach(Vector2Int tile in LevelGrid.Instance.GetTilesInRange(resourceTile, 2, true)) {
             int index = tile.x + traitArray.GetLength(0) * tile.y;
             int captureCode = -1;
-            if(resource.Contested) {
+            if(contested) {
                 captureCode = 3;
             }
-            else if(resource.Controller != null) {
-                captureCode = resource.Controller == teams[0] ? 1 : 2;
+            else if(controller != null) {
+                captureCode = controller == teams[0] ? 1 : 2;
             }
 
             TileInfo info = infoArray[index];

@@ -25,7 +25,7 @@ public class MonstersData
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(MonsterName.LostSoul, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
-            25, 4,
+            /*25*/5, 4,
             new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(6); }, AnimateGlow(2f, new Color(0.2f, 0.7f, 0.9f)), "Heals an ally for 6 health."),
             new StatusMove("Haunt", 2, new StatusAilment(StatusEffect.Haunt, 2, prefabs.spookHaunt), RangeSelector.MeleeSelector, 
                 (user, targets) => { AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered), true)); }, "The target takes 1.5x damage for 2 turns.")

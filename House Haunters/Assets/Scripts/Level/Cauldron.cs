@@ -41,9 +41,11 @@ public class Cauldron : GridEntity
         cookingMonster = monsterType;
         newCraft = !Controller.CraftedMonsters[monsterType];
 
-        cookIndicator.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
-        indicator.SetActive(false);
-        AnimationsManager.Instance.QueueFunction(() => { SetCookVisual(true); });
+        AnimationsManager.Instance.QueueFunction(() => { 
+            SetCookVisual(true);
+            cookIndicator.sprite = PrefabContainer.Instance.monsterToSprite[monsterType];
+            indicator.SetActive(false);
+        });
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(indicator, true));
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator.gameObject, true));
     }

@@ -114,8 +114,10 @@ public class ResourcePile : GridEntity
                 color = Controller.TeamColor;
             }
 
-            AnimationsManager.Instance.QueueFunction(() => { LevelHighlighter.Instance.UpdateCapture(this); });
-            AnimationsManager.Instance.QueueFunction(() => { SetOutlineColor(color); });
+            AnimationsManager.Instance.QueueFunction(() => {
+                LevelHighlighter.Instance.UpdateCapture(Tile, newController, nowContested);
+                SetOutlineColor(color);
+            });
             AnimationsManager.Instance.QueueAnimation(new VFXAnimator(captureVisual, color == Color.clear ? Color.white : color));
         }
     }

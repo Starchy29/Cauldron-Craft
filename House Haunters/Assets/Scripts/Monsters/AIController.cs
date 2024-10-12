@@ -344,6 +344,10 @@ public class AIController
                 return -0.2f; // don't use a status on a monster that already has that status
             }
 
+            if(targets.Count > 1) {
+                return -0.1f + 0.3f * targets.Count;
+            }
+
             if(move.TargetType == Move.Targets.Enemies) {
                 if(effect.effect == StatusEffect.Fear && !(hit.Stats.Moves[MonsterType.PRIMARY_INDEX] is Attack)) {
                     return -1f; // dont weaken an enemy that has no attacks

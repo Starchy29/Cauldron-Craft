@@ -17,11 +17,14 @@ public class IngredientAnimator : IMoveAnimator
         duration = DROP_RATE * (recipe.Count - 1) + DROP_TIME; // time until last drops plus time it takes the last one to drop
         ingredients = new List<IngredientDrop>();
 
+        int index = 0;
         foreach(Ingredient ingredient in recipe) {
             IngredientDrop dropper = GameObject.Instantiate(PrefabContainer.Instance.IngredientVFX).GetComponent<IngredientDrop>();
             dropper.Setup(cauldron, ingredient);
             dropper.gameObject.SetActive(false);
             ingredients.Add(dropper);
+            dropper.index = index;
+            index++;
         }
     }
 

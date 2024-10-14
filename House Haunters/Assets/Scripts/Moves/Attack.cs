@@ -9,8 +9,8 @@ public class Attack : Move
     public delegate void HitTrigger(Monster user, Monster target, int healthLost);
     private HitTrigger OnHit;
 
-    public Attack(string name, int cooldown, int damage, ISelector selection, AnimationFunction effectAnimation, string description = "", HitTrigger hitEffect = null) 
-        : base(name, cooldown, selection.Range > 1 ? MoveType.Attack : MoveType.Attack, Targets.Enemies, selection, null, effectAnimation, description)
+    public Attack(string name, int cooldown, int damage, ISelector selection, AnimationFunction effectAnimation, Sounds soundEffect, string description = "", HitTrigger hitEffect = null) 
+        : base(name, cooldown, selection.Range > 1 ? MoveType.Attack : MoveType.Attack, Targets.Enemies, selection, null, effectAnimation, soundEffect, description)
     {
         Damage = damage;
         OnHit = hitEffect;

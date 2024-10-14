@@ -9,8 +9,8 @@ public class StatusMove : Move
 
     private event EffectFunction extraEffect;
 
-    public StatusMove(string name, int cooldown, StatusAilment condition, ISelector selection, AnimationFunction animation, string description = "", EffectFunction extraEffect = null)
-        : base(name, cooldown, DetermineMoveType(condition), StatusAilment.IsPositive(condition.effect) ? Targets.Allies : Targets.Enemies, selection, null, animation, description)
+    public StatusMove(string name, int cooldown, StatusAilment condition, ISelector selection, AnimationFunction animation, Sounds soundEffect, string description = "", EffectFunction extraEffect = null)
+        : base(name, cooldown, DetermineMoveType(condition), StatusAilment.IsPositive(condition.effect) ? Targets.Allies : Targets.Enemies, selection, null, animation, soundEffect, description)
     {
         this.condition = condition;
         ApplyEffect = ApplyStatus;

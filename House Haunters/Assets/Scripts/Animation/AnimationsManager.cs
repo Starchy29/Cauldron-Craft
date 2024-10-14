@@ -42,4 +42,11 @@ public class AnimationsManager : MonoBehaviour
             animationQueue.Peek().Start();
         }
     }
+
+    public void QueueSound(Sounds sound, float pitch = 1f) {
+        animationQueue.Enqueue(new FunctionAnimator(() => { SoundManager.Instance.PlaySound(sound, pitch); }));
+        if(animationQueue.Count == 1) {
+            animationQueue.Peek().Start();
+        }
+    }
 }

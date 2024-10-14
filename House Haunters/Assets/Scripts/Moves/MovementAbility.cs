@@ -6,7 +6,7 @@ using UnityEngine;
 public class MovementAbility : Move
 {
     // constructor for a default walk move
-    public MovementAbility(string name) : base(name, 1, MoveType.Movement, Targets.StandableSpot, PathSelector.Singleton, null, AnimateWalk, "Reposition to a nearby tile.") {
+    public MovementAbility(string name) : base(name, 1, MoveType.Movement, Targets.StandableSpot, PathSelector.Singleton, null, AnimateWalk, Sounds.None, "Reposition to a nearby tile.") {
         ApplyEffect = MoveMonster;
     }
 

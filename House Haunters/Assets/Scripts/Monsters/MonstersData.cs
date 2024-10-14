@@ -25,87 +25,87 @@ public class MonstersData
         monsterTypes = new MonsterType[Enum.GetValues(typeof(MonsterName)).Length];
 
         monsterTypes[(int)MonsterName.LostSoul] = new MonsterType(MonsterName.LostSoul, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
-            /*25*/5, 4,
-            new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(6); }, AnimateGlow(2f, new Color(0.2f, 0.7f, 0.9f)), "Heals an ally for 6 health."),
+            25, 4,
+            new Move("Revitalize", 1, MoveType.Heal, Move.Targets.Allies, new RangeSelector(2, false, true), (user, tile) => { LevelGrid.Instance.GetMonster(tile).Heal(6); }, AnimateGlow(2f, new Color(0.2f, 0.7f, 0.9f)), Sounds.Spook, "Heals an ally for 6 health."),
             new StatusMove("Haunt", 2, new StatusAilment(StatusEffect.Haunt, 2, prefabs.spookHaunt), RangeSelector.MeleeSelector, 
-                (user, targets) => { AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered), true)); }, "The target takes 1.5x damage for 2 turns.")
+                (user, targets) => { AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered), true)); }, Sounds.Screech, "The target takes 1.5x damage for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Demon] = new MonsterType(MonsterName.Demon, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Decay },
             25, 4,
-            new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.fireball, prefabs.fireballBlast, 10f), "Deals 8 damage to the target and 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); }),
-            new StatusMove("Ritual", 2, new StatusAilment(StatusEffect.Power, 2, prefabs.demonStrength), SelfSelector.Instance, AnimateGlow(1.5f, Color.red), "Lose 3 life to gain power next turn", (user, tile) => user.TakeDamage(3))
+            new Attack("Fireball", 1, 8, new RangeSelector(3, false, true), AnimateProjectile(prefabs.fireball, prefabs.fireballBlast, 10f), Sounds.None, "Deals 8 damage to the target and 4 damage to enemies adjacent to the target.", (user, target, healthLost) => { DealSplashDamage(user, target.Tile, 4); }),
+            new StatusMove("Ritual", 2, new StatusAilment(StatusEffect.Power, 2, prefabs.demonStrength), SelfSelector.Instance, AnimateGlow(1.5f, Color.red), Sounds.Ritual, "Lose 3 life to gain power next turn", (user, tile) => user.TakeDamage(3))
         );
 
         monsterTypes[(int)MonsterName.Cactus] = new MonsterType(MonsterName.Cactus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
-            new Attack("Barb Bullet", 1, 7, new DirectionSelector(6, true), AnimateBarbBullet, "Deals 7 damage and pierces through enemies."),
+            new Attack("Barb Bullet", 1, 7, new DirectionSelector(6, true), AnimateBarbBullet, Sounds.None, "Deals 7 damage and pierces through enemies."),
             new ZoneMove("Thorn Trap", 2, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 5, 0, (lander) => { lander.TakeDamage(6); }, true, true), 
-                AnimateLobber(prefabs.thornShot, 2f, 0.8f), "Places a trap that blocks enemies and deals 6 damage when stepped on.")
+                AnimateLobber(prefabs.thornShot, 2f, 0.8f), Sounds.None, "Places a trap that blocks enemies and deals 6 damage when stepped on.")
         );
 
         tangledStatus = new StatusAilment(StatusEffect.Slowness, 2, prefabs.tangleVines);
         monsterTypes[(int)MonsterName.Flytrap] = new MonsterType(MonsterName.Flytrap, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
-            new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateMeleeWithParticle(prefabs.chompTeeth), "Deals 12 damage."),
-            new Move("Vine Grasp", 2, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, "Pulls the target to the user and slows it for 2 turns.")
+            new Attack("Chomp", 1, 12, RangeSelector.MeleeSelector, AnimateMeleeWithParticle(prefabs.chompTeeth), Sounds.Slash, "Deals 12 damage."),
+            new Move("Vine Grasp", 2, MoveType.Shift, Move.Targets.Enemies, new DirectionSelector(4, false), PullTarget, null, Sounds.None, "Pulls the target to the user and slows it for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Golem] = new MonsterType(MonsterName.Golem, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             22, 5,
-            new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.auraStatus), new RangeSelector(2, false, true), AnimateGlow(1.5f, Color.cyan), "Increases an ally's damage by 1.5x for 1 turn."),
-            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.crystalShield), RangeSelector.MeleeSelector, meleeAnimation, "Halves the damage an ally receives for 2 turns.")
+            new StatusMove("Aura Boost", 1, new StatusAilment(StatusEffect.Power, 1, prefabs.auraStatus), new RangeSelector(2, false, true), AnimateGlow(1.5f, Color.cyan), Sounds.Static, "Increases an ally's damage by 1.5x for 1 turn."),
+            new StatusMove("Crystallize", 2, new StatusAilment(StatusEffect.Sturdy, 2, prefabs.crystalShield), RangeSelector.MeleeSelector, meleeAnimation, Sounds.Crystallize, "Halves the damage an ally receives for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Automaton] = new MonsterType(MonsterName.Automaton, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Mineral },
             28, 2,
-            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.fireball, 3f, 1f, prefabs.fireballBlast), "Deals 9 damage in a 2x2 square. Cannot be used if the user has moved this turn."),
-            new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, "Receive half damage for a turn.")
+            new Attack("Flame Cannon", 1, 9, new ZoneSelector(5, 2, true), AnimateLobber(prefabs.fireball, 3f, 1f, prefabs.fireballBlast), Sounds.None, "Deals 9 damage in a 2x2 square. Cannot be used if the user has moved this turn."),
+            new StatusMove("Fortify", 2, new StatusAilment(StatusEffect.Sturdy, 1, prefabs.bastionShield), SelfSelector.Instance, null, Sounds.Shield, "Receive half damage for a turn.")
         );
         monsterTypes[(int)MonsterName.Automaton].Moves[MonsterType.PRIMARY_INDEX].CantWalkFirst = true;
 
         monsterTypes[(int)MonsterName.Fungus] = new MonsterType(MonsterName.Fungus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Decay },
             28, 3,
-            new StatusMove("Infect", 1, new StatusAilment(StatusEffect.Poison, 3, prefabs.poisonSpores), new RangeSelector(2, false, true), AnimateLobber(prefabs.sporeShot, 0.8f, 0.7f), "Deals 5 damage for 3 turns."),
-            new StatusMove("Psychic Spores", 1, new StatusAilment(StatusEffect.Fear, 2, prefabs.fearStatus), RangeSelector.MeleeSelector, meleeAnimation, "Halves the target's damage for 2 turns.")
+            new StatusMove("Infect", 1, new StatusAilment(StatusEffect.Poison, 3, prefabs.poisonSpores), new RangeSelector(2, false, true), AnimateLobber(prefabs.sporeShot, 0.8f, 0.7f), Sounds.None, "Deals 5 damage for 3 turns."),
+            new StatusMove("Psychic Spores", 1, new StatusAilment(StatusEffect.Fear, 2, prefabs.fearStatus), RangeSelector.MeleeSelector, meleeAnimation, Sounds.None, "Halves the target's damage for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Jackolantern] = new MonsterType(MonsterName.Jackolantern, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Mineral },
             22, 4,
-            new StatusMove("Will o' Wisp", 1, new StatusAilment(StatusEffect.Haunt, 1, prefabs.willOWisps), new RangeSelector(3, false, true), AnimateProjectile(prefabs.willOWisps, null, 5f, false, false), "The target receives 1.5x damage this turn."),
-            new StatusMove("Hex", 2, new StatusAilment(StatusEffect.Cursed, 3, prefabs.hexStatus), new RangeSelector(2, false, true), AnimateGlow(1.5f, new Color(0.5f, 0.1f, 0.8f)), "Makes an ally deal 4 revenge damage for 3 turns.")
+            new StatusMove("Will o' Wisp", 1, new StatusAilment(StatusEffect.Haunt, 1, prefabs.willOWisps), new RangeSelector(3, false, true), AnimateProjectile(prefabs.willOWisps, null, 5f, false, false), Sounds.None, "The target receives 1.5x damage this turn."),
+            new StatusMove("Hex", 2, new StatusAilment(StatusEffect.Cursed, 3, prefabs.hexStatus), new RangeSelector(2, false, true), AnimateGlow(1.5f, new Color(0.5f, 0.1f, 0.8f)), Sounds.Magic, "Makes an ally deal 4 revenge damage for 3 turns.")
         );
 
         monsterTypes[(int)MonsterName.Sludge] = new MonsterType(MonsterName.Sludge, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Flora },
             25, 4,
-            new Attack("Blob Lob", 1, 8, new RangeSelector(4, false, true), AnimateLobber(prefabs.sludgeLob, 2.0f, 0.6f), "Deals 8 damage."),
+            new Attack("Blob Lob", 1, 8, new RangeSelector(4, false, true), AnimateLobber(prefabs.sludgeLob, 2.0f, 0.6f), Sounds.None, "Deals 8 damage."),
             new ZoneMove("Toxic Puddle", 3, ZoneSelector.AdjacentSelector, TileAffector.CreateBlueprint(prefabs.sludgeZone, 3, 0, null, false, false, DealPuddleDamage),
-                AnimateStretching(new List<StretchType> { StretchType.Horizontal }, 1.5f, 1f), "Places a zone that deals 5 damage to enemies that stand on it.")
+                AnimateStretching(new List<StretchType> { StretchType.Horizontal }, 1.5f, 1f), Sounds.None, "Places a zone that deals 5 damage to enemies that stand on it.")
         );
 
         monsterTypes[(int)MonsterName.Fossil] = new MonsterType(MonsterName.Fossil, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Decay },
             22, 3,
-            new Attack("Bone Shot", 1, 10, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, 16f), "Deals 10 damage."),
-            new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, 1, null), meleeAnimation, "Places an area that slows enemies passing through.")
+            new Attack("Bone Shot", 1, 10, new DirectionSelector(5, false), AnimateLinearShot(prefabs.boneShot, 16f), Sounds.None, "Deals 10 damage."),
+            new ZoneMove("Quicksand", 3, new ZoneSelector(2, 2), TileAffector.CreateBlueprint(prefabs.quicksand, 3, 1, null), meleeAnimation, Sounds.None, "Places an area that slows enemies passing through.")
         );
 
         monsterTypes[(int)MonsterName.Phantom] = new MonsterType(MonsterName.Phantom, new List<Ingredient>() { Ingredient.Decay, Ingredient.Decay, Ingredient.Mineral },
             20, 5,
-            new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, AnimateMeleeWithParticle(prefabs.phantomSlash), "Deals 11 damage."),
-            new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, "Moves to the target tile and deals 9 damage to enemies passed through.")
+            new Attack("Slash", 1, 11, RangeSelector.MeleeSelector, AnimateMeleeWithParticle(prefabs.phantomSlash), Sounds.Slash, "Deals 11 damage."),
+            new Move("Pierce", 3, MoveType.Shift, Move.Targets.StandableSpot, new DirectionSelector(3, false, false), DashSlash, null, Sounds.None, "Moves to the target tile and deals 9 damage to enemies passed through.")
         );
 
         monsterTypes[(int)MonsterName.Beast] = new MonsterType(MonsterName.Beast, new List<Ingredient>() { Ingredient.Mineral, Ingredient.Mineral, Ingredient.Flora },
             25, 4,
-            new Attack("Claw", 1, 9, new ZoneSelector(1, 2), AnimateClaw, "Deals 9 damage in an arc."),
-            new StatusMove("Battle Cry", 5, new StatusAilment(StatusEffect.Swift, 2, prefabs.beastSpeed), ZoneSelector.AOESelector, AnimateBattleCry, "Increases speed of all nearby allies for 2 turns.")
+            new Attack("Claw", 1, 9, new ZoneSelector(1, 2), AnimateClaw, Sounds.Slash, "Deals 9 damage in an arc."),
+            new StatusMove("Battle Cry", 5, new StatusAilment(StatusEffect.Swift, 2, prefabs.beastSpeed), ZoneSelector.AOESelector, AnimateBattleCry, Sounds.Roar, "Increases speed of all nearby allies for 2 turns.")
         );
 
         monsterTypes[(int)MonsterName.Amalgamation] = new MonsterType(MonsterName.Amalgamation, new List<Ingredient>() { Ingredient.Decay, Ingredient.Flora, Ingredient.Mineral },
             30, 3,
-            new Attack("Lash Out", 1, 7, new ZoneSelector(1, 3), AnimateLashOut, "Deals 7 damage to all adjacent enemies."),
+            new Attack("Lash Out", 1, 7, new ZoneSelector(1, 3), AnimateLashOut, Sounds.None, "Deals 7 damage to all adjacent enemies."),
             new Move("Mend Flesh", 2, MoveType.Heal, Move.Targets.Allies, SelfSelector.Instance, (user, tile) => user.Heal(4), 
-                AnimateStretching(new List<StretchType> { StretchType.Horizontal, StretchType.Vertical, StretchType.Horizontal, StretchType.Vertical  }, 0.5f, 0.3f), "Heal 4 health")
+                AnimateStretching(new List<StretchType> { StretchType.Horizontal, StretchType.Vertical, StretchType.Horizontal, StretchType.Vertical  }, 0.5f, 0.3f), Sounds.None, "Heal 4 health")
         );
     }
 
@@ -199,6 +199,7 @@ public class MonstersData
         AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user, 0.25f, false));
         AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user, 0.25f, false));
         AnimationsManager.Instance.QueueAnimation(new RadialAnimator(prefab, user, 0.25f, false));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(0.5f));
     }
 
     private static void AnimateClaw(Monster user, Selection targets) {
@@ -223,6 +224,7 @@ public class MonstersData
 
     private static void AnimateLashOut(Monster user, Selection targets) {
         foreach(Vector2Int tile in targets.Filtered) {
+            AnimationsManager.Instance.QueueSound(Sounds.Bash);
             AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)tile)));
         }
     }
@@ -275,6 +277,10 @@ public class MonstersData
             if(hit != null && hit.Controller != user.Controller) {
                 hits.Add(hit);
             }
+        }
+
+        if(hits.Count > 0) {
+            AnimationsManager.Instance.QueueSound(Sounds.Pierce);
         }
 
         foreach(Monster hit in hits) {

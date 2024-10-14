@@ -11,8 +11,8 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.Auto;
-    public static TeamPreset team1Choice = Team.Alchemists;
+    public static GameMode Mode = GameMode.PVP;
+    public static TeamPreset team1Choice = Team.Occultists;
     public static TeamPreset team2Choice = Team.Witchcrafters;
     public static GameManager Instance { get; private set; }
 

@@ -6,6 +6,8 @@ public class IngredientDrop : MonoBehaviour
 {
     [SerializeField] private GameObject SplashPrefab;
 
+    public int index;
+
     private Vector3 startPos;
     private Vector3 endPos;
     private float startScale;
@@ -30,6 +32,7 @@ public class IngredientDrop : MonoBehaviour
             spawnedSplash = true;
             GameObject splash = Instantiate(SplashPrefab);
             splash.transform.position = transform.position + new Vector3(0, 0.35f, 0);
+            SoundManager.Instance.PlaySound(Sounds.WaterPlunk, 0.8f + index * 0.1f);
         }
 
         if(t < 0f || t > 1f) {

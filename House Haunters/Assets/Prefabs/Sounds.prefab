@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2569606358384614096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5535678603028419408}
+  - component: {fileID: 6910075894920530780}
+  m_Layer: 0
+  m_Name: Sounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5535678603028419408
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2569606358384614096}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.4563317, y: 0.090350404, z: -0.059913933}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6910075894920530780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2569606358384614096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d55aa6a8b9638ba45a5e7fc1bda44a96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waterPlunk: {fileID: 8300000, guid: c4403060127746c498bd2fa075f51b28, type: 3}
+  roar: {fileID: 8300000, guid: 2eaa0c21190b7bb42bdd9aae15f3f37b, type: 3}
+  crystallize: {fileID: 8300000, guid: 92419d1f064be7b49bbd6590edf060c9, type: 3}
+  spook: {fileID: 8300000, guid: daf44c462cb2aef448624783b4c44d5f, type: 3}
+  ritual: {fileID: 8300000, guid: 0214f1f5dcd656d49a685bd87a8a7ec4, type: 3}
+  shield: {fileID: 8300000, guid: 3e6b69c430fc3964dbda61615c43ac88, type: 3}
+  slash: {fileID: 8300000, guid: 529be7ee46f2561408c2db9a073a5586, type: 3}
+  bash: {fileID: 8300000, guid: 1d9b8cf0456266346abcb0e4476fe6ee, type: 3}
+  magic: {fileID: 8300000, guid: 320f0e10ed277da43a1020191d3c504b, type: 3}
+  staticBuzz: {fileID: 8300000, guid: 996ba5fcc94ae1e49a42407f75594630, type: 3}
+  screech: {fileID: 8300000, guid: 9e3d592ad39e39640b93e90eb0ce42c4, type: 3}
+  pierce: {fileID: 8300000, guid: 839ccf434ed60114685c6057cb4ce7b1, type: 3}

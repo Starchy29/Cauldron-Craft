@@ -88,10 +88,10 @@ public class Monster : GridEntity
         }
 
         int numChunks = 1;
-        if(amount >= 10) {
+        if(amount > 10) {
             numChunks = 3;
         }
-        else if(amount >= 5) {
+        else if(amount > 5) {
             numChunks = 2;
         }
 

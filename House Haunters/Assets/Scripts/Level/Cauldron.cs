@@ -70,6 +70,7 @@ public class Cauldron : GridEntity
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         spawned.gameObject.SetActive(false);
         AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
+        AnimationsManager.Instance.QueueSound(Sounds.Spawn);
         AnimationsManager.Instance.QueueFunction(() => {
             spawned.gameObject.SetActive(true);
             cookIndicator.gameObject.SetActive(false);

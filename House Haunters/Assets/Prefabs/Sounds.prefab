@@ -44,15 +44,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d55aa6a8b9638ba45a5e7fc1bda44a96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonHover: {fileID: 8300000, guid: 2eccda864eb35934c812827ba7852e3a, type: 3}
+  buttonClick: {fileID: 8300000, guid: c6e79d8a71bd47244aca301bf6a67446, type: 3}
+  backMenu: {fileID: 8300000, guid: e12e0df449f938c49ba0cf24d0162616, type: 3}
+  tileHover: {fileID: 8300000, guid: e3a524217721cd245bcdbf85c80ce153, type: 3}
+  start: {fileID: 8300000, guid: d3dd6dcc367c7c74e900db742da9a2e1, type: 3}
+  pause: {fileID: 8300000, guid: 1fc88579449a86f4fa18960f7d0abc4e, type: 3}
   waterPlunk: {fileID: 8300000, guid: c4403060127746c498bd2fa075f51b28, type: 3}
+  death: {fileID: 8300000, guid: 59af54dca5d3bc9438b41ff2049a41b8, type: 3}
+  capture: {fileID: 8300000, guid: 2a2cb4ed5088f06478493e0a83953df0, type: 3}
+  captureLoss: {fileID: 8300000, guid: 7c801caca003fe34d9ee663b6adc8f85, type: 3}
+  pop: {fileID: 8300000, guid: f9c95f2549e98884ba879c0b9e631c53, type: 3}
+  spawn: {fileID: 8300000, guid: 8b6c2a6eee1ec3248bd79409410c201f, type: 3}
   roar: {fileID: 8300000, guid: 2eaa0c21190b7bb42bdd9aae15f3f37b, type: 3}
   crystallize: {fileID: 8300000, guid: 92419d1f064be7b49bbd6590edf060c9, type: 3}
-  spook: {fileID: 8300000, guid: daf44c462cb2aef448624783b4c44d5f, type: 3}
+  soulHeal: {fileID: 8300000, guid: daf44c462cb2aef448624783b4c44d5f, type: 3}
   ritual: {fileID: 8300000, guid: 0214f1f5dcd656d49a685bd87a8a7ec4, type: 3}
   shield: {fileID: 8300000, guid: 3e6b69c430fc3964dbda61615c43ac88, type: 3}
   slash: {fileID: 8300000, guid: 529be7ee46f2561408c2db9a073a5586, type: 3}
   bash: {fileID: 8300000, guid: 1d9b8cf0456266346abcb0e4476fe6ee, type: 3}
-  magic: {fileID: 8300000, guid: 320f0e10ed277da43a1020191d3c504b, type: 3}
-  staticBuzz: {fileID: 8300000, guid: 996ba5fcc94ae1e49a42407f75594630, type: 3}
-  screech: {fileID: 8300000, guid: 9e3d592ad39e39640b93e90eb0ce42c4, type: 3}
+  hex: {fileID: 8300000, guid: b7d94e5cb061b1e4bb92b654e1c3ce76, type: 3}
+  aura: {fileID: 8300000, guid: 193425f26a87afe4f836522cce0e7f98, type: 3}
+  haunt: {fileID: 8300000, guid: 9e3d592ad39e39640b93e90eb0ce42c4, type: 3}
   pierce: {fileID: 8300000, guid: 839ccf434ed60114685c6057cb4ce7b1, type: 3}
+  whoosh: {fileID: 8300000, guid: da2465a604152a644a859112da5eb5f1, type: 3}
+  sand: {fileID: 8300000, guid: 88949b96427f035478b7f6984a842ad8, type: 3}
+  bone: {fileID: 8300000, guid: 362f7816488bde34898f8884824fa79d, type: 3}
+  sludgeToss: {fileID: 8300000, guid: b865cf55b9d5ef6468e771a847a0bd75, type: 3}
+  sludgeHit: {fileID: 8300000, guid: fefacc573c6ed2e42a1b343809a1bff6, type: 3}
+  sludgePuddle: {fileID: 8300000, guid: f501ff27e4cfc3040a74596f4d72a7af, type: 3}
+  plantGrowth: {fileID: 8300000, guid: 9ec5a183c34afe74ca42b1b0297c1470, type: 3}
+  stretchFlesh: {fileID: 8300000, guid: ef92c9ffde848984a83d4ce4c25382f7, type: 3}
+  bubbles: {fileID: 8300000, guid: de49029cd6f87a2478a061664f58646c, type: 3}
+  fireSpawn: {fileID: 8300000, guid: cab115512984eb443a4bda3abe3e0e3f, type: 3}
+  fireHit: {fileID: 8300000, guid: 1db81257d0f28f548b54e0a21204c447, type: 3}
+  shroomGrow: {fileID: 8300000, guid: 484ff17aba1fdc64b819be6a8edddfea, type: 3}
+  vineLash: {fileID: 8300000, guid: e9bf94917e7097b409dc71e1c5b0cc2d, type: 3}
+  bump: {fileID: 8300000, guid: c1a9feaa803548c4fae7786d338b5f98, type: 3}
+  walks:
+  - {fileID: 8300000, guid: e96a1a177381fbe47a58a732d109e508, type: 3}
+  - {fileID: 8300000, guid: 3a7cb34a4e1a60e4fa56f4477e842648, type: 3}
+  - {fileID: 8300000, guid: e25953be91b7a4a44b55fb974c013f7f, type: 3}

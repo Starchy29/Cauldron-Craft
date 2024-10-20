@@ -108,10 +108,7 @@ public class Monster : GridEntity
         }
 
         if(Health == 0) {
-            //AnimationsManager.Instance.QueueFunction(() => {
-            //    GameObject deathParticle = Instantiate(PrefabContainer.Instance.deathParticle);
-            //    deathParticle.transform.position = SpriteModel.transform.position;
-            //});
+            AnimationsManager.Instance.QueueSound(Sounds.Death);
             AnimationsManager.Instance.QueueFunction(() => { 
                 for(int i = 0; i < 15; i++) {
                     SpawnHurtParticle();
@@ -212,6 +209,7 @@ public class Monster : GridEntity
     private void CheckStatuses() {
         if(HasStatus(StatusEffect.Poison)) {
             AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
+            AnimationsManager.Instance.QueueSound(Sounds.Bubbles);
             AnimationsManager.Instance.QueueFunction(() => {
                 GameObject particle = Instantiate(PrefabContainer.Instance.poisonParticle);
                 particle.transform.position = SpriteModel.transform.position;

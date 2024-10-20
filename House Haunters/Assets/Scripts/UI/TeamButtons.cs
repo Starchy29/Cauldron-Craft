@@ -13,6 +13,7 @@ public class TeamButtons : MonoBehaviour
     private SpriteRenderer[] buttons;
     private Rect[] clickAreas;
     private int selectedIndex;
+    private int lastHovered;
 
     private static Color hoveredColor = new Color(0.2f, 0.9f, 0.8f);
     private static Color baseColor = new Color(0.85f, 0.85f, 0.85f);
@@ -46,11 +47,17 @@ public class TeamButtons : MonoBehaviour
             }
         }
 
+        if(hoveredIndex >= 0 && hoveredIndex != lastHovered && hoveredIndex != selectedIndex) {
+            SoundManager.Instance.PlaySound(Sounds.ButtonHover);
+        }
+        lastHovered = hoveredIndex;
+
         if(hoveredIndex < 0 || hoveredIndex == selectedIndex) {
             return;
         }
 
         if(InputManager.Instance.SelectPressed()) {
+            SoundManager.Instance.PlaySound(Sounds.ButtonClick);
             selectedIndex = hoveredIndex;
             TeamPreset selectedTeam = Team.Alchemists;
             if(selectedIndex == 1) {

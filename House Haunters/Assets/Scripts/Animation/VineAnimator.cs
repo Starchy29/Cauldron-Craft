@@ -72,6 +72,7 @@ public class VineAnimator : IMoveAnimator
 
                 // apply slowness effect in the middle
                 grabbed.ApplyStatus(slowness).SetActive(true);
+                SoundManager.Instance.PlaySound(Sounds.VineLash);
             }
         }
         

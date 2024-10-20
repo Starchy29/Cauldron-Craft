@@ -156,6 +156,7 @@ public class PrefabContainer : MonoBehaviour
     #region Jackolantern
     public Sprite jackolanternSprite;
     public GameObject willOWisps;
+    public GameObject wispAttack;
     public GameObject hexStatus;
     #endregion
 

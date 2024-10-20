@@ -64,6 +64,7 @@ public class ResourcePile : GridEntity
         for(int i = 0; i < harvestCount; i ++) {
             AnimationsManager.Instance.QueueFunction(SpawnHarvestParticle);
         }
+        AnimationsManager.Instance.QueueSound(Sounds.Pop);
         AnimationsManager.Instance.QueueAnimation(new PauseAnimator(FlingParticle.DURATION));
     }
 
@@ -114,6 +115,7 @@ public class ResourcePile : GridEntity
                 color = Controller.TeamColor;
             }
 
+            AnimationsManager.Instance.QueueSound(Controller == null ? Sounds.CaptureLoss : Sounds.Capture);
             AnimationsManager.Instance.QueueFunction(() => {
                 LevelHighlighter.Instance.UpdateCapture(Tile, newController, nowContested);
                 SetOutlineColor(color);

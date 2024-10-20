@@ -19,6 +19,7 @@ public class AutoButton : MonoBehaviour
     [SerializeField] private ClickFunction clickFunction;
     [SerializeField] private SpriteRenderer sprite;
     [SerializeField] public GameObject tooltip;
+    [SerializeField] private Sounds clickSound = Sounds.ButtonClick;
     private bool hovered;
 
     private bool disabled;
@@ -76,8 +77,13 @@ public class AutoButton : MonoBehaviour
     void Update() {
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
         bool nowHovered = Global.GetObjectArea(gameObject).Contains(mousePos);
-        if(!hovered && nowHovered && OnHover != null) {
-            OnHover();
+        if(!hovered && nowHovered) {
+            if(!disabled) {
+                SoundManager.Instance.PlaySound(Sounds.ButtonHover);
+            }
+            if(OnHover != null) {
+                OnHover();
+            }
         } 
         else if(hovered && !nowHovered) {
             if(OnMouseLeave != null) {
@@ -99,6 +105,7 @@ public class AutoButton : MonoBehaviour
         }
 
         if(!disabled && hovered && InputManager.Instance.SelectPressed()) {
+            SoundManager.Instance.PlaySound(clickSound);
             OnClick();
         }
 

@@ -33,6 +33,8 @@ public class MenuManager : MonoBehaviour
     private bool filterTargets;
     private int selectedMoveSlot;
     private Monster selected;
+    private GridEntity lastHoveredEntity;
+    private int lastHoveredIndex;
 
     public static MenuManager Instance {  get; private set; }
     public bool Paused { get { return state == SelectionTarget.Paused; } }
@@ -90,6 +92,11 @@ public class MenuManager : MonoBehaviour
                 return;
             }
 
+            if(hoveredTargetIndex >= 0 && hoveredTargetIndex != lastHoveredIndex) {
+                SoundManager.Instance.PlaySound(Sounds.TileHover);
+            }
+            lastHoveredIndex = hoveredTargetIndex;
+
             LevelHighlighter.Instance.ColorTiles(filterTargets ? targetOptions[hoveredTargetIndex].Filtered : targetOptions[hoveredTargetIndex].Unfiltered, HighlightType.Hovered);
 
             // if moving into a capture point, highlight the capture point
@@ -112,6 +119,9 @@ public class MenuManager : MonoBehaviour
             if(input.SelectPressed()) {
                 // use the move on the hovered target
                 SetState(SelectionTarget.None);
+                if(selectedMoveSlot == MonsterType.WALK_INDEX) {
+                    SoundManager.Instance.PlaySound(Sounds.ButtonClick);
+                }
                 selected.UseMove(selectedMoveSlot, targetOptions[hoveredTargetIndex]);   
             }
             return;
@@ -160,6 +170,10 @@ public class MenuManager : MonoBehaviour
 
         // check hovered entity
         GridEntity hoveredEntity = level.GetEntity(tile);
+        if(hoveredEntity != null && hoveredEntity != lastHoveredEntity && !(hoveredEntity is ResourcePile)) {
+            SoundManager.Instance.PlaySound(Sounds.TileHover);
+        }
+        lastHoveredEntity = hoveredEntity;
 
         if(hoveredEntity is Monster) {
             hoveredHealthbar = ((Monster)hoveredEntity).healthBar;
@@ -172,10 +186,12 @@ public class MenuManager : MonoBehaviour
 
         if(input.SelectPressed()) {
             if(hoveredEntity is Cauldron) {
+                SoundManager.Instance.PlaySound(Sounds.ButtonClick);
                 SetState(SelectionTarget.CraftChoice);
                 buyMenu.Open(hoveredEntity.Controller);
             }
             else if(hoveredEntity is Monster) {
+                SoundManager.Instance.PlaySound(Sounds.ButtonClick);
                 moveMenu.GetComponent<MoveMenu>().Open((Monster)hoveredEntity, controller);
                 selected = (Monster)hoveredEntity;
                 SetState(SelectionTarget.Move);
@@ -205,6 +221,8 @@ public class MenuManager : MonoBehaviour
         endTurnButton.gameObject.SetActive(false);
         buyMenu.gameObject.SetActive(false);
         pauseMenu.SetActive(false);
+        lastHoveredEntity = null;
+        lastHoveredIndex = -1;
 
         if(controller != null) {
             foreach(Monster teammate in controller.Teammates) {
@@ -268,6 +286,7 @@ public class MenuManager : MonoBehaviour
                 break;
             case SelectionTarget.Paused:
                 pauseMenu.SetActive(true);
+                SoundManager.Instance.PlaySound(Sounds.Pause);
                 break;
             case SelectionTarget.Targets:
             case SelectionTarget.CraftChoice:
@@ -281,12 +300,15 @@ public class MenuManager : MonoBehaviour
             case SelectionTarget.Move:
             case SelectionTarget.CraftChoice:
                 SetState(SelectionTarget.Monster);
+                SoundManager.Instance.PlaySound(Sounds.BackMenu);
                 break;
             case SelectionTarget.Targets:
                 SetState(SelectionTarget.Move);
+                SoundManager.Instance.PlaySound(Sounds.BackMenu);
                 break;
             case SelectionTarget.Paused:
                 SetState(gameManager.CurrentTurn == controller ? SelectionTarget.Monster : SelectionTarget.None);
+                SoundManager.Instance.PlaySound(Sounds.BackMenu);
                 break;
         }
     }

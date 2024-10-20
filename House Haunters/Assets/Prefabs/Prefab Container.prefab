@@ -103,6 +103,7 @@ MonoBehaviour:
   fearStatus: {fileID: 440044685583728902, guid: 559f44e367abef14aa941f00c845bc7a, type: 3}
   jackolanternSprite: {fileID: 21300000, guid: 69016b95560370e48b769880b801ce4f, type: 3}
   willOWisps: {fileID: 184069682565448650, guid: 8055708d1ede32944a519a64fe241d46, type: 3}
+  wispAttack: {fileID: 1772545031696556078, guid: 0e972855ef16e61409b102f23a2f60f9, type: 3}
   hexStatus: {fileID: 8192229477811552408, guid: ec3846a593fccfd429c25f983f94de48, type: 3}
   golemSprite: {fileID: 21300000, guid: 83d32868ced4456408251b721a984570, type: 3}
   crystalShield: {fileID: 3665705297723811173, guid: 40db46c88a716c447a42a9585cbd3713, type: 3}

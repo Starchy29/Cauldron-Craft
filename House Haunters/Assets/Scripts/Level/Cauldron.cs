@@ -69,14 +69,16 @@ public class Cauldron : GridEntity
         // spawn the monster
         Monster spawned = GameManager.Instance.SpawnMonster(cookingMonster, spawnSpot, Controller);
         spawned.gameObject.SetActive(false);
+        int currentCraftCount = Controller.TotalCrafted;
+        bool wasNewCraft = newCraft;
         AnimationsManager.Instance.QueueAnimation(new CameraAnimator(transform.position));
         AnimationsManager.Instance.QueueSound(Sounds.Spawn);
         AnimationsManager.Instance.QueueFunction(() => {
             spawned.gameObject.SetActive(true);
             cookIndicator.gameObject.SetActive(false);
-            if(newCraft) {
+            if(wasNewCraft) {
                 craftCounter.gameObject.SetActive(true);
-                craftCounter.text = Controller.TotalCrafted + "/13";
+                craftCounter.text = currentCraftCount + "/13";
             } else {
                 indicator.SetActive(false);
             }

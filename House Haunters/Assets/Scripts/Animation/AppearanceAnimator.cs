@@ -15,7 +15,9 @@ public class AppearanceAnimator : IMoveAnimator
     }
 
     public void Start() {
-        appearer.SetActive(visible);
+        if(appearer != null) {
+            appearer.SetActive(visible);
+        }
         Completed = true;
     }
 

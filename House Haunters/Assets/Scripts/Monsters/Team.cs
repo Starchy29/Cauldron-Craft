@@ -112,6 +112,10 @@ public class Team
             CraftedMonsters[startTeam[i]] = true;
             TotalCrafted++;
         }
+
+        if(AI != null) {
+            AI.ChooseStartPlan();
+        }
     }
 
     public bool CanCraft() {

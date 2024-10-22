@@ -22,6 +22,7 @@ public class StatusAilment : IEquatable<StatusAilment>
     public GameObject visual;
     public StatusEffect effect;
     public int duration;
+    public StatusAilment blueprintMadeFrom;
 
     public StatusAilment(StatusEffect effect, int duration, GameObject visualPrefab) {
         this.effect = effect;

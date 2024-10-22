@@ -8,6 +8,7 @@ public struct GamePlan
     private Dictionary<Monster, ResourcePile> monsterAssignments;
     private Dictionary<ResourcePile, List<Monster>> assignedAllies;
     private List<Monster> unassigned;
+    private List<ResourcePile> persuedResources;
 
     public GamePlan(List<ResourcePile> allResources) {
         assignedAllies = new Dictionary<ResourcePile, List<Monster>>();
@@ -17,6 +18,7 @@ public struct GamePlan
 
         monsterAssignments = new Dictionary<Monster, ResourcePile>();
         unassigned = new List<Monster>();
+        persuedResources = new List<ResourcePile>();
     }
 
     public void Assign(Monster ally, ResourcePile resource) {
@@ -33,6 +35,7 @@ public struct GamePlan
         } else {
             assignedAllies[resource].Add(ally);
         }
+        UpdateGoals();
     }
 
     public void Remove(Monster ally) {
@@ -42,6 +45,7 @@ public struct GamePlan
             assignedAllies[monsterAssignments[ally]].Remove(ally);
         }
         monsterAssignments.Remove(ally);
+        UpdateGoals();
     }
 
     public List<Monster> GetAssignedAt(ResourcePile resource) {
@@ -54,5 +58,18 @@ public struct GamePlan
 
     public List<Monster> GetUnassigned() {
         return unassigned;
+    }
+
+    public List<ResourcePile> GetTargetResources() {
+        return persuedResources;
+    }
+
+    private void UpdateGoals() {
+        persuedResources.Clear();
+        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
+            if(assignedAllies[resource].Count > 0) {
+                persuedResources.Add(resource);
+            }
+        }
     }
 }

@@ -122,8 +122,9 @@ public class MonstersData
     private static Move.AnimationFunction AnimateMeleeWithParticle(GameObject particlePrefab) {
         return (Monster user, Selection targets) => {
             GameObject particle = GameObject.Instantiate(particlePrefab);
-            particle.transform.position = LevelGrid.Instance.GetMonster(targets.Filtered[0]).SpriteModel.transform.position;
             particle.SetActive(false);
+            Monster hitMonster = LevelGrid.Instance.GetMonster(targets.Filtered[0]);
+            AnimationsManager.Instance.QueueFunction(() => { particle.transform.position = hitMonster.SpriteModel.transform.position; });
             AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(particle, true));
             AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, Global.DetermineCenter(targets.Filtered)));
 
@@ -207,18 +208,21 @@ public class MonstersData
         Vector3 target = Global.DetermineCenter(targets.Unfiltered);
         particle.transform.position = target;
         particle.SetActive(false);
-        Vector3 direction = target - user.transform.position;
-        if(direction.y < 0 && direction.x < 0) {
-            particle.transform.rotation = Quaternion.Euler(0, 0, 90);
-            particle.GetComponent<SpriteRenderer>().flipX = true;
-        }
-        else if(direction.y < 0) {
-            particle.transform.rotation = Quaternion.Euler(0, 0, -90);
-        }
-        else if(direction.x < 0) {
-            particle.GetComponent<SpriteRenderer>().flipX = true;
-        }
-        AnimationsManager.Instance.QueueFunction(() => { particle.SetActive(true); });
+        
+        AnimationsManager.Instance.QueueFunction(() => { 
+            particle.SetActive(true); 
+            Vector3 direction = target - user.transform.position;
+            if(direction.y < 0 && direction.x < 0) {
+                particle.transform.rotation = Quaternion.Euler(0, 0, 90);
+                particle.GetComponent<SpriteRenderer>().flipX = true;
+            }
+            else if(direction.y < 0) {
+                particle.transform.rotation = Quaternion.Euler(0, 0, -90);
+            }
+            else if(direction.x < 0) {
+                particle.GetComponent<SpriteRenderer>().flipX = true;
+            }
+        });
         AnimationsManager.Instance.QueueAnimation(new ThrustAnimator(user.gameObject, target));
     }
 
@@ -285,9 +289,12 @@ public class MonstersData
             AnimationsManager.Instance.QueueSound(Sounds.Pierce);
         }
 
-        foreach(Monster hit in hits) {
-            SpawnPierceParticle(hit.Tile);
-        }
+        AnimationsManager.Instance.QueueFunction(() => { 
+            foreach(Monster hit in hits) {
+                SpawnPierceParticle(hit.Tile);
+            }
+        });
+        
         AnimationsManager.Instance.QueueAnimation(new PauseAnimator(0.3f));
         foreach(Monster hit in hits) {
             hit.TakeDamage(9, user);

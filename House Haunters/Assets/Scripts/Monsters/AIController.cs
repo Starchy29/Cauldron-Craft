@@ -33,10 +33,29 @@ public class AIController
     };
 
     private GamePlan plan;
+    Dictionary<Ingredient, int> allyNeeds = new Dictionary<Ingredient, int>();
 
     public AIController(Team team) {
         this.controlTarget = team;
         plan = new GamePlan(new List<ResourcePile>(GameObject.FindObjectsByType<ResourcePile>(FindObjectsSortMode.None)));
+    }
+
+    // called by Team.cs after the start team is spawned
+    public void ChooseStartPlan() {
+        // start attacking 2 random resources
+        Monster supporter = controlTarget.Teammates.Find((Monster teammate) => monsterRoles[teammate.Stats.Name] == TeamRole.Support);
+        if(supporter == null) {
+            supporter = controlTarget.Teammates[UnityEngine.Random.Range(0, controlTarget.Teammates.Count)];
+        }
+        List<Monster> attackers = controlTarget.Teammates.FindAll((Monster teammate) => teammate != supporter);
+
+        ResourcePile notAttacked = GameManager.Instance.AllResources[UnityEngine.Random.Range(0, GameManager.Instance.AllResources.Count)];
+        List<ResourcePile> attackTargets = GameManager.Instance.AllResources.FindAll((ResourcePile resource) => resource != notAttacked);
+
+        for(int i = 0; i < attackTargets.Count; i++) {
+            plan.Assign(attackers[i], attackTargets[i]);
+        }
+        plan.Assign(supporter, attackTargets[UnityEngine.Random.Range(0, attackTargets.Count)]);
     }
 
     public void RemoveMonster(Monster defeated) {
@@ -66,40 +85,67 @@ public class AIController
 
         // update the game plan
         Dictionary<ResourcePile, ResourceData> resourceData = EvaluateResources();
-        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            // unassign monsters if possible
+        List<ResourcePile> targets = new List<ResourcePile>(plan.GetTargetResources()); // moifies collection by unassigning, so need to copy
+        foreach(ResourcePile resource in targets) {
+            // unassign defending monsters if possible
             ResourceData info = resourceData[resource];
-            List<Monster> assignees = plan.GetAssignedAt(resource);
-            if(assignees.Count == 0) {
+            if(resource.Controller == null || resource.Contested) {
                 continue;
             }
-            
-            if(resource.Controller == controlTarget && !resource.Contested
-                && assignees.Count > 1 && (info.priority < 0.3f || info.threatValue < 0.5f)
-            ) {
-                // give up one defender
-                Monster leaver = assignees.Find((Monster ally) => monsterRoles[ally.Stats.Name] == TeamRole.Offense);
-                if(leaver == null) {
-                    leaver = assignees.Find((Monster ally) => monsterRoles[ally.Stats.Name] == TeamRole.Support);
+
+            List<Monster> assignees = plan.GetAssignedAt(resource);
+
+            if(info.priority < 0.1f || assignees.Find((Monster monster) => monsterRoles[monster.Stats.Name] != TeamRole.Support) == null) {
+                // abandon all
+                List<Monster> assignedHere = plan.GetAssignedAt(resource);
+                for(int i = assignedHere.Count - 1; i >= 0; i--) {
+                    plan.Assign(assignedHere[i], null);
                 }
-                if(leaver == null) {
-                    leaver = assignees[UnityEngine.Random.Range(0, assignees.Count)];
-                }
-                plan.Assign(leaver, null);
             }
-            else if(info.Advantage <= -2f) {
-                // abandon this attack
-                for(int i = assignees.Count - 1; i >= 0; i--) {
-                    plan.Assign(assignees[i], null);
+            else if(assignees.Count > 1 && info.threatValue < 0.5f) {
+                // leave one behind
+                Monster stayer = assignees.Find((Monster ally) => monsterRoles[ally.Stats.Name] == TeamRole.Defense);
+                if(stayer == null) {
+                    stayer = assignees.Find((Monster ally) => monsterRoles[ally.Stats.Name] == TeamRole.Offense);
+                }
+                if(stayer == null) {
+                    stayer = assignees[UnityEngine.Random.Range(0, assignees.Count)];
+                }
+                List<Monster> assignedHere = plan.GetAssignedAt(resource);
+                for(int i = assignedHere.Count - 1; i >= 0; i--) {
+                    if(assignedHere[i] == stayer) {
+                        continue;
+                    }
+                    plan.Assign(assignedHere[i], null);
                 }
             }
         }
 
-        // choose which resource to attack
+        // choose whether to launch an attack on a new resource or support an existing resource
         List<Monster> unassigned = plan.GetUnassigned();
-        ResourcePile objective = GameManager.Instance.AllResources.Max((ResourcePile resource) => resourceData[resource].priority);
-        for(int i = unassigned.Count - 1; i >= 0; i--) {
-            plan.Assign(unassigned[i], objective);
+        if(unassigned.Count > 0) {
+            // consider shoring up a defense or an existing attack
+            ResourcePile chosenTarget = null;
+            List<ResourcePile> activeTargets = plan.GetTargetResources();
+            if(activeTargets.Count > 0) {
+                chosenTarget = activeTargets.Min((ResourcePile resource) => resourceData[resource].Advantage);
+                if(activeTargets.Count < 3 
+                    && unassigned.FindAll((Monster monster) => monsterRoles[monster.Stats.Name] != TeamRole.Support).Count > 1
+                    && (resourceData[chosenTarget].priority < 0.3f || resourceData[chosenTarget].Advantage > 0)
+                ) {
+                    chosenTarget = null; // choose to attack instead
+                }
+            }
+
+            // choose a new resource to attack
+            if(chosenTarget == null) {
+                List<ResourcePile> attackOptions = GameManager.Instance.AllResources.FindAll((ResourcePile target) => !activeTargets.Contains(target));
+                chosenTarget = attackOptions.Max((ResourcePile option) => resourceData[option].priority);
+            }
+
+            for(int i = unassigned.Count - 1; i >= 0; i--) {
+                plan.Assign(unassigned[i], chosenTarget);
+            }
         }
 
         // order abilities
@@ -202,9 +248,9 @@ public class AIController
         // find the best walk destination
         ResourcePile assignment = plan.GetAssignmentOf(monster);
         List<Vector2Int> walkableTiles = walkOptions[monster].FindAll((Vector2Int tile) => LevelGrid.Instance.IsOpenTile(tile));
-        Vector2Int idealEndTile = walkableTiles.Count > 0 ? walkableTiles.Max((Vector2Int tile) => DeterminePositionValue(tile, assignment.Tile)) : monster.Tile;
-        float startPosValue = DeterminePositionValue(monster.Tile, assignment.Tile);
-        float idealEndValue = DeterminePositionValue(idealEndTile, assignment.Tile);
+        Vector2Int idealEndTile = walkableTiles.Count > 0 ? walkableTiles.Max((Vector2Int tile) => DeterminePositionValue(monster, tile, assignment)) : monster.Tile;
+        float startPosValue = DeterminePositionValue(monster, monster.Tile, assignment);
+        float idealEndValue = DeterminePositionValue(monster, idealEndTile, assignment);
 
         // consider simply walking
         if(walkableTiles.Count > 0) {
@@ -285,7 +331,7 @@ public class AIController
             Vector2Int walkDestination = positionTargets.Key;
             List<Selection> targetGroups = positionTargets.Value;
 
-            float posVal = DeterminePositionValue(walkDestination, plan.GetAssignmentOf(monster).Tile);
+            float posVal = DeterminePositionValue(monster, walkDestination, plan.GetAssignmentOf(monster));
             foreach(Selection targetGroup in targetGroups) {
                 if(targetGroup.Filtered.Count == 0) {
                     continue;
@@ -408,8 +454,8 @@ public class AIController
                     if(enemiesHit == 0) {
                         return -0.1f;
                     }
-
-                    return 0.4f * DeterminePositionValue(targets[0], plan.GetAssignmentOf(user).Tile) + 0.6f * enemiesHit;
+                    
+                    return 0.4f * DeterminePositionValue(user, targets[0], plan.GetAssignmentOf(user)) + 0.6f * enemiesHit;
 
                 case MonsterName.Flytrap:
                     // pull
@@ -420,24 +466,35 @@ public class AIController
         return 0.3f;
     }
 
-    // returns a value 0-1 that represents how far this starting position is from the end goal
-    private float DeterminePositionValue(Vector2Int position, Vector2Int goal) {
-        float tileDistance = Monster.FindPath(position, goal).Count - 1f; // distance to an orthog/diag adjacent tile
-        if(position.x != goal.x && position.y != goal.y) {
-            tileDistance--; // make diagonal corners worth the same as orthogonally adjacent
-        }
-
-        const float MAX_DISTANCE = 20f;
-        float distanceValue = Mathf.Max(0f, (MAX_DISTANCE - tileDistance) / MAX_DISTANCE);
-
+    // returns a value that represents how well this position approaches the capture point
+    private float DeterminePositionValue(Monster monster, Vector2Int position, ResourcePile goal) {
+        float distanceValue = 0f;
         float captureBonus = 0f;
-        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            if(resource.IsInCaptureRange(position)) {
-                if(resource.Controller != controlTarget && !resource.Contested) {
-                    captureBonus = 0.2f;
+        if(goal.IsInCaptureRange(position)) {
+            distanceValue = 1f;
+
+            // slighlty value being towards where the opponent is likely to attack
+            Vector2Int enemySpawn = GameManager.Instance.OpponentOf(controlTarget).Spawnpoint.Tile;
+            int resourceDist = Global.CalcTileDistance(goal.Tile, enemySpawn);
+            int testDist = Global.CalcTileDistance(position, enemySpawn);
+            distanceValue += (resourceDist - testDist) / 200f;
+
+            // weight this spot higher if this monster would be the only capturer
+            int otherCapturers = controlTarget.Teammates.FindAll((Monster teammate) => teammate != monster && goal.IsInCaptureRange(teammate.Tile)).Count;
+            captureBonus = otherCapturers == 0 ? 1f : 0.2f;
+        } else {
+            List<Vector2Int> path = Monster.FindPath(position, goal.Tile);
+            int tilesOnPoint = 0;
+            for(int i = path.Count - 1; i >= 0; i--) {
+                if(goal.IsInCaptureRange(path[i])) {
+                    tilesOnPoint++;
+                } else {
+                    break;
                 }
-                break;
             }
+
+            int tilesFromPoint = path.Count - tilesOnPoint;
+            distanceValue = 1f - tilesFromPoint * 0.1f;
         }
 
         TileAffector terrain = LevelGrid.Instance.GetTile(position).CurrentEffect;
@@ -477,7 +534,7 @@ public class AIController
         // count how many resources are needed to craft the remaining monster types
         float allyTotal = 0;
         float enemyTotal = 0;
-        Dictionary<Ingredient, int> allyNeeds = new Dictionary<Ingredient, int>();
+        allyNeeds.Clear();
         Dictionary<Ingredient, int> enemyNeeds = new Dictionary<Ingredient, int>();
         foreach(Ingredient ingredient in Enum.GetValues(typeof(Ingredient))) {
             allyNeeds[ingredient] = 0;
@@ -551,10 +608,34 @@ public class AIController
         List<MonsterName> newCrafts = buyOptions.FindAll((MonsterName type) => !controlTarget.CraftedMonsters[type]);
         if(newCrafts.Count > 0) {
             buyOptions = newCrafts;
-        }
-        else if(controlTarget.Teammates.Count > GameManager.Instance.OpponentOf(controlTarget).Teammates.Count) {
-            // only craft a duplicate if necessary
-            return;
+        } else {
+            Dictionary<Ingredient, int> surplus = new Dictionary<Ingredient, int>();
+            int totalSurplus = 0;
+            foreach(Ingredient resource in Enum.GetValues(typeof(Ingredient))) {
+                surplus[resource] = Mathf.Max(0, controlTarget.Resources[resource] - allyNeeds[resource]);
+                totalSurplus += surplus[resource];
+            }
+
+            if(totalSurplus >= 3) {
+                // find all monsters that can be crafted with the extra resources
+                buyOptions = buyOptions.FindAll((MonsterName monster) => { 
+                    List<Ingredient> recipe = MonstersData.Instance.GetMonsterData(monster).Recipe;
+                    foreach(Ingredient resource in Enum.GetValues(typeof(Ingredient))) {
+                        if(surplus[resource] < recipe.FindAll((Ingredient cost) => cost == resource).Count) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
+                if(buyOptions.Count == 0) {
+                    return;
+                }
+            }
+            else if(controlTarget.Teammates.Count > GameManager.Instance.OpponentOf(controlTarget).Teammates.Count) {
+                // only spend needed resources on a duplicate if falling behind the opponent
+                return;
+            }
         }
 
         controlTarget.BuyMonster(buyOptions[UnityEngine.Random.Range(0, buyOptions.Count)]);

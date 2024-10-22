@@ -128,7 +128,7 @@ public class Monster : GridEntity
     }
 
     public GameObject ApplyStatus(StatusAilment blueprint) {
-        StatusAilment duplicate = Statuses.Find((StatusAilment existing) => { return existing == blueprint; });
+        StatusAilment duplicate = Statuses.Find((StatusAilment existing) => { return existing.blueprintMadeFrom == blueprint; });
         if(duplicate != null) {
             duplicate.duration = blueprint.duration; // reset duration;
             return duplicate.visual;
@@ -141,6 +141,7 @@ public class Monster : GridEntity
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(visual, true));
 
         StatusAilment affliction = new StatusAilment(blueprint.effect, blueprint.duration, visual);
+        affliction.blueprintMadeFrom = blueprint;
         Statuses.Add(affliction);
         return visual;
     }
@@ -179,12 +180,14 @@ public class Monster : GridEntity
         Move move = Stats.Moves[moveSlot];
 
         Vector2 selectionMid = Global.DetermineCenter(targets.Filtered);
-        if(selectionMid.x > transform.position.x) {
-            AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(false); });
-        }
-        else if(selectionMid.x < transform.position.x) {
-            AnimationsManager.Instance.QueueFunction(() => { SetSpriteFlip(true); });
-        }
+        AnimationsManager.Instance.QueueFunction(() => {
+            if(selectionMid.x > transform.position.x) {
+                SetSpriteFlip(false);
+            }
+            else if(selectionMid.x < transform.position.x) {
+                SetSpriteFlip(true);
+            }
+        });
 
         Stats.Moves[moveSlot].Use(this, targets);
         Cooldowns[moveSlot] = Stats.Moves[moveSlot].Cooldown;

@@ -81,6 +81,7 @@ MonoBehaviour:
   shroomGrow: {fileID: 8300000, guid: 484ff17aba1fdc64b819be6a8edddfea, type: 3}
   vineLash: {fileID: 8300000, guid: e9bf94917e7097b409dc71e1c5b0cc2d, type: 3}
   bump: {fileID: 8300000, guid: c1a9feaa803548c4fae7786d338b5f98, type: 3}
+  heal: {fileID: 8300000, guid: c523f808a8abaab4c85325f6b42eaf2b, type: 3}
   walks:
   - {fileID: 8300000, guid: e96a1a177381fbe47a58a732d109e508, type: 3}
   - {fileID: 8300000, guid: 3a7cb34a4e1a60e4fa56f4477e842648, type: 3}

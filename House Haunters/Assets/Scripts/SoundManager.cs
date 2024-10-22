@@ -41,6 +41,7 @@ public enum Sounds {
     VineLash,
     Bump,
     Spawn,
+    Heal
 }
 
 public class SoundManager : MonoBehaviour
@@ -87,25 +88,25 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip shroomGrow;
     [SerializeField] private AudioClip vineLash;
     [SerializeField] private AudioClip bump;
+    [SerializeField] private AudioClip heal;
     [SerializeField] private AudioClip[] walks;
 
-    private const float MAX_VOL = 0.1f;
+    public const float MAX_VOL = 0.2f;
+    public static float volPercent;
 
     public static SoundManager Instance { get; private set; }
 
     private static Dictionary<Sounds, AudioClip> soundClips;
 
     private List<AudioSource> activeSounds = new List<AudioSource>();
-    private float volumePercent = 1.0f;
 
     void Start() {
         if(Instance != null) {
             Destroy(gameObject);
             return;
         }
-
-        AudioListener.volume = MAX_VOL * volumePercent;
-
+        volPercent = VolumeSlider.START_PERCENT;
+        AudioListener.volume = volPercent * SoundManager.MAX_VOL;
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
@@ -147,6 +148,7 @@ public class SoundManager : MonoBehaviour
             { Sounds.VineLash, vineLash },
             { Sounds.Bump, bump },
             { Sounds.Spawn, spawn },
+            { Sounds.Heal, heal }
         };
     }
 

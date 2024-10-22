@@ -56,6 +56,8 @@ public class Monster : GridEntity
         if(Health > Stats.Health) {
             Health = Stats.Health;
         }
+
+        AnimationsManager.Instance.QueueSound(Sounds.Heal);
         AnimationsManager.Instance.QueueFunction(() => { 
             GameObject particle = Instantiate(PrefabContainer.Instance.healParticle);
             particle.transform.position = SpriteModel.transform.position;

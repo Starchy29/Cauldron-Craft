@@ -28,7 +28,7 @@ public class Cauldron : GridEntity
         cookAnimator = spriteRenderer.gameObject.GetComponent<Particle>();
         Controller = GameManager.Instance.GetTeam(controlledByLeft);
         Controller.Spawnpoint = this;
-        Controller.OnTurnStart += FinishCook;
+        Controller.OnTurnStart += () => { FinishCook(); };
         SetOutlineColor(Controller.TeamColor);
     }
 
@@ -50,7 +50,7 @@ public class Cauldron : GridEntity
         AnimationsManager.Instance.QueueAnimation(new AppearanceAnimator(cookIndicator.gameObject, true));
     }
 
-    public void FinishCook() {
+    public void FinishCook(bool shortPause = false) {
         if(CookState != State.Cooking) {
             return;
         }
@@ -85,7 +85,7 @@ public class Cauldron : GridEntity
             SetCookVisual(false); 
             Instantiate(PrefabContainer.Instance.spawnSmoke).transform.position = spawned.SpriteModel.transform.position + new Vector3(0, 0.2f, 0);
         });
-        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(2.0f));
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(shortPause ? 0.8f : 2.0f));
         AnimationsManager.Instance.QueueFunction(() => {
             indicator.SetActive(false);
             craftCounter.gameObject.SetActive(false);

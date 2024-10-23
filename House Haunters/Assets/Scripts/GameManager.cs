@@ -11,7 +11,7 @@ public enum GameMode {
 
 public class GameManager : MonoBehaviour
 {
-    public static GameMode Mode = GameMode.PVP;
+    public static GameMode Mode = GameMode.VSAI;
     public static TeamPreset team1Choice = Team.Occultists;
     public static TeamPreset team2Choice = Team.Witchcrafters;
     public static GameManager Instance { get; private set; }
@@ -37,13 +37,11 @@ public class GameManager : MonoBehaviour
 
     // runs after everything else because of script execution order
     void Start() {
-        leftTeam.SpawnStartTeam();
-        rightTeam.SpawnStartTeam();
         foreach(ResourcePile resource in AllResources) {
             LevelHighlighter.Instance.UpdateCapture(resource.Tile, resource.Controller, resource.Contested);
         }
 
-        //QueueIntro();
+        QueueIntro();
         AnimationsManager.Instance.QueueAnimation(new CameraAnimator(CurrentTurn.Spawnpoint.transform.position));
         GameOverviewDisplayer.Instance.ShowTurnStart(CurrentTurn);
         CurrentTurn.StartTurn();
@@ -93,6 +91,10 @@ public class GameManager : MonoBehaviour
 
     private void QueueIntro() {
         GameOverviewDisplayer.Instance.ShowObjective();
+
+        leftTeam.SpawnStartTeam();
+        rightTeam.SpawnStartTeam();
+
         AllResources.Sort((ResourcePile cur, ResourcePile next) => (int)(-cur.transform.position.y + next.transform.position.y)); // sort top to bottom
         foreach(ResourcePile resource in AllResources) {
             AnimationsManager.Instance.QueueAnimation(new CameraAnimator(resource.transform.position));

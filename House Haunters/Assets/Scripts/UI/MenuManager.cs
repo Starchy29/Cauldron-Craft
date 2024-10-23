@@ -35,7 +35,6 @@ public class MenuManager : MonoBehaviour
     private Monster selected;
     private GridEntity lastHoveredEntity;
     private int lastHoveredIndex;
-    private ResourcePile hoveredResource;
 
     public static MenuManager Instance {  get; private set; }
     public bool Paused { get { return state == SelectionTarget.Paused; } }
@@ -54,10 +53,6 @@ public class MenuManager : MonoBehaviour
     void Update() {
         InputManager input = InputManager.Instance;
         Vector2 mousePos = InputManager.Instance.GetMousePosition();
-        if(hoveredResource != null) {
-            hoveredResource.productionIndicator.SetActive(false);
-            hoveredResource = null;
-        }
 
         if(gameManager.CurrentTurn == controller && state == SelectionTarget.None && !AnimationsManager.Instance.Animating) {
             SetState(SelectionTarget.Monster);
@@ -188,10 +183,6 @@ public class MenuManager : MonoBehaviour
         else if(hoveredEntity is Cauldron) {
             LevelHighlighter.Instance.ColorTile(hoveredEntity.Tile, HighlightType.Hovered);
         }
-        else if(hoveredEntity is ResourcePile) {
-            hoveredResource = ((ResourcePile)hoveredEntity);
-            hoveredResource.productionIndicator.SetActive(true);
-        }
 
         if(input.SelectPressed()) {
             if(hoveredEntity is Cauldron) {
@@ -317,7 +308,7 @@ public class MenuManager : MonoBehaviour
                 SoundManager.Instance.PlaySound(Sounds.BackMenu);
                 break;
             case SelectionTarget.Paused:
-                SetState(gameManager.CurrentTurn == controller ? SelectionTarget.Monster : SelectionTarget.None);
+                SetState(AnimationsManager.Instance.Animating ? SelectionTarget.None : SelectionTarget.Monster);
                 SoundManager.Instance.PlaySound(Sounds.BackMenu);
                 break;
         }

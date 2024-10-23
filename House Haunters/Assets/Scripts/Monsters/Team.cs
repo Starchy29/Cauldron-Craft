@@ -94,23 +94,35 @@ public class Team
     }
 
     public void SpawnStartTeam() {
+        AnimationsManager animator = AnimationsManager.Instance;
         LevelGrid level = LevelGrid.Instance;
-        Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
-        List<Vector2Int> spawnTiles = level.GetTilesInRange(Spawnpoint.Tile, 1, true);
+        //Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
+        //List<Vector2Int> spawnTiles = level.GetTilesInRange(Spawnpoint.Tile, 1, true);
 
-        spawnTiles.Sort((Vector2Int cur, Vector2Int next) => Global.CalcTileDistance(cur, levelMid) - Global.CalcTileDistance(next, levelMid));
-        spawnTiles = new List<Vector2Int> { spawnTiles[0], spawnTiles[1], spawnTiles[2] };
+        //spawnTiles.Sort((Vector2Int cur, Vector2Int next) => Global.CalcTileDistance(cur, levelMid) - Global.CalcTileDistance(next, levelMid));
+        //spawnTiles = new List<Vector2Int> { spawnTiles[0], spawnTiles[1], spawnTiles[2] };
 
-        List<TileWithDistance> distances = spawnTiles.ConvertAll((Vector2Int tile) => new TileWithDistance{ 
-            tile = tile,
-            distance = Monster.FindPath(tile, levelMid).Count
-        });
-        distances.Sort((TileWithDistance cur, TileWithDistance next) => cur.distance - next.distance);
+        //List<TileWithDistance> distances = spawnTiles.ConvertAll((Vector2Int tile) => new TileWithDistance{ 
+        //    tile = tile,
+        //    distance = Monster.FindPath(tile, levelMid).Count
+        //});
+        //distances.Sort((TileWithDistance cur, TileWithDistance next) => cur.distance - next.distance);
 
-        for(int i = 0; i < startTeam.Length; i++) {
-            GameManager.Instance.SpawnMonster(startTeam[i], distances[i].tile, this);
-            CraftedMonsters[startTeam[i]] = true;
+        //for(int i = 0; i < startTeam.Length; i++) {
+        //    GameManager.Instance.SpawnMonster(startTeam[i], distances[i].tile, this);
+        //    CraftedMonsters[startTeam[i]] = true;
+        //    TotalCrafted++;
+        //}
+
+        animator.QueueAnimation(new CameraAnimator(Spawnpoint.transform.position));
+        GameOverviewDisplayer.Instance.ShowTurnStart(this);
+        foreach(MonsterName starter in startTeam) {
+            animator.QueueAnimation(new IngredientAnimator(Spawnpoint, MonstersData.Instance.GetMonsterData(starter).Recipe));
+            Spawnpoint.StartCook(starter);
+            CraftedMonsters[starter] = true;
             TotalCrafted++;
+            animator.QueueAnimation(new PauseAnimator(1f));
+            Spawnpoint.FinishCook(true);
         }
 
         if(AI != null) {

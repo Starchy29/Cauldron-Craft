@@ -35,7 +35,7 @@ public class AutoButton : MonoBehaviour
     public Trigger OnHover;
     public Trigger OnMouseLeave;
 
-    protected Color baseColor = new Color(0.85f, 0.85f, 0.85f);
+    protected Color baseColor = new Color(0.9f, 0.9f, 0.9f);
     protected Color disabledColor = new Color(0.3f, 0.3f, 0.3f);
     protected Color hoveredColor = new Color(0.2f, 0.9f, 0.8f);
     private float tooltipTimer;
@@ -56,19 +56,26 @@ public class AutoButton : MonoBehaviour
                 OnClick = MenuManager.Instance.BackMenu;
                 break;
             case ClickFunction.QuitMatch:
-                OnClick = () => { SceneManager.LoadScene(0); };
+                OnClick = () => { 
+                    SceneManager.LoadScene(0);
+                    if(SceneManager.GetActiveScene().buildIndex > 1) {
+                        SoundManager.Instance.StopSong(false, true);
+                        SoundManager.Instance.PlaySong(true);
+                    }
+                };
                 break;
             case ClickFunction.CloseGame:
                 OnClick = () => { Application.Quit(); };
                 break;
             case ClickFunction.StartGame:
                 OnClick = () => {
-                    if(GameManager.Mode == GameMode.VSAI) {
+                    SoundManager.Instance.StopSong(true);
+                    if (GameManager.Mode == GameMode.VSAI) {
                         List<TeamPreset> aiOptions = new List<TeamPreset> { Team.Alchemists, Team.Witchcrafters, Team.Occultists };
                         aiOptions.Remove(GameManager.team1Choice);
                         GameManager.team2Choice = aiOptions[Random.value < 0.5f ? 0 : 1];
                     }
-                    SceneManager.LoadScene(2); 
+                    StartCoroutine(MainMenuScript.FadeToBlack());
                 };
                 break;
         }

@@ -41,11 +41,17 @@ public enum Sounds {
     VineLash,
     Bump,
     Spawn,
-    Heal
+    Heal,
+    Victory
 }
 
 public class SoundManager : MonoBehaviour
 {
+    [Header("Music")]
+    [SerializeField] private AudioClip menuSong;
+    [SerializeField] private AudioClip battleSong;
+    [SerializeField] private AudioClip winStinger;
+
     [Header("UI Sounds")]
     [SerializeField] private AudioClip buttonHover;
     [SerializeField] private AudioClip buttonClick;
@@ -98,9 +104,19 @@ public class SoundManager : MonoBehaviour
 
     private static Dictionary<Sounds, AudioClip> soundClips;
 
+    private AudioSource menuSongPlayer;
+    private AudioSource battleSongPlayer;
+
+    private enum Fader {
+        None,
+        Menu,
+        Battle
+    }
+    private Fader fading;
+
     private List<AudioSource> activeSounds = new List<AudioSource>();
 
-    void Start() {
+    void Awake() {
         if(Instance != null) {
             Destroy(gameObject);
             return;
@@ -148,8 +164,19 @@ public class SoundManager : MonoBehaviour
             { Sounds.VineLash, vineLash },
             { Sounds.Bump, bump },
             { Sounds.Spawn, spawn },
-            { Sounds.Heal, heal }
+            { Sounds.Heal, heal },
+            { Sounds.Victory, winStinger }
         };
+
+        menuSongPlayer = gameObject.AddComponent<AudioSource>();
+        menuSongPlayer.clip = menuSong;
+        menuSongPlayer.loop = true;
+
+        battleSongPlayer = gameObject.AddComponent<AudioSource>();
+        battleSongPlayer.clip = battleSong;
+        battleSongPlayer.loop = true;
+
+        PlaySong(true);
     }
 
     void Update() {
@@ -157,6 +184,16 @@ public class SoundManager : MonoBehaviour
             if(!activeSounds[i].isPlaying) {
                 Destroy(activeSounds[i]);
                 activeSounds.RemoveAt(i);
+            }
+        }
+
+        if(fading != Fader.None) {
+            AudioSource fader = fading == Fader.Menu ? menuSongPlayer : battleSongPlayer;
+            fader.volume -= Time.deltaTime / 2f;
+            if(fader.volume <= 0f) {
+                fader.volume = 0f;
+                fader.Stop();
+                fading = Fader.None;
             }
         }
     }
@@ -184,5 +221,26 @@ public class SoundManager : MonoBehaviour
         }
         activeSounds[index].Stop();
         activeSounds.RemoveAt(index);
+    }
+
+    public void PlaySong(bool menu) {
+        AudioSource chosen = menu ? menuSongPlayer : battleSongPlayer;
+        chosen.volume = 1f;
+        chosen.Play();
+    }
+
+    public void StopSong(bool menu, bool immediate = false) {
+        if(fading != Fader.None) {
+            AudioSource fader = fading == Fader.Menu ? menuSongPlayer : battleSongPlayer;
+            fader.Stop();
+            fader.volume = 0f;
+        }
+
+        if(immediate) {
+            AudioSource stopper = menu ? menuSongPlayer : battleSongPlayer;
+            stopper.Stop();
+        } else {
+            fading = menu ? Fader.Menu : Fader.Battle;
+        }
     }
 }

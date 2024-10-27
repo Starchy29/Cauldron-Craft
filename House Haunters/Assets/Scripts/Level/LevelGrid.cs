@@ -25,7 +25,7 @@ public class LevelGrid : MonoBehaviour
         Instance = this;
         Tiles = GetComponent<Tilemap>();
         Width = 19;
-        Height = 15;
+        Height = 19;
 
         Monster.pathDistances = new Monster.PathData[Height, Width];
         entityGrid = new GridEntity[Height, Width];

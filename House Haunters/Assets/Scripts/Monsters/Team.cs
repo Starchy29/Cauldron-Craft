@@ -32,7 +32,7 @@ public class Team
         name = "Witchcrafters",
         teamColor = new Color(0.5f, 0.8f, 0.1f),
         startResource = Ingredient.Flora,
-        teamComp = new MonsterName[3] { MonsterName.Flytrap,  MonsterName.Fungus, MonsterName.Beast }
+        teamComp = new MonsterName[3] { MonsterName.Flytrap,  MonsterName.Beast, MonsterName.LostSoul }
     };
 
     public static TeamPreset Occultists = new TeamPreset {
@@ -96,23 +96,6 @@ public class Team
     public void SpawnStartTeam() {
         AnimationsManager animator = AnimationsManager.Instance;
         LevelGrid level = LevelGrid.Instance;
-        //Vector2Int levelMid = new Vector2Int(level.Width / 2, level.Height / 2);
-        //List<Vector2Int> spawnTiles = level.GetTilesInRange(Spawnpoint.Tile, 1, true);
-
-        //spawnTiles.Sort((Vector2Int cur, Vector2Int next) => Global.CalcTileDistance(cur, levelMid) - Global.CalcTileDistance(next, levelMid));
-        //spawnTiles = new List<Vector2Int> { spawnTiles[0], spawnTiles[1], spawnTiles[2] };
-
-        //List<TileWithDistance> distances = spawnTiles.ConvertAll((Vector2Int tile) => new TileWithDistance{ 
-        //    tile = tile,
-        //    distance = Monster.FindPath(tile, levelMid).Count
-        //});
-        //distances.Sort((TileWithDistance cur, TileWithDistance next) => cur.distance - next.distance);
-
-        //for(int i = 0; i < startTeam.Length; i++) {
-        //    GameManager.Instance.SpawnMonster(startTeam[i], distances[i].tile, this);
-        //    CraftedMonsters[startTeam[i]] = true;
-        //    TotalCrafted++;
-        //}
 
         animator.QueueAnimation(new CameraAnimator(Spawnpoint.transform.position));
         GameOverviewDisplayer.Instance.ShowTurnStart(this);
@@ -175,6 +158,7 @@ public class Team
             CraftedMonsters[type] = true;
             TotalCrafted++;
             if(TotalCrafted >= CRAFT_GOAL) {
+                AnimationsManager.Instance.QueueFunction(() => { SoundManager.Instance.StopSong(false); });
                 AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));
                 Spawnpoint.FinishCook();
                 AnimationsManager.Instance.QueueAnimation(new PauseAnimator(1f));

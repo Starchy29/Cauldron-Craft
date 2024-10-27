@@ -37,6 +37,7 @@ public class GameManager : MonoBehaviour
 
     // runs after everything else because of script execution order
     void Start() {
+        SoundManager.Instance.PlaySong(false);
         foreach(ResourcePile resource in AllResources) {
             LevelHighlighter.Instance.UpdateCapture(resource.Tile, resource.Controller, resource.Contested);
         }
@@ -77,6 +78,7 @@ public class GameManager : MonoBehaviour
     public void DefeatMonster(Monster defeated) {
         // check for loss due to no remaining monsters
         if(defeated.Controller.Teammates.Count == 1 && defeated.Controller.TotalIngredients < 3 && defeated.Controller.Spawnpoint.CookState == Cauldron.State.Ready) {
+            AnimationsManager.Instance.QueueFunction(() => { SoundManager.Instance.StopSong(false); });
             GameOverviewDisplayer.Instance.ShowWinner(OpponentOf(defeated.Controller));
             return;
         }

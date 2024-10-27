@@ -40,7 +40,7 @@ public class MonstersData
         monsterTypes[(int)MonsterName.Cactus] = new MonsterType(MonsterName.Cactus, new List<Ingredient>() { Ingredient.Flora, Ingredient.Flora, Ingredient.Flora },
             28, 3,
             new Attack("Barb Bullet", 1, 7, new DirectionSelector(6, true), AnimateBarbBullet, Sounds.Whoosh, "Deals 7 damage and pierces through enemies."),
-            new ZoneMove("Thorn Trap", 2, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 5, 0, (lander) => { lander.TakeDamage(6); }, true, true), 
+            new ZoneMove("Thorn Trap", 2, new RangeSelector(3, false, true), TileAffector.CreateBlueprint(prefabs.spikeTrapPrefab, 5, 0, DealSpikeTrapDamage, true, true), 
                 AnimateLobber(prefabs.thornShot, 2f, 0.8f, Sounds.MushroomGrow), Sounds.Whoosh, "Places a trap that blocks enemies and deals 6 damage when stepped on.")
         );
 
@@ -330,6 +330,12 @@ public class MonstersData
             particle.transform.position = occupant.SpriteModel.transform.position;
         });
         occupant.TakeDamage(5);
+    }
+
+    private static void DealSpikeTrapDamage(Monster occupant) {
+        AnimationsManager.Instance.QueueSound(Sounds.VineLash);
+        AnimationsManager.Instance.QueueFunction(() => { SpawnPierceParticle(occupant.Tile); });
+        occupant.TakeDamage(6);
     }
 
     /* deprecated :(

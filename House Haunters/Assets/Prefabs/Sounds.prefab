@@ -44,6 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d55aa6a8b9638ba45a5e7fc1bda44a96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  menuSong: {fileID: 8300000, guid: 5e87374ed5152d344a78ba97a022081e, type: 3}
+  battleSong: {fileID: 8300000, guid: b4aa5176148929f4f9ee288e046df487, type: 3}
+  winStinger: {fileID: 8300000, guid: e7b2bf3c7c168874eb8eeeae6fa212ff, type: 3}
   buttonHover: {fileID: 8300000, guid: 2eccda864eb35934c812827ba7852e3a, type: 3}
   buttonClick: {fileID: 8300000, guid: c6e79d8a71bd47244aca301bf6a67446, type: 3}
   backMenu: {fileID: 8300000, guid: e12e0df449f938c49ba0cf24d0162616, type: 3}

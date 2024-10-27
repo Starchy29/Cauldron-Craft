@@ -119,7 +119,10 @@ public class LevelHighlighter : MonoBehaviour
         foreach(Vector2Int tile in LevelGrid.Instance.GetTilesInRange(resourceTile, 2, true)) {
             int index = tile.x + traitArray.GetLength(0) * tile.y;
             int captureCode = -1;
-            if(contested) {
+            if(!LevelGrid.Instance.GetTile(tile).Walkable) {
+                captureCode = 0;
+            }
+            else if(contested) {
                 captureCode = 3;
             }
             else if(controller != null) {

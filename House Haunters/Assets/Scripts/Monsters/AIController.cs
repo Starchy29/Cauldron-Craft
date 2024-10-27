@@ -148,6 +148,19 @@ public class AIController
             }
         }
 
+        // DEBUG SHOW ASIGNMENTS
+        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
+            Debug.Log("assigned to " + resource.Type + ":");
+            foreach(Monster teammate in plan.GetAssignedAt(resource)) {
+                Debug.Log("-" + teammate.Stats.Name);
+            }
+        }
+        Debug.Log("unassigned:");
+        foreach(Monster teammate in plan.GetUnassigned()) {
+            Debug.Log("-" + teammate.Stats.Name);
+        }
+        // END DEBUG
+
         // order abilities
         Dictionary<Monster, int> movePriorities = new Dictionary<Monster, int>();
         foreach(Monster teammate in controlTarget.Teammates) {

@@ -40,8 +40,12 @@ public class GameOverviewDisplayer : MonoBehaviour
             gameObject.SetActive(true);
             textbox.text = "The " + winner.Name + " Win";
             textbox.color = winner.TeamColor;
+            SoundManager.Instance.PlaySound(Sounds.Victory);
         });
-        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(5f));
-        AnimationsManager.Instance.QueueFunction(() => { SceneManager.LoadScene(0); });
+        AnimationsManager.Instance.QueueAnimation(new PauseAnimator(7f));
+        AnimationsManager.Instance.QueueFunction(() => {
+            SoundManager.Instance.PlaySong(true);
+            SceneManager.LoadScene(0); 
+        });
     }
 }

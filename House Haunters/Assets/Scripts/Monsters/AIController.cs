@@ -150,15 +150,17 @@ public class AIController
 
         // DEBUG SHOW ASIGNMENTS
         foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            Debug.Log("assigned to " + resource.Type + ":");
+            string assignment = "assigned to " + resource.Type + ": ";
             foreach(Monster teammate in plan.GetAssignedAt(resource)) {
-                Debug.Log("-" + teammate.Stats.Name);
+                assignment += teammate.Stats.Name + ", ";
             }
+            Debug.Log(assignment);
         }
-        Debug.Log("unassigned:");
+        string unassignment = "unassigned:";
         foreach(Monster teammate in plan.GetUnassigned()) {
-            Debug.Log("-" + teammate.Stats.Name);
+           unassignment = "-" + teammate.Stats.Name;
         }
+        Debug.Log(unassignment);
         // END DEBUG
 
         // order abilities
@@ -170,7 +172,7 @@ public class AIController
             // 1: targeted by an ally
             movePriorities[teammate] = 0;
         }
-
+        
         List<TurnOption> monsterPlans = controlTarget.Teammates.ConvertAll((Monster monster) => ChooseAction(monster));
         foreach(TurnOption plan in monsterPlans) {
             if(!plan.UsesAbility) {
@@ -483,6 +485,33 @@ public class AIController
     private float DeterminePositionValue(Monster monster, Vector2Int position, ResourcePile goal) {
         float distanceValue = 0f;
         float captureBonus = 0f;
+
+        if(monsterRoles[monster.Stats.Name] == TeamRole.Support) {
+            // supporters should not advance on capture points. Instead they should move to the middle of their teammates attacking the same resource
+            if(plan.GetAssignmentOf(monster).IsInCaptureRange(position)) {
+                captureBonus = 0.5f;
+            }
+            
+            int numAttackers = 0;
+            Vector2 teamMiddle = Vector2.zero;
+            List<Monster> comrades = plan.GetAssignedAt(plan.GetAssignmentOf(monster));
+            foreach(Monster comrade in comrades) {
+                if(monsterRoles[comrade.Stats.Name] != TeamRole.Support) {
+                    numAttackers++;
+                    teamMiddle += (Vector2)LevelGrid.Instance.Tiles.GetCellCenterWorld((Vector3Int)comrade.Tile);
+                }
+            }
+
+            if(numAttackers == 0) {
+                return 0;
+            }
+
+            teamMiddle /= numAttackers;
+            Vector2Int targetTile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(teamMiddle);
+            distanceValue = 1f - 0.02f * Monster.FindPath(position, targetTile).Count;
+            return distanceValue + captureBonus;
+        }
+
         if(goal.IsInCaptureRange(position)) {
             distanceValue = 1f;
 
@@ -507,7 +536,7 @@ public class AIController
             }
 
             int tilesFromPoint = path.Count - tilesOnPoint;
-            distanceValue = 1f - tilesFromPoint * 0.1f;
+            distanceValue = 1f - tilesFromPoint * 0.02f;
         }
 
         TileAffector terrain = LevelGrid.Instance.GetTile(position).CurrentEffect;

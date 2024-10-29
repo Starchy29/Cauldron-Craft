@@ -22,6 +22,7 @@ public class LevelGrid : MonoBehaviour
     public event MonsterTrigger OnMonsterMove;
 
     void Awake() {
+        Debug.Log("started level grid");
         Instance = this;
         Tiles = GetComponent<Tilemap>();
         Width = 19;
@@ -43,6 +44,7 @@ public class LevelGrid : MonoBehaviour
                 environmentGrid[y, x] = typeToData[tile == null ? TileType.Ground : tile.Type];
             }
         }
+        Debug.Log("finished level grid");
     }
 
     public List<Vector2Int> GetTilesInRange(Vector2Int spot, int range, bool squareArea) {

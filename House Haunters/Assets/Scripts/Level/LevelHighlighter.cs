@@ -55,6 +55,7 @@ public class LevelHighlighter : MonoBehaviour
     public ResourcePile HoveredResource;
 
     void Start() {
+        Debug.Log("started highlighter");
         Instance = this;
         LevelGrid level = LevelGrid.Instance;
         resolution = new Vector2Int(level.Width * TILE_PIXEL_WIDTH, level.Height * TILE_PIXEL_WIDTH);
@@ -66,6 +67,7 @@ public class LevelHighlighter : MonoBehaviour
 
         SetUpTexture();
         SetUpShader();
+        Debug.Log("finished highlighter");
     }
 
     ~LevelHighlighter() {

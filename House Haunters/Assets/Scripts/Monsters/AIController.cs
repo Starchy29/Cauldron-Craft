@@ -148,21 +148,6 @@ public class AIController
             }
         }
 
-        // DEBUG SHOW ASIGNMENTS
-        foreach(ResourcePile resource in GameManager.Instance.AllResources) {
-            string assignment = "assigned to " + resource.Type + ": ";
-            foreach(Monster teammate in plan.GetAssignedAt(resource)) {
-                assignment += teammate.Stats.Name + ", ";
-            }
-            Debug.Log(assignment);
-        }
-        string unassignment = "unassigned:";
-        foreach(Monster teammate in plan.GetUnassigned()) {
-           unassignment = "-" + teammate.Stats.Name;
-        }
-        Debug.Log(unassignment);
-        // END DEBUG
-
         // order abilities
         Dictionary<Monster, int> movePriorities = new Dictionary<Monster, int>();
         foreach(Monster teammate in controlTarget.Teammates) {
@@ -508,6 +493,10 @@ public class AIController
 
             teamMiddle /= numAttackers;
             Vector2Int targetTile = (Vector2Int)LevelGrid.Instance.Tiles.WorldToCell(teamMiddle);
+            if(!LevelGrid.Instance.GetTile(targetTile).Walkable) {
+                // if the middle of the pack is an invalid tile, move towards a single ally
+                targetTile = comrades.Find((Monster ally) => monsterRoles[ally.Stats.Name] != TeamRole.Support).Tile;
+            }
             distanceValue = 1f - 0.02f * Monster.FindPath(position, targetTile).Count;
             return distanceValue + captureBonus;
         }

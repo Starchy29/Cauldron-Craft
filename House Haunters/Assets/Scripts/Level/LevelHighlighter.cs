@@ -201,10 +201,11 @@ public class LevelHighlighter : MonoBehaviour
         filter.mesh = mesh;
 
         // Create texture
-        texture = new RenderTexture(resolution.x, resolution.y, 1);
+        /*texture = new RenderTexture(resolution.x, resolution.y, 1);
         texture.filterMode = FilterMode.Point;
         texture.enableRandomWrite = true;
-        texture.Create();
+        //texture.format = RenderTextureFormat.Default;
+        texture.Create();*/
 
         meshRenderer.sharedMaterial.mainTexture = texture;
         meshRenderer.sortingLayerName = "Tile Highlight";

@@ -13,7 +13,8 @@ public enum HighlightType {
 
 public class LevelHighlighter : MonoBehaviour
 {
-    [SerializeField] private ComputeShader computeShader;
+    //[SerializeField] private ComputeShader computeShader;
+    private Material material;
 
     private MeshRenderer meshRenderer;
     private MeshFilter filter;
@@ -55,7 +56,6 @@ public class LevelHighlighter : MonoBehaviour
     public ResourcePile HoveredResource;
 
     void Start() {
-        Debug.Log("started highlighter");
         Instance = this;
         LevelGrid level = LevelGrid.Instance;
         resolution = new Vector2Int(level.Width * TILE_PIXEL_WIDTH, level.Height * TILE_PIXEL_WIDTH);
@@ -67,7 +67,6 @@ public class LevelHighlighter : MonoBehaviour
 
         SetUpTexture();
         SetUpShader();
-        Debug.Log("finished highlighter");
     }
 
     ~LevelHighlighter() {
@@ -78,23 +77,32 @@ public class LevelHighlighter : MonoBehaviour
     void Update() {
         t += Time.deltaTime / 2f;
         t %= 1f;
-        computeShader.SetFloat("t", t);
+        material.SetFloat("t", t);
 
         if(CursorTile.HasValue) {
-            computeShader.SetInts("cursorTile", CursorTile.Value.x, CursorTile.Value.y);
+            //computeShader.SetInts("cursorTile", CursorTile.Value.x, CursorTile.Value.y);
+            material.SetInt("cursorTileX", CursorTile.Value.x);
+            material.SetInt("cursorTileY", CursorTile.Value.y);
         } else {
-            computeShader.SetInts("cursorTile", -1, -1);
+            //computeShader.SetInts("cursorTile", -1, -1);
+            material.SetInt("cursorTileX", -1);
+            material.SetInt("cursorTileY", -1);
         }
         if(HoveredResource == null) {
-            computeShader.SetInts("hoveredZoneCenter", -20, -20);
+            //computeShader.SetInts("hoveredZoneCenter", -20, -20);
+            material.SetInt("hoveredZoneCenterX", -20);
+            material.SetInt("hoveredZoneCenterY", -20);
         } else {
-            computeShader.SetInts("hoveredZoneCenter", HoveredResource.Tile.x, HoveredResource.Tile.y);
+            //computeShader.SetInts("hoveredZoneCenter", HoveredResource.Tile.x, HoveredResource.Tile.y);
+            material.SetInt("hoveredZoneCenterX", HoveredResource.Tile.x);
+            material.SetInt("hoveredZoneCenterY", HoveredResource.Tile.y);
         }
 
         UpdateHighlightData();
         tileBuffer.SetData(infoArray);
-        computeShader.SetBuffer(0, "_TileData", tileBuffer);
-        computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
+        material.SetBuffer("_TileData", tileBuffer);
+        //computeShader.SetBuffer(0, "_TileData", tileBuffer);
+        //computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
     }
 
     public void ColorTiles(List<Vector2Int> tiles, HighlightType type) {
@@ -186,7 +194,8 @@ public class LevelHighlighter : MonoBehaviour
         };
 
         meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        meshRenderer.sharedMaterial = new Material(Shader.Find("Unlit/SimpleShader"));
+        meshRenderer.sharedMaterial = new Material(Shader.Find("Unlit/LevelShaderPS"));
+        material = meshRenderer.material;
 
         filter = gameObject.AddComponent<MeshFilter>();
         filter.mesh = mesh;
@@ -224,19 +233,21 @@ public class LevelHighlighter : MonoBehaviour
         }
 
         teams = GameManager.Instance.AllTeams;
-        computeShader.SetVector("team1Color", teams[0].TeamColor);
-        computeShader.SetVector("team2Color", teams[1].TeamColor);
-        computeShader.SetTexture(0, "_Texture", texture);
-        computeShader.SetInts("tileDims", level.Width, level.Height);
-        computeShader.SetInt("pixPerTile", TILE_PIXEL_WIDTH);
+        material.SetVector("team1Color", teams[0].TeamColor);
+        material.SetVector("team2Color", teams[1].TeamColor);
+        //computeShader.SetTexture(0, "_Texture", texture);
+        //computeShader.SetInts("tileDims", level.Width, level.Height);
+        material.SetInt("tilesWide", level.Width);
+        material.SetInt("tilesTall", level.Height);
+        material.SetInt("pixPerTile", TILE_PIXEL_WIDTH);
 
         uint sizeX, sizeY, sizeZ;
-        computeShader.GetKernelThreadGroupSizes(0, out sizeX, out sizeY, out sizeZ);
-        groupCounts = new Vector3Int(
+        //computeShader.GetKernelThreadGroupSizes(0, out sizeX, out sizeY, out sizeZ);
+        /*groupCounts = new Vector3Int(
             Mathf.CeilToInt((float)resolution.x / sizeX), 
             Mathf.CeilToInt((float)resolution.y / sizeY),
             1
-        );
+        );*/
     }
 
     private void UpdateHighlightData() {

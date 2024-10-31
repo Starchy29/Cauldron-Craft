@@ -4691,7 +4691,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af01448cc76736c459b38b05bd26c0f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  computeShader: {fileID: 7200000, guid: 51184803002dcda429737b3757aa3ecc, type: 3}
+  material: {fileID: 2100000, guid: 8177c142e2e6a8348b260a6e89b107b2, type: 2}
   HoveredResource: {fileID: 0}
 --- !u!4 &1708174508
 Transform:

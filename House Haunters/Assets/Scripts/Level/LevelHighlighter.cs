@@ -50,17 +50,17 @@ public class LevelHighlighter : MonoBehaviour
     //private TileInfo[] infoArray;
 
     private struct TileData {
-        public int[] floorType; // 0: ground, 1: wall, 2: pit
-        public int[] highlightType;
-        public int[] terrainController;
-        public int[] capturer;
+        public float[] floorType; // 0: ground, 1: wall, 2: pit
+        public float[] highlightType;
+        public float[] terrainController;
+        public float[] capturer;
     }
     private TileData dataArrays;
 
-    private ComputeBuffer floorBuffer;
-    private ComputeBuffer highlightBuffer;
-    private ComputeBuffer terrainBuffer;
-    private ComputeBuffer captureBuffer;
+    //private ComputeBuffer floorBuffer;
+    //private ComputeBuffer highlightBuffer;
+    //private ComputeBuffer terrainBuffer;
+    //private ComputeBuffer captureBuffer;
 
     private Dictionary<HighlightType, List<Vector2Int>> highlightedTiles;
 
@@ -121,15 +121,19 @@ public class LevelHighlighter : MonoBehaviour
 
     // since webGL does not support structured buffers, each variable is split into a separate array
     private void SetBufferData() {
-        floorBuffer.SetData(dataArrays.floorType);
-        highlightBuffer.SetData(dataArrays.highlightType);
-        terrainBuffer.SetData(dataArrays.terrainController);
-        captureBuffer.SetData(dataArrays.capturer);
+        //floorBuffer.SetData(dataArrays.floorType);
+        //highlightBuffer.SetData(dataArrays.highlightType);
+        //terrainBuffer.SetData(dataArrays.terrainController);
+        //captureBuffer.SetData(dataArrays.capturer);
 
-        material.SetBuffer("floorTypes", floorBuffer);
-        material.SetBuffer("highlightTypes", highlightBuffer);
-        material.SetBuffer("terrainControllers", terrainBuffer);
-        material.SetBuffer("capturers", captureBuffer);
+        //material.SetBuffer("floorTypes", floorBuffer);
+        //material.SetBuffer("highlightTypes", highlightBuffer);
+        //material.SetBuffer("terrainControllers", terrainBuffer);
+        //material.SetBuffer("capturers", captureBuffer);
+        material.SetFloatArray("floorTypes", dataArrays.floorType);
+        material.SetFloatArray("highlightTypes", dataArrays.highlightType);
+        material.SetFloatArray("terrainControllers", dataArrays.terrainController);
+        material.SetFloatArray("capturers", dataArrays.capturer);
     }
 
     public void ColorTiles(List<Vector2Int> tiles, HighlightType type) {
@@ -245,15 +249,15 @@ public class LevelHighlighter : MonoBehaviour
         //tileBuffer = new ComputeBuffer(level.Width * level.Height, TileInfo.STRIDE);
         //infoArray = new TileInfo[level.Width * level.Height];
         int tileCount = level.Width * level.Height;
-        dataArrays.floorType = new int[tileCount];
-        dataArrays.highlightType = new int[tileCount];
-        dataArrays.terrainController = new int[tileCount];
-        dataArrays.capturer = new int[tileCount];
+        dataArrays.floorType = new float[tileCount];
+        dataArrays.highlightType = new float[tileCount];
+        dataArrays.terrainController = new float[tileCount];
+        dataArrays.capturer = new float[tileCount];
 
-        floorBuffer = new ComputeBuffer(tileCount, sizeof(int));
-        highlightBuffer = new ComputeBuffer(tileCount, sizeof(int));
-        terrainBuffer = new ComputeBuffer(tileCount, sizeof(int));
-        captureBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        //floorBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        //highlightBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        //terrainBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        //captureBuffer = new ComputeBuffer(tileCount, sizeof(int));
 
         for(int y = 0; y < level.Height; y++) {
             for(int x = 0; x < level.Width; x++) {

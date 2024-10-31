@@ -73,10 +73,15 @@ Shader "Unlit/LevelShaderPS"
             int hoveredZoneCenterX;
             int hoveredZoneCenterY;
             //StructuredBuffer<TileInfo> _TileData;
-            Buffer<int> floorTypes;
-            Buffer<int> highlightTypes;
-            Buffer<int> terrainControllers;
-            Buffer<int> capturers;
+            //Buffer<int> floorTypes;
+            //Buffer<int> highlightTypes;
+            //Buffer<int> terrainControllers;
+            //Buffer<int> capturers;
+
+            uniform float floorTypes[361]; // 19x19 level
+            uniform float highlightTypes[361];
+            uniform float terrainControllers[361];
+            uniform float capturers[361];
 
             TileInfo getTile(int x, int y) {
                 if (x < 0 || y < 0 || x >= tilesWide || y >= tilesTall) {

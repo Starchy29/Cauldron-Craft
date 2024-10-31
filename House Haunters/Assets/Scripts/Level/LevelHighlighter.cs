@@ -14,7 +14,7 @@ public enum HighlightType {
 public class LevelHighlighter : MonoBehaviour
 {
     //[SerializeField] private ComputeShader computeShader;
-    private Material material;
+    private static Material material = new Material(Shader.Find("Unlit/LevelShaderPS"));
 
     private MeshRenderer meshRenderer;
     private MeshFilter filter;
@@ -194,8 +194,7 @@ public class LevelHighlighter : MonoBehaviour
         };
 
         meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        meshRenderer.sharedMaterial = new Material(Shader.Find("Unlit/LevelShaderPS"));
-        material = meshRenderer.material;
+        meshRenderer.sharedMaterial = material;
 
         filter = gameObject.AddComponent<MeshFilter>();
         filter.mesh = mesh;

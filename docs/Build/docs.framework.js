@@ -27,7 +27,7 @@ Module['ready'] = new Promise((resolve, reject) => {
   readyPromiseResolve = resolve;
   readyPromiseReject = reject;
 });
-["_main","getExceptionMessage","___get_exception_message","_free","_ReleaseKeys","_getMetricsInfo","_SendMessageFloat","_SendMessageString","_SendMessage","_SetFullscreen","_InjectProfilerSample","_fflush","onRuntimeInitialized"].forEach((prop) => {
+["_main","getExceptionMessage","___get_exception_message","_free","_ReleaseKeys","_GetCopyBufferAsCStr","_getMetricsInfo","_SendMessageFloat","_SendMessageString","_SendMessage","_SetFullscreen","_InjectProfilerSample","_SendPasteEvent","_fflush","onRuntimeInitialized"].forEach((prop) => {
   if (!Object.getOwnPropertyDescriptor(Module['ready'], prop)) {
     Object.defineProperty(Module['ready'], prop, {
       get: () => abort('You are getting ' + prop + ' on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js'),
@@ -78,12 +78,96 @@ Module["SetFullscreen"] = function (fullscreen) {
 };
 if (!Module['ENVIRONMENT_IS_PTHREAD']) {
   Module['preRun'].push(function () {
+    function injectIndexedDBToAutomaticallyPersist() {
+      // The contents of this function cherry-pick the changes from upstream Emscripten
+      // PR https://github.com/emscripten-core/emscripten/pull/21938.
+      // TODO: Once Emscripten is updated the next time, this IDBFS.queuePersist = ... assignment can be removed.
+      IDBFS.queuePersist = function(mount) {
+        function onPersistComplete() {
+          if (mount.idbPersistState === 'again') startPersist(); // If a new sync request has appeared in between, kick off a new sync
+          else mount.idbPersistState = 0; // Otherwise reset sync state back to idle to wait for a new sync later
+        }
+        function startPersist() {
+          mount.idbPersistState = 'idb'; // Mark that we are currently running a sync operation
+          IDBFS.syncfs(mount, /*populate:*/false, onPersistComplete);
+        }
+
+        if (!mount.idbPersistState) {
+          // Programs typically write/copy/move multiple files in the in-memory
+          // filesystem within a single app frame, so when a filesystem sync
+          // command is triggered, do not start it immediately, but only after
+          // the current frame is finished. This way all the modified files
+          // inside the main loop tick will be batched up to the same sync.
+          mount.idbPersistState = setTimeout(startPersist, 0);
+        } else if (mount.idbPersistState === 'idb') {
+          // There is an active IndexedDB sync operation in-flight, but we now
+          // have accumulated more files to sync. We should therefore queue up
+          // a new sync after the current one finishes so that all writes
+          // will be properly persisted.
+          mount.idbPersistState = 'again';
+        }
+      };
+      // TODO: Once Emscripten is updated the next time, this IDBFS.mount = ... assignment can be removed.
+      IDBFS.mount = function(mount) {
+        // reuse core MEMFS functionality
+        var mnt = MEMFS.mount(mount);
+        // If the automatic IDBFS persistence option has been selected, then automatically persist
+        // all modifications to the filesystem as they occur.
+        if (typeof mount !== 'undefined' && mount.opts && mount.opts.autoPersist) {
+          mnt.idbPersistState = 0; // IndexedDB sync starts in idle state
+          var memfs_node_ops = mnt.node_ops;
+          mnt.node_ops = Object.assign({}, mnt.node_ops); // Clone node_ops to inject write tracking
+          mnt.node_ops.mknod = function(parent, name, mode, dev) {
+            var node = memfs_node_ops.mknod(parent, name, mode, dev);
+            // Propagate injected node_ops to the newly created child node
+            node.node_ops = mnt.node_ops;
+            // Remember for each IDBFS node which IDBFS mount point they came from so we know which mount to persist on modification.
+            node.idbfs_mount = mnt.mount;
+            // Remember original MEMFS stream_ops for this node
+            node.memfs_stream_ops = node.stream_ops;
+            // Clone stream_ops to inject write tracking
+            node.stream_ops = Object.assign({}, node.stream_ops);
+
+            // Track all file writes
+            node.stream_ops.write = function(stream, buffer, offset, length, position, canOwn) {
+              // This file has been modified, we must persist IndexedDB when this file closes
+              stream.node.isModified = true;
+              return node.memfs_stream_ops.write(stream, buffer, offset, length, position, canOwn);
+            };
+
+            // Persist IndexedDB on file close
+            node.stream_ops.close = function(stream) {
+              var n = stream.node;
+              if (n.isModified) {
+                IDBFS.queuePersist(n.idbfs_mount);
+                n.isModified = false;
+              }
+              if (n.memfs_stream_ops.close) return n.memfs_stream_ops.close(stream);
+            };
+
+            return node;
+          };
+          // Also kick off persisting the filesystem on other operations that modify the filesystem.
+          mnt.node_ops.rmdir   = function(path)       { IDBFS.queuePersist(mnt.mount); return memfs_node_ops.rmdir(path); };
+          mnt.node_ops.unlink  = function(path)       { IDBFS.queuePersist(mnt.mount); return memfs_node_ops.unlink(path); };
+          mnt.node_ops.mkdir   = function(path, mode) { IDBFS.queuePersist(mnt.mount); return memfs_node_ops.mkdir(path, mode); };
+          mnt.node_ops.symlink = function(parent, newname, oldpath)    { IDBFS.queuePersist(mnt.mount); return memfs_node_ops.symlink(parent, newname, oldpath); };
+          mnt.node_ops.rename  = function(old_node, new_dir, new_name) { IDBFS.queuePersist(mnt.mount); return memfs_node_ops.rename(old_node, new_dir, new_name); };
+        }
+        return mnt;
+      };
+    }
+    // TODO: Once Emscripten is updated the next time, this injectIndexedDBToAutomaticallyPersist() function can be removed.
+    injectIndexedDBToAutomaticallyPersist();
     // Initialize the IndexedDB based file system. Module['unityFileSystemInit'] allows
     // developers to override this with their own function, when they want to do cloud storage
     // instead.
     var unityFileSystemInit = Module['unityFileSystemInit'] || function () {
       FS.mkdir('/idbfs');
-      FS.mount(IDBFS, {}, '/idbfs');
+      // If user has specified Module.autoSyncPersistentDataPath = true in their JS web template config, then the IndexedDB storage
+      // will be automatically persisted to the user.
+      // Save the IDBFS mount point to Module so that JS_FileSystem_Sync() function can have access to it.
+      Module.__unityIdbfsMount = FS.mount(IDBFS, { autoPersist: !!Module['autoSyncPersistentDataPath'] }, '/idbfs');
       Module.addRunDependency('JS_FileSystem_Mount');
       FS.syncfs(true, function (err) {
         if (err)
@@ -277,6 +361,22 @@ function SendMessage(gameObject, func, param) {
 }
 // Export SendMessage out from the JS module via the Module export object
 Module["SendMessage"] = SendMessage;
+// Create a promise that is resolved later when "RunWebGLPlayer" was run
+// We can ignore the reject handler as the UnityLoader registers a global startupErrorHandler
+var _resolvePlayerIsInitialized;
+var _playerIsInitializedPromise = new Promise(function (resolve) {
+    _resolvePlayerIsInitialized = resolve;
+});
+
+// Waits for unity player initialization to finish, i.e., load initial scene
+function _WaitForInitialization() {
+    return _playerIsInitializedPromise;
+}
+
+Module["WebPlayer"] = {    
+    PlayerIsInitialized: _resolvePlayerIsInitialized,
+    WaitForInitialization: _WaitForInitialization,
+};
 
 
 // Sometimes an existing Module object exists with properties
@@ -1181,13 +1281,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  6315712: () => { return Module.webglContextAttributes.premultipliedAlpha; },  
- 6315773: () => { return Module.webglContextAttributes.preserveDrawingBuffer; },  
- 6315837: () => { return Module.webglContextAttributes.powerPreference; },  
- 6315895: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 6315950: ($0) => { performance.now = function() { return $0; }; },  
- 6315998: ($0) => { performance.now = function() { return $0; }; },  
- 6316046: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7632096: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7632151: ($0) => { performance.now = function() { return $0; }; },  
+ 7632199: ($0) => { performance.now = function() { return $0; }; },  
+ 7632247: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1221,11 +1318,78 @@ var ASM_CONSTS = {
   
   
   
-  function lengthBytesUTF8(str) { var len = 0; for (var i = 0; i < str.length; ++i) { var c = str.charCodeAt(i); if (c <= 0x7F) { len++; } else if (c <= 0x7FF) { len += 2; } else if (c >= 0xD800 && c <= 0xDFFF) { len += 4; ++i; } else { len += 3; } } return len; }
+  function lengthBytesUTF8(str) {
+      var len = 0;
+      for (var i = 0; i < str.length; ++i) {
+        // Gotcha: charCodeAt returns a 16-bit word that is a UTF-16 encoded code
+        // unit, not a Unicode code point of the character! So decode
+        // UTF16->UTF32->UTF8.
+        // See http://unicode.org/faq/utf_bom.html#utf16-3
+        var c = str.charCodeAt(i); // possibly a lead surrogate
+        if (c <= 0x7F) {
+          len++;
+        } else if (c <= 0x7FF) {
+          len += 2;
+        } else if (c >= 0xD800 && c <= 0xDFFF) {
+          len += 4; ++i;
+        } else {
+          len += 3;
+        }
+      }
+      return len;
+    }
   
   function stringToUTF8Array(str, heap, outIdx, maxBytesToWrite) {
-      if (!(maxBytesToWrite > 0)) return 0; var startIdx = outIdx; var endIdx = outIdx + maxBytesToWrite - 1; for (var i = 0; i < str.length; ++i) { var u = str.charCodeAt(i); if (u >= 0xD800 && u <= 0xDFFF) { var u1 = str.charCodeAt(++i); u = 0x10000 + ((u & 0x3FF) << 10) | (u1 & 0x3FF); } if (u <= 0x7F) { if (outIdx >= endIdx) break; heap[outIdx++] = u; } else if (u <= 0x7FF) { if (outIdx + 1 >= endIdx) break; heap[outIdx++] = 0xC0 | (u >> 6); heap[outIdx++] = 0x80 | (u & 63); } else if (u <= 0xFFFF) { if (outIdx + 2 >= endIdx) break; heap[outIdx++] = 0xE0 | (u >> 12); heap[outIdx++] = 0x80 | ((u >> 6) & 63); heap[outIdx++] = 0x80 | (u & 63); } else { if (outIdx + 3 >= endIdx) break; heap[outIdx++] = 0xF0 | (u >> 18); heap[outIdx++] = 0x80 | ((u >> 12) & 63); heap[outIdx++] = 0x80 | ((u >> 6) & 63); heap[outIdx++] = 0x80 | (u & 63); } } heap[outIdx] = 0; return outIdx - startIdx; }
-  function stringToUTF8(str, outPtr, maxBytesToWrite) { return stringToUTF8Array(str, HEAPU8,outPtr, maxBytesToWrite); }
+      assert(typeof str === 'string');
+      // Parameter maxBytesToWrite is not optional. Negative values, 0, null,
+      // undefined and false each don't write out any bytes.
+      if (!(maxBytesToWrite > 0))
+        return 0;
+  
+      var startIdx = outIdx;
+      var endIdx = outIdx + maxBytesToWrite - 1; // -1 for string null terminator.
+      for (var i = 0; i < str.length; ++i) {
+        // Gotcha: charCodeAt returns a 16-bit word that is a UTF-16 encoded code
+        // unit, not a Unicode code point of the character! So decode
+        // UTF16->UTF32->UTF8.
+        // See http://unicode.org/faq/utf_bom.html#utf16-3
+        // For UTF8 byte structure, see http://en.wikipedia.org/wiki/UTF-8#Description
+        // and https://www.ietf.org/rfc/rfc2279.txt
+        // and https://tools.ietf.org/html/rfc3629
+        var u = str.charCodeAt(i); // possibly a lead surrogate
+        if (u >= 0xD800 && u <= 0xDFFF) {
+          var u1 = str.charCodeAt(++i);
+          u = 0x10000 + ((u & 0x3FF) << 10) | (u1 & 0x3FF);
+        }
+        if (u <= 0x7F) {
+          if (outIdx >= endIdx) break;
+          heap[outIdx++] = u;
+        } else if (u <= 0x7FF) {
+          if (outIdx + 1 >= endIdx) break;
+          heap[outIdx++] = 0xC0 | (u >> 6);
+          heap[outIdx++] = 0x80 | (u & 63);
+        } else if (u <= 0xFFFF) {
+          if (outIdx + 2 >= endIdx) break;
+          heap[outIdx++] = 0xE0 | (u >> 12);
+          heap[outIdx++] = 0x80 | ((u >> 6) & 63);
+          heap[outIdx++] = 0x80 | (u & 63);
+        } else {
+          if (outIdx + 3 >= endIdx) break;
+          if (u > 0x10FFFF) warnOnce('Invalid Unicode code point ' + ptrToString(u) + ' encountered when serializing a JS string to a UTF-8 string in wasm memory! (Valid unicode code points should be in range 0-0x10FFFF).');
+          heap[outIdx++] = 0xF0 | (u >> 18);
+          heap[outIdx++] = 0x80 | ((u >> 12) & 63);
+          heap[outIdx++] = 0x80 | ((u >> 6) & 63);
+          heap[outIdx++] = 0x80 | (u & 63);
+        }
+      }
+      // Null-terminate the pointer to the buffer.
+      heap[outIdx] = 0;
+      return outIdx - startIdx;
+    }
+  function stringToUTF8(str, outPtr, maxBytesToWrite) {
+      assert(typeof maxBytesToWrite == 'number', 'stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!');
+      return stringToUTF8Array(str, HEAPU8,outPtr, maxBytesToWrite);
+    }
   function stringToUTF8OnStack(str) {
       var size = lengthBytesUTF8(str) + 1;
       var ret = stackAlloc(size);
@@ -1479,18 +1643,21 @@ var ASM_CONSTS = {
     }
 
   function _GetJSLoadTimeInfo(loadTimePtr) {
-    HEAPU32[loadTimePtr >> 2] = Module.pageStartupTime || 0;
-    HEAPU32[(loadTimePtr >> 2) + 1] = Module.dataUrlLoadEndTime || 0;
-    HEAPU32[(loadTimePtr >> 2) + 2] = Module.codeDownloadTimeEnd || 0;
+    loadTimePtr = (loadTimePtr >> 2);
+    HEAPU32[loadTimePtr] = Module.pageStartupTime || 0;
+    HEAPU32[loadTimePtr + 1] = Module.dataUrlLoadEndTime || 0;
+    HEAPU32[loadTimePtr + 2] = Module.codeDownloadTimeEnd || 0;
    }
 
   function _GetJSMemoryInfo(totalJSptr, usedJSptr) {
+      totalJSptr = (totalJSptr >> 3);
+      usedJSptr = (usedJSptr >> 3);
       if (performance.memory) {
-        HEAPF64[totalJSptr >> 3] = performance.memory.totalJSHeapSize;
-        HEAPF64[usedJSptr >> 3] = performance.memory.usedJSHeapSize;
+        HEAPF64[totalJSptr] = performance.memory.totalJSHeapSize;
+        HEAPF64[usedJSptr] = performance.memory.usedJSHeapSize;
       } else {
-        HEAPF64[totalJSptr >> 3] = NaN;
-        HEAPF64[usedJSptr >> 3] = NaN;
+        HEAPF64[totalJSptr] = NaN;
+        HEAPF64[usedJSptr] = NaN;
       }
     }
 
@@ -1745,7 +1912,40 @@ var ASM_CONSTS = {
           }
       }
 
+  var ExceptionsSeen = 0;
+  
+  function LogErrorWithAdditionalInformation(error) {
+  		// Module.dynCall_* or dynCall_* is directly is used for calling callbacks.
+  		// Use makeDynCall instead for compatibility with WebAssembly.Table.
+  		if (
+  			(
+  				error instanceof ReferenceError ||
+  				error instanceof TypeError
+  			) &&
+  			error.message.indexOf('dynCall_') != -1
+  		) {
+  			error.message = 'Detected use of deprecated "Module.dynCall_*" API. Use "makeDynCall" API instead. Refer to https://docs.unity3d.com/6000.0/Documentation/Manual/web-interacting-browser-deprecated.html#dyncall for more information.\n' + error.message;
+  		}
+  
+  		console.error(error);
+  	}
+  function _JS_CallAsLongAsNoExceptionsSeen(cb) {
+  		if (!ExceptionsSeen) {
+  			try {
+  				(() => dynCall_v.call(null, cb))();
+  			} catch(e) {
+  				ExceptionsSeen = 1;
+  				console.error('Uncaught exception from main loop:');
+  				LogErrorWithAdditionalInformation(e);
+  				console.error('Halting program.');
+  				if (Module.errorHandler) Module.errorHandler(e);
+  				throw e;
+  			}
+  		}
+  	}
+
   function _JS_Cursor_SetImage(ptr, length) {
+      ptr = ptr;
       var binary = "";
       for (var i = 0; i < length; i++)
         binary += String.fromCharCode(HEAPU8[ptr + i]);
@@ -1777,10 +1977,12 @@ var ASM_CONSTS = {
   		return '#' + jsDomCssEscapeId(canvasId);
   	}
   function _JS_DOM_MapViewportCoordinateToElementLocalCoordinate(viewportX, viewportY, targetX, targetY) {
+  		targetX = (targetX >> 2);
+  		targetY = (targetY >> 2);
   		var canvas = document.querySelector(jsCanvasSelector());
   		var rect = canvas && canvas.getBoundingClientRect();
-  		HEAPU32[targetX >> 2] = viewportX - (rect ? rect.left : 0);
-  		HEAPU32[targetY >> 2] = viewportY - (rect ? rect.top : 0);
+  		HEAPU32[targetX] = viewportX - (rect ? rect.left : 0);
+  		HEAPU32[targetY] = viewportY - (rect ? rect.top : 0);
   	}
 
   
@@ -1809,35 +2011,35 @@ var ASM_CONSTS = {
   	window.open(str, '_blank', '');
   }
 
-  var fs = {numPendingSync:0,syncInternal:1000,syncInProgress:false,sync:function(onlyPendingSync)
-  	{
-  		if (onlyPendingSync) {
-  			if (fs.numPendingSync == 0)
-  				return;
-  		}
-  		else if (fs.syncInProgress) {
-  			// this is to avoid indexedDB memory leak when FS.syncfs is executed before the previous one completed.
-  			fs.numPendingSync++;
-  			return;
-  		}
-  
-  		fs.syncInProgress = true;
-  		FS.syncfs(false, (function(err) {
-  			fs.syncInProgress = false;
-  		}));
-  		fs.numPendingSync = 0;
-  	}};
   function _JS_FileSystem_Initialize()
   {
-  	Module.setInterval(function(){
-  		fs.sync(true);
-  	}, fs.syncInternal);
+  	// no-op
   }
 
   function _JS_FileSystem_Sync()
   {
-  	fs.sync(false);
+  	// Kick off a new IDBFS sync on Unity's Application.persistentDataPath directory tree.
+  	// Do it carefully in a fashion that is compatible with the Module.autoSyncPersistentDataPath option
+  	// (to avoid multiple redundant syncs in flight at the same time)
+  	IDBFS.queuePersist(Module.__unityIdbfsMount.mount);
+  	if (!window.warnedAboutManualFilesystemSyncGettingDeprecated) {
+  		window.warnedAboutManualFilesystemSyncGettingDeprecated = true;
+  		if (!Module.autoSyncPersistentDataPath) {
+  			console.warn('Manual synchronization of Unity Application.persistentDataPath via JS_FileSystem_Sync() is deprecated and will be later removed in a future Unity version. The persistent data directory will be automatically synchronized instead on file modification. Pass config.autoSyncPersistentDataPath = true; to configuration in createUnityInstance() to opt in to the new behavior.');
+  		}
+  	}
   }
+
+  function _JS_GetRandomBytes(destBuffer, numBytes) {
+      // Crypto is widely available in browsers, but if running in
+      // Node.js or another shell, it might not be present.
+      // getRandomValues() cannot be called for more than 64K bytes at a time.
+      if (typeof crypto === 'undefined' || numBytes > 65535)
+          return 0;
+  
+      crypto.getRandomValues(new Uint8Array(HEAPU8.buffer, destBuffer, numBytes));
+      return 1;
+    }
 
   function _JS_Get_WASM_Size()
     {
@@ -2148,6 +2350,61 @@ var ASM_CONSTS = {
       }
 
   
+  
+  
+  
+  
+  
+  var mobile_input_hide_delay = null;
+  var mobile_input_text = null;
+  
+  var mobile_input = null;
+  
+  function _JS_Init_CopyPaste() {
+          var canvas = document.querySelector(jsCanvasSelector());
+          
+          // UUM-72388 we need to conditionally prevent default so that users can
+          // copy paste between elements on the page to the unity canvas. Check
+          // mobile input here otherwise paste data will paste twice.
+          const _handlePaste = function (event) {
+              if (document.activeElement == canvas || !!mobile_input)
+                  event.preventDefault();
+              const data = event.clipboardData.getData("text");
+  
+              if(!!mobile_input){
+                  mobile_input.input.value += data;
+              } else {
+                  var str_wasm = stringToNewUTF8(data);
+                  _SendPasteEvent(str_wasm);
+                  _free(str_wasm);
+              }
+          }
+  
+          const _handleCopy = function (event) {
+              if (document.activeElement == canvas)
+                  event.preventDefault();
+              const data = !!mobile_input ? 
+              mobile_input.input.value.slice(mobile_input.input.selectionStart, mobile_input.input.selectionEnd) 
+              : UTF8ToString(_GetCopyBufferAsCStr());
+  
+              event.clipboardData.setData("text/plain", data);
+          }
+  
+          // Add the event listener on the window to account for mobile copy paste.
+          // When copying/pasting elements, the canvas is not the one in focus so
+          // we cannot prevent default. On desktop canvas does not pick up copy paste events.
+          window.addEventListener("paste", _handlePaste);
+          window.addEventListener("copy", _handleCopy);
+          window.addEventListener("cut", _handleCopy);
+  
+          Module.deinitializers.push(function() {
+              window.removeEventListener("paste", _handlePaste);
+              window.removeEventListener("copy", _handleCopy);
+              window.removeEventListener("cut", _handleCopy);
+          });
+      }
+
+  
   function _JS_LinearAccelerationSensor_IsRunning() {
           // Sensor is running if there is an activated new JS_LinearAccelerationSensor; or the JS_LinearAccelerationSensor_callback is hooked up
           return (JS_LinearAccelerationSensor && JS_LinearAccelerationSensor.activated) || (JS_LinearAccelerationSensor_callback != 0);
@@ -2195,15 +2452,6 @@ var ASM_CONSTS = {
 
   
   
-  
-  
-  
-  var mobile_input_hide_delay = null;
-  var mobile_input_text = null;
-  
-  var mobile_input = null;
-  
-  
   var mobile_input_ignore_blur_event = false;
   
   
@@ -2246,13 +2494,16 @@ var ASM_CONSTS = {
   
   function _JS_MobileKeyboard_GetTextSelection(outStart, outLength)
   {
+      outStart = (outStart >> 2);
+      outLength = (outLength >> 2);
+  
       if (!mobile_input) {
-          HEAP32[outStart >> 2] = 0;
-          HEAP32[outLength >> 2] = 0;
+          HEAP32[outStart] = 0;
+          HEAP32[outLength] = 0;
           return;
       }
-      HEAP32[outStart >> 2] = mobile_input.input.selectionStart;
-      HEAP32[outLength >> 2] = mobile_input.input.selectionEnd - mobile_input.input.selectionStart;
+      HEAP32[outStart] = mobile_input.input.selectionStart;
+      HEAP32[outLength] = mobile_input.input.selectionEnd - mobile_input.input.selectionStart;
   }
 
   
@@ -2450,6 +2701,18 @@ var ASM_CONSTS = {
       }
   }
 
+  function _JS_Module_WebGLContextAttributes_PowerPreference() {
+      return Module.webglContextAttributes.powerPreference;
+    }
+
+  function _JS_Module_WebGLContextAttributes_PremultipliedAlpha() {
+      return Module.webglContextAttributes.premultipliedAlpha;
+    }
+
+  function _JS_Module_WebGLContextAttributes_PreserveDrawingBuffer() {
+      return Module.webglContextAttributes.preserveDrawingBuffer;
+    }
+
   var JS_OrientationSensor = null;
   
   var JS_OrientationSensor_callback = 0;
@@ -2638,7 +2901,7 @@ var ASM_CONSTS = {
   		// - https://www.w3.org/TR/screen-orientation/
   		// - https://caniuse.com/screen-orientation
   		// - https://developer.mozilla.org/en-US/docs/Web/API/Screen/orientation
-  		if (!screen.orientation) {
+  		if (!screen.orientation || !screen.orientation.lock) {
   			// As of writing, this is only not implemented on Safari
   			return;
   		}
@@ -5984,7 +6247,7 @@ var ASM_CONSTS = {
   		}
   	}
 
-  var WEBAudio = {audioInstanceIdCounter:0,audioInstances:{},audioContext:null,audioWebEnabled:0,audioCache:[],pendingAudioSources:{}};
+  var WEBAudio = {audioInstanceIdCounter:0,audioInstances:{},audioContext:null,audioWebEnabled:0,audioCache:[],pendingAudioSources:{},FAKEMOD_SAMPLERATE:44100};
   function jsAudioMixinSetPitch(source) {
   	// Add a helper to AudioBufferSourceNode which gives the current playback position of the clip in seconds.
   	source.estimatePlaybackPosition = function () {
@@ -6027,11 +6290,7 @@ var ASM_CONSTS = {
   			return 0;
   		}
   
-  		// Fakemod assumes sample rate is 44100, though that's not necessarily the case,
-  		// depending on OS, if the audio file was not imported by our pipeline.
-  		// Therefore we need to recalculate the length based on the actual samplerate.
-  		var sampleRateRatio = 44100 / this.buffer.sampleRate;
-  		return this.buffer.length * sampleRateRatio;
+  		return this.buffer.length;
   	}
   
   	/**
@@ -6051,7 +6310,7 @@ var ASM_CONSTS = {
   		}
   
   		// Get output buffer
-  		var startOutputBuffer = ptr >> 2;
+  		var startOutputBuffer = (ptr >> 2);
   		var output = HEAPF32.subarray(startOutputBuffer, startOutputBuffer + (length >> 2));
   		var numMaxSamples = Math.floor((length >> 2) / this.buffer.numberOfChannels);
   		var numReadSamples = Math.min(this.buffer.length, numMaxSamples);
@@ -6117,7 +6376,9 @@ var ASM_CONSTS = {
   		source: null,
   		gain: WEBAudio.audioContext.createGain(),
   		panner: WEBAudio.audioContext.createPanner(),
-  		threeD: false,
+  		spatialBlendDryGain: WEBAudio.audioContext.createGain(),
+  		spatialBlendWetGain: WEBAudio.audioContext.createGain(),
+  		spatialBlendLevel: 0,
   		loop: false,
   		loopStart: 0,
   		loopEnd: 0,
@@ -6148,7 +6409,8 @@ var ASM_CONSTS = {
   		try {
   			var self = this;
   			this.source = soundClip.createSourceNode();
-  			this.setupPanning();
+  			this.configurePanningNodes();
+  			this.setSpatialBlendLevel(this.spatialBlendLevel);
   
   			// Setup on ended callback
   			this.source.onended = function () {
@@ -6163,7 +6425,6 @@ var ASM_CONSTS = {
   			this.source.loopStart = this.loopStart;
   			this.source.loopEnd = this.loopEnd;
   			this.source.start(startTime, startOffset);
-  			this.source.scheduledStartTime = startTime;
   			this.source.playbackStartTime = startTime - startOffset / this.source.playbackRate.value;
   			this.source.setPitch(this.pitch);
   		} catch (e) {
@@ -6237,7 +6498,6 @@ var ASM_CONSTS = {
   			loopStart: this.source.loopStart,
   			loopEnd: this.source.loopEnd,
   			playbackRate: this.source.playbackRate.value,
-  			scheduledStartTime: this.source.scheduledStartTime,
   			scheduledStopTime: undefined,
   			// Specifies in seconds the time at the clip where the playback was paused at.
   			// Can be negative if the audio clip has not started yet.
@@ -6271,7 +6531,7 @@ var ASM_CONSTS = {
   
   		var pausedSource = this.source;
   		var soundClip = jsAudioCreateUncompressedSoundClip(pausedSource.buffer, false);
-  		this.playSoundClip(soundClip, pausedSource.scheduledStartTime, Math.max(0, pausedSource.playbackPausedAtPosition));
+  		this.playSoundClip(soundClip, WEBAudio.audioContext.currentTime, Math.max(0, pausedSource.playbackPausedAtPosition));
   		this.source.loop = pausedSource.loop;
   		this.source.loopStart = pausedSource.loopStart;
   		this.source.loopEnd = pausedSource.loopEnd;
@@ -6320,20 +6580,12 @@ var ASM_CONSTS = {
   
   	/**
   	 * Set channel 3D mode
-  	 * @param {boolean} threeD If true the channel will be played back as 3D audio
+  	 * @param {number} spatialBlendLevel Dry/wet mix for spatial panning
   	 */
-  	channel.set3D = function (threeD) {
-  		if (this.threeD == threeD) {
-  			return;
+  	channel.set3D = function (spatialBlendLevel) {
+  		if (this.spatialBlendLevel != spatialBlendLevel) {
+  			this.setSpatialBlendLevel(spatialBlendLevel);
   		}
-  		this.threeD = threeD;
-  
-  		// Only update node graph is source is initialized
-  		if (!this.source) {
-  			return;
-  		}
-  
-  		this.setupPanning();
   	}
   
   	/**
@@ -6411,22 +6663,51 @@ var ASM_CONSTS = {
   	};
   
   	/**
-  	 * Changes this audio channel to either 3D panning or 2D mode (no panning)
+  	 * Updates the spatial blend of the channel, reconfigures audio nodes if necessary
   	 */
-  	channel.setupPanning = function () {
-  		// We have a mocked paused object in effect?
-  		if (this.source.isPausedMockNode) return;
+  	channel.setSpatialBlendLevel = function (spatialBlendLevel) {
   
-  		// Configure audio panning options either for 3D or 2D.
+  		var sourceCanBeConfigured = this.source && !this.source.isPausedMockNode;
+  		var spatializationTypeChanged = (this.spatialBlendLevel > 0 && spatialBlendLevel == 0) || (this.spatialBlendLevel == 0 && spatialBlendLevel > 0);
+  		var needToReconfigureNodes = sourceCanBeConfigured && spatializationTypeChanged;
+  
+  		this.spatialBlendWetGain.gain.value = spatialBlendLevel;
+  		this.spatialBlendDryGain.gain.value = 1 - spatialBlendLevel;
+  		this.spatialBlendLevel = spatialBlendLevel;
+  
+  		if (needToReconfigureNodes)
+  			this.configurePanningNodes();
+  	}
+  	
+  	/**
+  	 * Configure audio panning options either for 3D or 2D.
+  	 */
+  	channel.configurePanningNodes = function() {
+  
+  		if (!this.source)
+  			return;
+  
   		this.source.disconnect();
+  		this.spatialBlendDryGain.disconnect();
+  		this.spatialBlendWetGain.disconnect();
   		this.panner.disconnect();
   		this.gain.disconnect();
-  		if (this.threeD) {
-  			// In 3D: AudioBufferSourceNode/MediaElementSourceNode -> PannerNode -> GainNode -> AudioContext.destination
-  			this.source.connect(this.panner);
+  		
+  		if (this.spatialBlendLevel > 0) {
+  			// In 3D: SourceNode -> DryGainNode --------------> GainNode -> AudioContext.destination
+  			//                    ↘ WetGainNode -> PannerNode ↗
+  	
+  			// Dry path
+  			this.source.connect(this.spatialBlendDryGain);
+  			this.spatialBlendDryGain.connect(this.gain);
+  			
+  			// Spatialized path
+  			this.source.connect(this.spatialBlendWetGain);
+  			this.spatialBlendWetGain.connect(this.panner);
   			this.panner.connect(this.gain);
+  			
   		} else {
-  			// In 2D: AudioBufferSourceNode/MediaElementSourceNode -> GainNode -> AudioContext.destination
+  			// In 2D: SourceNode -> GainNode -> AudioContext.destination
   			this.source.connect(this.gain);
   		}
   		this.gain.connect(WEBAudio.audioContext.destination);
@@ -6463,6 +6744,30 @@ var ASM_CONSTS = {
   	return WEBAudio.audioInstanceIdCounter;
   }
 
+  function _JS_Sound_GetAudioBufferSampleRate(soundInstance)
+  {
+  	if (WEBAudio.audioWebEnabled == 0)
+  		return WEBAudio.FAKEMOD_SAMPLERATE;
+  
+  	var audioInstance = WEBAudio.audioInstances[soundInstance];
+  	if (!audioInstance)
+  		return WEBAudio.FAKEMOD_SAMPLERATE;
+  
+  	// Handle the case where it's a channel instance rather than a sound instance
+  	var buffer = audioInstance.buffer ? audioInstance.buffer : audioInstance.source ? audioInstance.source.buffer : 0;
+  	if (!buffer)
+  		return WEBAudio.FAKEMOD_SAMPLERATE;
+  
+  	return buffer.sampleRate;
+  }
+
+  function _JS_Sound_GetAudioContextSampleRate()
+  {
+  	if (WEBAudio.audioWebEnabled == 0)
+  		return WEBAudio.FAKEMOD_SAMPLERATE;
+  	return WEBAudio.audioContext.sampleRate;
+  }
+
   function _JS_Sound_GetLength(bufferInstance)
   {
   	if (WEBAudio.audioWebEnabled == 0)
@@ -6491,10 +6796,11 @@ var ASM_CONSTS = {
 
   function _JS_Sound_GetMetaData(bufferInstance, metaData)
   {
+  	metaData = (metaData >> 2);
   	if (WEBAudio.audioWebEnabled == 0)
   	{
-  		HEAPU32[metaData >> 2] = 0;
-  		HEAPU32[(metaData >> 2) + 1] = 0;
+  		HEAPU32[metaData] = 0;
+  		HEAPU32[metaData + 1] = 0;
   		return false;
   	}
   
@@ -6503,13 +6809,13 @@ var ASM_CONSTS = {
   	if (!soundClip)
   	{
   
-  		HEAPU32[metaData >> 2] = 0;
-  		HEAPU32[(metaData >> 2) + 1] = 0;
+  		HEAPU32[metaData] = 0;
+  		HEAPU32[metaData + 1] = 0;
   		return false;
   	}
   
-  	HEAPU32[metaData >> 2] = soundClip.getNumberOfChannels();
-  	HEAPU32[(metaData >> 2) + 1] = soundClip.getFrequency();
+  	HEAPU32[metaData] = soundClip.getNumberOfChannels();
+  	HEAPU32[metaData + 1] = soundClip.getFrequency();
   
   	return true;
   }
@@ -6588,18 +6894,6 @@ var ASM_CONSTS = {
   	catch (e) {
   		alert('Web Audio API is not supported in this browser');
   	}
-  }
-
-  function _JS_Sound_IsStopped(channelInstance)
-  {
-  	if (WEBAudio.audioWebEnabled == 0)
-  		return true;
-  	
-  	var channel = WEBAudio.audioInstances[channelInstance];
-  	if (!channel)
-  		return true;
-  
-  	return channel.isStopped();
   }
 
   
@@ -6880,6 +7174,7 @@ var ASM_CONSTS = {
   	if (WEBAudio.audioWebEnabled == 0)
   		return 0;
   
+      ptr = ptr;
   	var audioData = HEAPU8.buffer.slice(ptr, ptr + length);
   
   	// We don't ever want to play back really small audio clips as compressed, the compressor has a startup CPU cost,
@@ -6915,10 +7210,11 @@ var ASM_CONSTS = {
   
   function jsAudioCreateUncompressedSoundClipFromPCM(channels, length, sampleRate, ptr) {
   	var buffer = WEBAudio.audioContext.createBuffer(channels, length, sampleRate);
+  	var idx = (ptr >> 2)
   
   	// Copy audio data to buffer
   	for (var i = 0; i < channels; i++) {
-  		var offs = (ptr >> 2) + length * i;
+  		var offs = idx + length * i;
   		var copyToChannel = buffer['copyToChannel'] || function (source, channelNumber, startInChannel) {
   			// Shim for copyToChannel on browsers which don't support it like Safari.
   			var clipped = source.subarray(0, Math.min(source.length, this.length - (startInChannel | 0)));
@@ -6985,10 +7281,10 @@ var ASM_CONSTS = {
   
   }
 
-  function _JS_Sound_Set3D(channelInstance, threeD)
+  function _JS_Sound_Set3D(channelInstance, spatialBlendLevel)
   {
   	var channel = WEBAudio.audioInstances[channelInstance];
-  	channel.set3D(threeD);
+  	channel.set3D(spatialBlendLevel);
   }
 
   function _JS_Sound_SetListenerOrientation(x, y, z, xUp, yUp, zUp)
@@ -7133,8 +7429,10 @@ var ASM_CONSTS = {
   			w = size.width;
   			h = size.height;
   		}
-  		HEAPF64[outWidth >> 3] = w;
-  		HEAPF64[outHeight >> 3] = h;
+  		outWidth = (outWidth >> 3);
+  		outHeight = (outHeight >> 3);
+  		HEAPF64[outWidth] = w;
+  		HEAPF64[outHeight] = h;
   	}
 
   
@@ -7178,8 +7476,10 @@ var ASM_CONSTS = {
 
   function _JS_SystemInfo_GetScreenSize(outWidth, outHeight)
   	{
-  		HEAPF64[outWidth >> 3] = Module.SystemInfo.width;
-  		HEAPF64[outHeight >> 3] = Module.SystemInfo.height;
+  		outWidth = (outWidth >> 3);
+  		outHeight = (outHeight >> 3);
+  		HEAPF64[outWidth] = Module.SystemInfo.width;
+  		HEAPF64[outHeight] = Module.SystemInfo.height;
   	}
 
   
@@ -7228,17 +7528,69 @@ var ASM_CONSTS = {
   	return !!Module.shouldQuit;
   }
 
+  var activeWebCams = {};
+  function _JS_WebCamVideo_GetNativeHeight(deviceId) {
+  		return activeWebCams[deviceId] && activeWebCams[deviceId].video.videoHeight;
+  	}
+
+  function _JS_WebCamVideo_GetNativeWidth(deviceId) {
+  		return activeWebCams[deviceId] && activeWebCams[deviceId].video.videoWidth;
+  	}
+
+  function _JS_WebCamVideo_GrabFrame(deviceId, buffer, destWidth, destHeight) {
+  		var webcam = activeWebCams[deviceId];
+  		if (!webcam) return;
+  		// Do not sample a new frame if there cannot be a new video frame available for us. (we would
+  		// just be capturing the same pixels again, wasting performance)
+  		var timeNow = performance.now();
+  		if (timeNow < webcam.nextFrameAvailableTime) {
+  			return;
+  		}
+  		// Calculate when the next video frame will be available.
+  		webcam.nextFrameAvailableTime += webcam.frameLengthInMsecs;
+  		// We have lost a lot of time and missed frames? Then reset the calculation for the next frame
+  		// availability based on present time.
+  		if (webcam.nextFrameAvailableTime < timeNow) {
+  			webcam.nextFrameAvailableTime = timeNow + webcam.frameLengthInMsecs;
+  		}
+  		var canvas = webcam.canvas;
+  		if (canvas.width != destWidth || canvas.height != destHeight || !webcam.context2d) {
+  			canvas.width = destWidth;
+  			canvas.height = destHeight;
+  			// Chrome and Firefox bug? After resizing the canvas, the 2D context
+  			// needs to be reacquired or the resize does not apply.
+  			webcam.context2d = canvas.getContext('2d');
+  		}
+  		var context = webcam.context2d;
+  		context.drawImage(webcam.video, 0, 0, webcam.video.videoWidth, webcam.video.videoHeight, 0, 0, destWidth, destHeight);
+  		HEAPU8.set(context.getImageData(0, 0, destWidth, destHeight).data, buffer);
+  		return 1; // Managed to capture a frame
+  	}
+
   function _JS_WebGPU_SetCommandEncoder(encoder)
       {
           Module["WebGPU"].commandEncoder = encoder;
       }
 
+  function utf8(ptr) {
+      return UTF8ToString(ptr);
+    }
+  
+  function wgpu_checked_shift(ptr, shift) {
+      assert((ptr >>> shift) << shift == ptr);
+      return ptr >>> shift;
+    }
+  var wgpu = {};
   function _JS_WebGPU_Setup(adapter, device)
       {
           Module["WebGPU"] = {};
-          Module["WebGPU"].aadapter = wgpu[adapter];
+          Module["WebGPU"].adapter = wgpu[adapter];
           Module["WebGPU"].device = wgpu[device];
       }
+
+  function _JS_WebPlayer_FinishInitialization() {
+  		Module.WebPlayer.PlayerIsInitialized();
+  	}
 
   function ___assert_fail(condition, filename, line, func) {
       abort(`Assertion failed: ${UTF8ToString(condition)}, at: ` + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
@@ -7383,7 +7735,7 @@ var ASM_CONSTS = {
       // type of the thrown object. Find one which matches, and
       // return the type of the catch block which should be called.
       for (var i = 0; i < arguments.length; i++) {
-        var caughtType = ((arguments[i]) >>> 0);
+        var caughtType = arguments[i];
   
         if (caughtType === 0 || caughtType === thrownType) {
           // Catch all clause matched or exactly the same type is caught
@@ -7432,6 +7784,10 @@ var ASM_CONSTS = {
       exceptionLast = new CppException(ptr);
       uncaughtExceptionCount++;
       throw exceptionLast;
+    }
+
+  function ___cxa_uncaught_exceptions() {
+      return uncaughtExceptionCount;
     }
 
   function ___dlsym(handle, symbol) {
@@ -8857,6 +9213,19 @@ var ASM_CONSTS = {
   }
   }
 
+  function ___syscall_symlink(target, linkpath) {
+  try {
+  
+      target = SYSCALLS.getStr(target);
+      linkpath = SYSCALLS.getStr(linkpath);
+      FS.symlink(target, linkpath);
+      return 0;
+    } catch (e) {
+    if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
+    return -e.errno;
+  }
+  }
+
   function convertI32PairToI53Checked(lo, hi) {
       assert(lo == (lo >>> 0) || lo == (lo|0)); // lo should either be a i32 or a u32
       assert(hi === (hi|0));                    // hi should be a i32
@@ -9149,15 +9518,6 @@ var ASM_CONSTS = {
       return runEmAsmFunction(code, sigPtr, argbuf);
     }
 
-  function runMainThreadEmAsm(code, sigPtr, argbuf, sync) {
-      var args = readEmAsmArgs(sigPtr, argbuf);
-      if (!ASM_CONSTS.hasOwnProperty(code)) abort('No EM_ASM constant found at address ' + code);
-      return ASM_CONSTS[code].apply(null, args);
-    }
-  function _emscripten_asm_const_int_sync_on_main_thread(code, sigPtr, argbuf) {
-      return runMainThreadEmAsm(code, sigPtr, argbuf, 1);
-    }
-
   function _emscripten_cancel_main_loop() {
       Browser.mainLoop.pause();
       Browser.mainLoop.func = null;
@@ -9286,6 +9646,8 @@ var ASM_CONSTS = {
         return (target && target.nodeName) ? target.nodeName : '';
       },fullscreenEnabled:function() {
         return document.fullscreenEnabled
+        // Firefox 64 shipped unprefixed form of fullscreenEnabled (https://caniuse.com/#feat=mdn-api_document_fullscreenenabled)
+        || document.mozFullScreenEnabled
         // Safari 13.0.3 on macOS Catalina 10.15.1 still ships with prefixed webkitFullscreenEnabled.
         // TODO: If Safari at some point ships with unprefixed version, update the version check above.
         || document.webkitFullscreenEnabled
@@ -9379,10 +9741,13 @@ var ASM_CONSTS = {
   
       function restoreOldStyle() {
         var fullscreenElement = document.fullscreenElement
+          || document.mozFullScreenElement
           || document.webkitFullscreenElement
           ;
         if (!fullscreenElement) {
           document.removeEventListener('fullscreenchange', restoreOldStyle);
+  
+          document.removeEventListener('mozfullscreenchange', restoreOldStyle);
   
           // Unprefixed Fullscreen API shipped in Chromium 71 (https://bugs.chromium.org/p/chromium/issues/detail?id=383813)
           // As of Safari 13.0.3 on macOS Catalina 10.15.1 still ships with prefixed webkitfullscreenchange. TODO: revisit this check once Safari ships unprefixed version.
@@ -9418,6 +9783,7 @@ var ASM_CONSTS = {
         }
       }
       document.addEventListener('fullscreenchange', restoreOldStyle);
+      document.addEventListener('mozfullscreenchange', restoreOldStyle);
       // Unprefixed Fullscreen API shipped in Chromium 71 (https://bugs.chromium.org/p/chromium/issues/detail?id=383813)
       // As of Safari 13.0.3 on macOS Catalina 10.15.1 still ships with prefixed webkitfullscreenchange. TODO: revisit this check once Safari ships unprefixed version.
       document.addEventListener('webkitfullscreenchange', restoreOldStyle);
@@ -9499,6 +9865,10 @@ var ASM_CONSTS = {
   
       if (target.requestFullscreen) {
         target.requestFullscreen();
+      } else if (target.mozRequestFullScreen) {
+        target.mozRequestFullScreen();
+      } else if (target.mozRequestFullscreen) {
+        target.mozRequestFullscreen();
       } else if (target.webkitRequestFullscreen) {
         target.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
       } else {
@@ -9522,6 +9892,8 @@ var ASM_CONSTS = {
       var d = specialHTMLTargets[1];
       if (d.exitFullscreen) {
         d.fullscreenElement && d.exitFullscreen();
+      } else if (d.mozCancelFullScreen) {
+        d.mozFullScreenElement && d.mozCancelFullScreen();
       } else if (d.webkitExitFullscreen) {
         d.webkitFullscreenElement && d.webkitExitFullscreen();
       } else {
@@ -9639,7 +10011,7 @@ var ASM_CONSTS = {
       // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
       // for any code that deals with heap sizes, which would require special
       // casing all heap size related code to treat 0 specially.
-      return 2147483648;
+      return 2147418112;
     }
   function _emscripten_get_heap_max() {
       return getHeapMax();
@@ -9849,6 +10221,16 @@ var ASM_CONSTS = {
         }
       },createContext:function(/** @type {HTMLCanvasElement} */ canvas, webGLContextAttributes) {
   
+        // BUG: Workaround Chrome WebGL 2 issue: the first shipped versions of WebGL 2 in Chrome 57 did not actually implement
+        // the new garbage free WebGL 2 entry points that take an offset and a length to an existing heap (instead of having to
+        // create a completely new heap view). In Chrome the entry points only were added in to Chrome 58 and newer. For
+        // Chrome 57 (and older), disable WebGL 2 support altogether.
+        function getChromeVersion() {
+          var chromeVersion = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
+          if (chromeVersion) return chromeVersion[2]|0;
+          // If not chrome, fall through to return undefined. (undefined <= integer will yield false)
+        }
+  
         // BUG: Workaround Safari WebGL issue: After successfully acquiring WebGL context on a canvas,
         // calling .getContext() will always return that context independent of which 'webgl' or 'webgl2'
         // context version was passed. See https://bugs.webkit.org/show_bug.cgi?id=222758 and
@@ -9867,7 +10249,7 @@ var ASM_CONSTS = {
         var ctx =
           (webGLContextAttributes.majorVersion > 1)
           ?
-            canvas.getContext("webgl2", webGLContextAttributes)
+            !(getChromeVersion() <= 57) && canvas.getContext("webgl2", webGLContextAttributes)
           :
           (canvas.getContext("webgl", webGLContextAttributes)
             // https://caniuse.com/#feat=webgl
@@ -10613,6 +10995,8 @@ var ASM_CONSTS = {
       if (!target) return -4;
   
       if (!target.requestFullscreen
+        && !target.mozRequestFullScreen
+        && !target.mozRequestFullscreen
         && !target.webkitRequestFullscreen
         ) {
         return -3;
@@ -10668,6 +11052,10 @@ var ASM_CONSTS = {
     }
 
   
+  function abortOnCannotGrowMemory(requestedSize) {
+      abort(`Cannot enlarge memory arrays to size ${requestedSize} bytes (OOM). If you want malloc to return NULL (0) instead of this abort, do not link with -sABORTING_MALLOC (that is, the default when growth is enabled is to not abort, but you have overridden that)`);
+    }
+  
   function emscripten_realloc_buffer(size) {
       var b = wasmMemory.buffer;
       try {
@@ -10710,7 +11098,7 @@ var ASM_CONSTS = {
       var maxHeapSize = getHeapMax();
       if (requestedSize > maxHeapSize) {
         err(`Cannot enlarge memory, asked to go up to ${requestedSize} bytes, but the limit is ${maxHeapSize} bytes!`);
-        return false;
+        abortOnCannotGrowMemory(requestedSize);
       }
   
       var alignUp = (x, multiple) => x + (multiple - x % multiple) % multiple;
@@ -10732,12 +11120,19 @@ var ASM_CONSTS = {
         }
       }
       err(`Failed to grow the heap from ${oldSize} bytes to ${newSize} bytes, not enough memory!`);
-      return false;
+      abortOnCannotGrowMemory(requestedSize);
     }
 
+  /** @suppress {checkTypes} */
   function _emscripten_sample_gamepad_data() {
-      return (JSEvents.lastGamepadState = (navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : null)))
-        ? 0 : -1;
+      try {
+        if (navigator.getGamepads) return (JSEvents.lastGamepadState = navigator.getGamepads())
+          ? 0 : -1;
+      } catch(e) {
+        err(`navigator.getGamepads() exists, but failed to execute with exception ${e}. Disabling Gamepad access.`);
+        navigator.getGamepads = null; // Disable getGamepads() so that it won't be attempted to be used again.
+      }
+      return -1;
     }
 
   
@@ -10806,6 +11201,8 @@ var ASM_CONSTS = {
       target = findEventTarget(target);
       if (!target) return -4;
   
+      registerFullscreenChangeEventCallback(target, userData, useCapture, callbackfunc, 19, "mozfullscreenchange", targetThread);
+  
       // Unprefixed Fullscreen API shipped in Chromium 71 (https://bugs.chromium.org/p/chromium/issues/detail?id=383813)
       // As of Safari 13.0.3 on macOS Catalina 10.15.1 still ships with prefixed webkitfullscreenchange. TODO: revisit this check once Safari ships unprefixed version.
       registerFullscreenChangeEventCallback(target, userData, useCapture, callbackfunc, 19, "webkitfullscreenchange", targetThread);
@@ -10836,13 +11233,15 @@ var ASM_CONSTS = {
       };
       return JSEvents.registerOrRemoveHandler(eventHandler);
     }
+  
   function _emscripten_set_gamepadconnected_callback_on_thread(userData, useCapture, callbackfunc, targetThread) {
-      if (!navigator.getGamepads && !navigator.webkitGetGamepads) return -1;
+      if (_emscripten_sample_gamepad_data()) return -1;
       return registerGamepadEventCallback(2, userData, useCapture, callbackfunc, 26, "gamepadconnected", targetThread);
     }
 
+  
   function _emscripten_set_gamepaddisconnected_callback_on_thread(userData, useCapture, callbackfunc, targetThread) {
-      if (!navigator.getGamepads && !navigator.webkitGetGamepads) return -1;
+      if (_emscripten_sample_gamepad_data()) return -1;
       return registerGamepadEventCallback(2, userData, useCapture, callbackfunc, 27, "gamepaddisconnected", targetThread);
     }
 
@@ -10865,7 +11264,7 @@ var ASM_CONSTS = {
         assert(e);
   
         var keyEventData = JSEvents.keyEvent;
-        keyEventData = (keyEventData >>> 0);
+        keyEventData = keyEventData;
   
         HEAPF64[((keyEventData)>>3)] = e.timeStamp;
   
@@ -11169,7 +11568,7 @@ var ASM_CONSTS = {
   /** @suppress {duplicate } */
   function _emscripten_webgl_do_create_context(target, attributes) {
       assert(attributes);
-      var a = (attributes >>> 2);
+      var a = (attributes >> 2);
       var powerPreference = HEAP32[a + (24>>2)];
       var contextAttributes = {
         'alpha': !!HEAP32[a + (0>>2)],
@@ -11248,7 +11647,7 @@ var ASM_CONSTS = {
 
   function _emscripten_webgl_init_context_attributes(attributes) {
       assert(attributes);
-      var a = (attributes >>> 2);
+      var a = (attributes >> 2);
       for (var i = 0; i < (56>>2); ++i) {
         HEAP32[a+i] = 0;
       }
@@ -11613,12 +12012,12 @@ var ASM_CONSTS = {
 
   function _glClearBufferfv(buffer, drawbuffer, value) {
   
-      GLctx.clearBufferfv(buffer, drawbuffer, HEAPF32, (value >>> 2));
+      GLctx.clearBufferfv(buffer, drawbuffer, HEAPF32, (value >> 2));
     }
 
   function _glClearBufferuiv(buffer, drawbuffer, value) {
   
-      GLctx.clearBufferuiv(buffer, drawbuffer, HEAPU32, (value >>> 2));
+      GLctx.clearBufferuiv(buffer, drawbuffer, HEAPU32, (value >> 2));
     }
 
   function _glClearColor(x0, x1, x2, x3) { GLctx.clearColor(x0, x1, x2, x3) }
@@ -13025,7 +13424,7 @@ var ASM_CONSTS = {
       var shift = heapAccessShiftForWebGLHeap(heap);
       var sizePerPixel = colorChannelsInGlTextureFormat(format) << shift;
       var bytes = (computeUnpackAlignedImageSize(width, height, sizePerPixel, GL.unpackAlignment));
-      return heap.subarray((pixels >>> shift), ((pixels + bytes) >>> shift));
+      return heap.subarray((pixels >> shift), ((pixels + bytes) >> shift));
     }
   
   
@@ -13033,10 +13432,10 @@ var ASM_CONSTS = {
   function _glReadPixels(x, y, width, height, format, type, pixels) {
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
         if (GLctx.currentPixelPackBufferBinding) {
-          GLctx.readPixels(x, y, width, height, format, type, (pixels >>> 0));
+          GLctx.readPixels(x, y, width, height, format, type, pixels);
         } else {
           var heap = heapObjectForWebGLType(type);
-          GLctx.readPixels(x, y, width, height, format, type, heap, (pixels >>> (heapAccessShiftForWebGLHeap(heap))));
+          GLctx.readPixels(x, y, width, height, format, type, heap, (pixels >> (heapAccessShiftForWebGLHeap(heap))));
         }
         return;
       }
@@ -13430,10 +13829,10 @@ var ASM_CONSTS = {
       if (GL.currentContext.version >= 2) {
         // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
         if (GLctx.currentPixelUnpackBufferBinding) {
-          GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, (pixels >>> 0));
+          GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
         } else if (pixels) {
           var heap = heapObjectForWebGLType(type);
-          GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, heap, (pixels >>> (heapAccessShiftForWebGLHeap(heap))));
+          GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, heap, (pixels >> (heapAccessShiftForWebGLHeap(heap))));
         } else {
           GLctx.texImage2D(target, level, internalFormat, width, height, border, format, type, null);
         }
@@ -13445,10 +13844,10 @@ var ASM_CONSTS = {
   
   function _glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, pixels) {
       if (GLctx.currentPixelUnpackBufferBinding) {
-        GLctx.texImage3D(target, level, internalFormat, width, height, depth, border, format, type, (pixels >>> 0));
+        GLctx.texImage3D(target, level, internalFormat, width, height, depth, border, format, type, pixels);
       } else if (pixels) {
         var heap = heapObjectForWebGLType(type);
-        GLctx.texImage3D(target, level, internalFormat, width, height, depth, border, format, type, heap, (pixels >>> (heapAccessShiftForWebGLHeap(heap))));
+        GLctx.texImage3D(target, level, internalFormat, width, height, depth, border, format, type, heap, (pixels >> (heapAccessShiftForWebGLHeap(heap))));
       } else {
         GLctx.texImage3D(target, level, internalFormat, width, height, depth, border, format, type, null);
       }
@@ -13474,10 +13873,10 @@ var ASM_CONSTS = {
       if (GL.currentContext.version >= 2) {
         // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
         if (GLctx.currentPixelUnpackBufferBinding) {
-          GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, (pixels >>> 0));
+          GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
         } else if (pixels) {
           var heap = heapObjectForWebGLType(type);
-          GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, heap, (pixels >>> (heapAccessShiftForWebGLHeap(heap))));
+          GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, heap, (pixels >> (heapAccessShiftForWebGLHeap(heap))));
         } else {
           GLctx.texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, null);
         }
@@ -13491,10 +13890,10 @@ var ASM_CONSTS = {
   
   function _glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels) {
       if (GLctx.currentPixelUnpackBufferBinding) {
-        GLctx.texSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, (pixels >>> 0));
+        GLctx.texSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
       } else if (pixels) {
         var heap = heapObjectForWebGLType(type);
-        GLctx.texSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, heap, (pixels >>> (heapAccessShiftForWebGLHeap(heap))));
+        GLctx.texSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, heap, (pixels >> (heapAccessShiftForWebGLHeap(heap))));
       } else {
         GLctx.texSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, null);
       }
@@ -13506,7 +13905,7 @@ var ASM_CONSTS = {
   function _glUniform1fv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform1fv(webglGetUniformLocation(location), HEAPF32, (value >>> 2), count);
+        count && GLctx.uniform1fv(webglGetUniformLocation(location), HEAPF32, (value >> 2), count);
         return;
       }
   
@@ -13534,7 +13933,7 @@ var ASM_CONSTS = {
   function _glUniform1iv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform1iv(webglGetUniformLocation(location), HEAP32, (value >>> 2), count);
+        count && GLctx.uniform1iv(webglGetUniformLocation(location), HEAP32, (value >> 2), count);
         return;
       }
   
@@ -13552,7 +13951,7 @@ var ASM_CONSTS = {
     }
 
   function _glUniform1uiv(location, count, value) {
-      count && GLctx.uniform1uiv(webglGetUniformLocation(location), HEAPU32, (value >>> 2), count);
+      count && GLctx.uniform1uiv(webglGetUniformLocation(location), HEAPU32, (value >> 2), count);
     }
 
   
@@ -13560,7 +13959,7 @@ var ASM_CONSTS = {
   function _glUniform2fv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform2fv(webglGetUniformLocation(location), HEAPF32, (value >>> 2), count*2);
+        count && GLctx.uniform2fv(webglGetUniformLocation(location), HEAPF32, (value >> 2), count*2);
         return;
       }
   
@@ -13583,7 +13982,7 @@ var ASM_CONSTS = {
   function _glUniform2iv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform2iv(webglGetUniformLocation(location), HEAP32, (value >>> 2), count*2);
+        count && GLctx.uniform2iv(webglGetUniformLocation(location), HEAP32, (value >> 2), count*2);
         return;
       }
   
@@ -13602,7 +14001,7 @@ var ASM_CONSTS = {
     }
 
   function _glUniform2uiv(location, count, value) {
-      count && GLctx.uniform2uiv(webglGetUniformLocation(location), HEAPU32, (value >>> 2), count*2);
+      count && GLctx.uniform2uiv(webglGetUniformLocation(location), HEAPU32, (value >> 2), count*2);
     }
 
   
@@ -13610,7 +14009,7 @@ var ASM_CONSTS = {
   function _glUniform3fv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform3fv(webglGetUniformLocation(location), HEAPF32, (value >>> 2), count*3);
+        count && GLctx.uniform3fv(webglGetUniformLocation(location), HEAPF32, (value >> 2), count*3);
         return;
       }
   
@@ -13634,7 +14033,7 @@ var ASM_CONSTS = {
   function _glUniform3iv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform3iv(webglGetUniformLocation(location), HEAP32, (value >>> 2), count*3);
+        count && GLctx.uniform3iv(webglGetUniformLocation(location), HEAP32, (value >> 2), count*3);
         return;
       }
   
@@ -13654,7 +14053,7 @@ var ASM_CONSTS = {
     }
 
   function _glUniform3uiv(location, count, value) {
-      count && GLctx.uniform3uiv(webglGetUniformLocation(location), HEAPU32, (value >>> 2), count*3);
+      count && GLctx.uniform3uiv(webglGetUniformLocation(location), HEAPU32, (value >> 2), count*3);
     }
 
   
@@ -13662,7 +14061,7 @@ var ASM_CONSTS = {
   function _glUniform4fv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform4fv(webglGetUniformLocation(location), HEAPF32, (value >>> 2), count*4);
+        count && GLctx.uniform4fv(webglGetUniformLocation(location), HEAPF32, (value >> 2), count*4);
         return;
       }
   
@@ -13671,7 +14070,7 @@ var ASM_CONSTS = {
         var view = miniTempWebGLFloatBuffers[4*count-1];
         // hoist the heap out of the loop for pthreads+growth.
         var heap = HEAPF32;
-        value = (value >>> 2);
+        value = (value >> 2);
         for (var i = 0; i < 4 * count; i += 4) {
           view[i] = heap[value++];
           view[i + 1] = heap[value++];
@@ -13690,7 +14089,7 @@ var ASM_CONSTS = {
   function _glUniform4iv(location, count, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniform4iv(webglGetUniformLocation(location), HEAP32, (value >>> 2), count*4);
+        count && GLctx.uniform4iv(webglGetUniformLocation(location), HEAP32, (value >> 2), count*4);
         return;
       }
   
@@ -13711,7 +14110,7 @@ var ASM_CONSTS = {
     }
 
   function _glUniform4uiv(location, count, value) {
-      count && GLctx.uniform4uiv(webglGetUniformLocation(location), HEAPU32, (value >>> 2), count*4);
+      count && GLctx.uniform4uiv(webglGetUniformLocation(location), HEAPU32, (value >> 2), count*4);
     }
 
   function _glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding) {
@@ -13725,7 +14124,7 @@ var ASM_CONSTS = {
   function _glUniformMatrix3fv(location, count, transpose, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniformMatrix3fv(webglGetUniformLocation(location), !!transpose, HEAPF32, (value >>> 2), count*9);
+        count && GLctx.uniformMatrix3fv(webglGetUniformLocation(location), !!transpose, HEAPF32, (value >> 2), count*9);
         return;
       }
   
@@ -13755,7 +14154,7 @@ var ASM_CONSTS = {
   function _glUniformMatrix4fv(location, count, transpose, value) {
   
       if (GL.currentContext.version >= 2) { // WebGL 2 provides new garbage-free entry points to call to WebGL. Use those always when possible.
-        count && GLctx.uniformMatrix4fv(webglGetUniformLocation(location), !!transpose, HEAPF32, (value >>> 2), count*16);
+        count && GLctx.uniformMatrix4fv(webglGetUniformLocation(location), !!transpose, HEAPF32, (value >> 2), count*16);
         return;
       }
   
@@ -13764,7 +14163,7 @@ var ASM_CONSTS = {
         var view = miniTempWebGLFloatBuffers[16*count-1];
         // hoist the heap out of the loop for pthreads+growth.
         var heap = HEAPF32;
-        value = (value >>> 2);
+        value = (value >> 2);
         for (var i = 0; i < 16 * count; i += 16) {
           view[i] = heap[value++];
           view[i + 1] = heap[value++];
@@ -13859,7 +14258,7 @@ var ASM_CONSTS = {
 
   function _glVertexAttrib4fv(index, v) {
   
-      v = (v >>> 2);
+      v = (v >> 2);
       GLctx.vertexAttrib4f(index, HEAPF32[v], HEAPF32[v+1], HEAPF32[v+2], HEAPF32[v+3]);
     }
 
@@ -13911,7 +14310,7 @@ var ASM_CONSTS = {
       for(c = c.split('|'); c[0];) s = s['replaceAll'](String.fromCharCode(ch++), c.pop());
       return [,].concat(s.split(' '));
     }
-  var GPUTextureAndVertexFormats = wgpuDecodeStrings('r8YA8RmA8UA8TAHUAHTAHVO8YO8RmO8UO8TALUALTALVOHUOHTOHV W8Y W8Z W8Rm W8U W8T bgra8Y bgra8ZOb9e5uVOb10a2YO11b10uVOLUOLTOLV WHU WHT WHV WLU WLT WLV GJHYJ24plusJ24plus-GJLVJLV-GQ1-W-YQ1-W-ZQ2-W-YQ2-W-ZQ3-W-YQ3-W-ZQ4-r-YQ4-r-RmQ5-rg-YQ5-rg-RmQ6h-rgb-uVQ6h-rgb-VQ7-W-YQ7-W-ZSYSZSa1YSa1Z etc2-W8Y etc2-W8ZI11YI11RmIg11YIg11RmX4x4-YX4x4-ZX5x4-YX5x4-ZX5x5-YX5x5-ZX6x5-YX6x5-ZX6x6-YX6x6-ZX8x5-YX8x5-ZX8x6-YX8x6-ZX8x8-YX8x8-ZXE5-YXE5-ZXE6-YXE6-ZXE8-YXE8-ZXE10-YXE10-ZX12x10-YX12x10-ZX12x12-YX12x12-Z U8MU8KT8MT8KY8MY8KRm8MRm8KUHMUHKTHMTHKYHMYHKRmHMRmHKVHMVHKVL VLMVLx3 VLKUL ULMULx3 ULKTL TLMTLx3 TLx4', 'unorm-srgb|unorm| astc-|rgba|float|uint|sint| etc2-rgb8|snor| bc|-BC| rg|-AC|x2 |32|x4 | depth| eac-r|16|stencil8|-D-BJ|10x| D|Im|-D-AJ| r');
+  var GPUTextureAndVertexFormats = wgpuDecodeStrings('r8YA8TA8SA8UALSALUALWR8YR8TR8SR8UANSANUANWRLSRLURLW V8Y V8Z V8T V8S V8U bgra8Y bgra8ZRb9e5uWRbJa2SRbJa2YR11bJuWRNSRNURNW VLS VLU VLW VNS VNU VNWB8ILYI24plusI24plus-E8INWINW-E8Q1-V-YQ1-V-ZQ2-V-YQ2-V-ZQ3-V-YQ3-V-ZQ4-r-YQ4-r-TQ5-rg-YQ5-rg-TQ6h-rgb-uWQ6h-rgb-WQ7-V-YQ7-V-ZPYPZPa1YPa1Z etc2-V8Y etc2-V8ZFr11YFr11TFrg11YFrg11TX4x4-YX4x4-ZX5x4-YX5x4-ZX5x5-YX5x5-ZX6x5-YX6x5-ZX6x6-YX6x6-ZX8x5-YX8x5-ZX8x6-YX8x6-ZX8x8-YX8x8-ZXJx5-YXJx5-ZXJx6-YXJx6-ZXJx8-YXJx8-ZXJxJ-YXJxJ-ZX12xJ-YX12xJ-ZX12x12-YX12x12-Z S8MS8KU8MU8KY8MY8KT8MT8KSLMSLKULMULKYLMYLKTLMTLKWLMWLKWN WNMWNx3 WNKSN SNMSNx3 SNKUN UNMUNx3 UNKYJ-J-J-2', 'unorm-srgb|unorm| astc-|float|rgba|sint|snorm|uint| rg| bc| etc2-rgb8|-AC|32|x2 |16|x4 |10| depth|-B|SC| eac-|stencil|-ESJ|-E-A| E| r');
   function _navigator_gpu_get_preferred_canvas_format() {
       
       assert(navigator["gpu"], "Your browser does not support WebGPU!", "assert(navigator['gpu'], 'Your browser does not support WebGPU!') failed!");
@@ -13920,9 +14319,8 @@ var ASM_CONSTS = {
       return GPUTextureAndVertexFormats.indexOf(navigator['gpu']['getPreferredCanvasFormat']());
     }
 
-  var wgpu = {};
   
-  var wgpuIdCounter = 1;
+  var wgpuIdCounter = 2;
   function wgpuStore(object) {
       if (object) {
         // WebGPU renderer usage can burn through a lot of object IDs each rendered frame
@@ -13933,7 +14331,7 @@ var ASM_CONSTS = {
         // 2147483646 / 1000 / 120 / 60 / 60 = 4.97 hours, which is realistic for a page to
         // stay open for that long. Therefore handle wraparound of the ID counter generation,
         // and find free gaps in the object IDs for new objects.
-        while(wgpu[++wgpuIdCounter]) if (wgpuIdCounter > 2147483646) wgpuIdCounter = 1;
+        while(wgpu[wgpuIdCounter]) wgpuIdCounter = wgpuIdCounter < 2147483647 ? wgpuIdCounter + 1 : 2;
   
         wgpu[wgpuIdCounter] = object;
   
@@ -13941,13 +14339,21 @@ var ASM_CONSTS = {
         // this object is known by on Wasm side.
         object.wid = wgpuIdCounter;
   
-        return wgpuIdCounter;
+        ;
+  
+        return wgpuIdCounter++;
       }
       // Implicit return undefined to marshal ID 0 over to Wasm.
     }
   
-  function debugDir(x, desc) {
-      return x;
+  function _wgpuMuteJsExceptions(fn) {
+      return (p) => { // only support one argument to function fn (we could do ...params, but we only ever need one arg so that's fine)
+        try {
+          return fn(p);
+        } catch(e) {
+          
+        }
+      }
     }
   /** @suppress{checkTypes} */
   function _navigator_gpu_request_adapter_async(options, adapterCallback, userData) {
@@ -13955,9 +14361,9 @@ var ASM_CONSTS = {
       assert(adapterCallback, "must pass a callback function to navigator_gpu_request_adapter_async!", "assert(adapterCallback, 'must pass a callback function to navigator_gpu_request_adapter_async!') failed!");
       assert(navigator["gpu"], "Your browser does not support WebGPU!", "assert(navigator['gpu'], 'Your browser does not support WebGPU!') failed!");
       assert(options != 0, "assert(options != 0) failed!");
-      assert(options % 4 == 0, "assert(options % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
   
-      options >>= 2
+      assert((options >> 2) << 2 == options);
+  options >>= 2;
   
       let gpu = navigator['gpu'],
         powerPreference = [, 'low-power', 'high-performance'][HEAPU32[options]],
@@ -13972,16 +14378,17 @@ var ASM_CONSTS = {
         
         function cb(adapter) {
           
-          
           ((a1, a2) => dynCall_vii.apply(null, [adapterCallback, a1, a2]))(wgpuStore(adapter), userData);
         }
-        gpu['requestAdapter'](opts).then(cb).catch(
+        gpu['requestAdapter'](opts)
+          .then(_wgpuMuteJsExceptions(cb))
+          .catch(
           (e)=>{console.error(`navigator.gpu.requestAdapter() Promise failed: ${e}`); cb(/*intentionally omit arg to pass undefined*/)}
         );
-        return 1/*EM_TRUE*/;
+        return 1/*WGPU_TRUE*/;
       }
       
-      // Implicit return EM_FALSE, WebGPU is not supported.
+      // Implicit return WGPU_FALSE, WebGPU is not supported.
     }
 
   
@@ -14318,7 +14725,11 @@ var ASM_CONSTS = {
       return bytes.length-1;
     }
 
-  var _wgpuFeatures = wgpuDecodeStrings('A-clip-control A32BCencil8DbcDetc2DaCc timeCamp-query indirect-firC-inCance shader-f16 rg11b10uBrenderable', ' texture-compression-|st|float-|depth').slice(1);
+  function _strftime_l(s, maxsize, format, tm, loc) {
+      return _strftime(s, maxsize, format, tm); // no locale support yet
+    }
+
+  var _wgpuFeatures = wgpuDecodeStrings('A-Ccontrol A32F-Dencil8GbcGbc-sliced-3dGetc2GaDc timeDamp-query indirect-firD-inB shader-f16 rg11b10uF-rendEbgra8unorm-Dorage F32-filtECdiBs dual-source-blending', ' texture-compression-|float|erable |st|clip-|Dance|depth').slice(1);
   function _wgpu_adapter_or_device_get_features(adapterOrDevice) {
       
       assert(adapterOrDevice != 0, "assert(adapterOrDevice != 0) failed!");
@@ -14326,18 +14737,24 @@ var ASM_CONSTS = {
       assert(wgpu[adapterOrDevice] instanceof GPUAdapter || wgpu[adapterOrDevice] instanceof GPUDevice, "assert(wgpu[adapterOrDevice] instanceof GPUAdapter || wgpu[adapterOrDevice] instanceof GPUDevice) failed!");
       let id = 1,
         featuresBitMask = 0;
+  
+      
+  
       for(let feature of _wgpuFeatures) {
-        if (wgpu[adapterOrDevice]['features'].has(feature)) featuresBitMask |= id;
+        if (wgpu[adapterOrDevice]['features'].has(feature)) {
+          
+          featuresBitMask |= id;
+        }
         id *= 2;
       }
       return featuresBitMask;
     }
 
-  var _wgpu32BitLimitNames = wgpuDecodeStrings('>1D >2D >3D max6ArrayLayer<BindGroup<BindingsPerBindGroup maxDynamic5m=DynamicS:e=4d6?ax4r?axS:eB7?axS:e6?ax5mB7?in5m;minS:e;maxVertexB7<VertexAttribute<VertexB7ArrayStride max9Component<9Variable<8<8BytesPer4@:eSize maxComputeInvocationsPerWorkgroup@izeX@izeY@izeZ', ' maxComputeWorkgroupS|sPerShaderStage m|maxTextureDimension|BuffersPerPipelineLayout max|s max|BufferOffsetAlignment |torag|InterStageShader|ColorAttachment|uffer|Texture|Unifor|Sample', 52).slice(1);
+  var _wgpu32BitLimitNames = wgpuDecodeStrings('max<1D=<2D=<3D=T4ArrayLayers=9s=9sPlus5>s=BindingsPer9=DynamicUniform>:=Dynamic;e>:=SampledT4s@axSamplers@ax;e>s@ax;eT4s@axUniform>s@inUniform>6t min;e>6t=5>s=5Attributes=5>ArrayStride=InterStageShaderVariables=ColorAttachments=ColorAttachmentBytesPerSample?;eSize=ComputeInvocationsPerWorkgroup?SizeX?SizeY?SizeZ', 'PerShaderStage m| maxComputeWorkgroup|Buffer| max|TextureDimension|Storag|sPerPipelineLayout|BindGroup|s7ColorAttachment|Uniform6|OffsetAlignmen|Vertex|exture', 52).slice(1);
   
   var _wgpu64BitLimitNames = wgpuDecodeStrings('maxUniform4Storage4BufferSize', 'BufferBindingSize max', 52).slice(1);
   
-  function wgpuWriteU64HeapIdx(heap32Idx, number) {
+  function wgpuWriteI53ToU64HeapIdx(heap32Idx, number) {
       assert(heap32Idx != 0, "assert(heap32Idx != 0) failed!");
       HEAPU32[heap32Idx] = number;
       HEAPU32[heap32Idx+1] = number / 4294967296;
@@ -14345,16 +14762,17 @@ var ASM_CONSTS = {
   function _wgpu_adapter_or_device_get_limits(adapterOrDevice, limits) {
       
       assert(limits != 0, "passed a null limits struct pointer", "assert(limits != 0, 'passed a null limits struct pointer') failed!");
-      assert(limits % 4 == 0, "passed an unaligned limits struct pointer", "assert(limits % 4 == 0, 'passed an unaligned limits struct pointer') failed!");
       assert(adapterOrDevice != 0, "assert(adapterOrDevice != 0) failed!");
       assert(wgpu[adapterOrDevice], "assert(wgpu[adapterOrDevice]) failed!");
       assert(wgpu[adapterOrDevice] instanceof GPUAdapter || wgpu[adapterOrDevice] instanceof GPUDevice, "assert(wgpu[adapterOrDevice] instanceof GPUAdapter || wgpu[adapterOrDevice] instanceof GPUDevice) failed!");
   
       let l = wgpu[adapterOrDevice]['limits'];
   
-      limits >>= 2
+      assert((limits >> 2) << 2 == limits);
+  limits >>= 2;
       for(let limitName of _wgpu64BitLimitNames) {
-        wgpuWriteU64HeapIdx(limits, l[limitName]);
+        assert(l[limitName] !== undefined, `Browser WebGPU implementation incorrect: it should advertise limit ${limitName}`, "assert(l[limitName] !== undefined, `Browser WebGPU implementation incorrect: it should advertise limit ${limitName}`) failed!");
+        wgpuWriteI53ToU64HeapIdx(limits, l[limitName]);
         limits += 2;
       }
   
@@ -14371,45 +14789,59 @@ var ASM_CONSTS = {
       assert(heap32Idx != 0, "assert(heap32Idx != 0) failed!");
       return HEAPU32[heap32Idx] + HEAPU32[heap32Idx+1] * 4294967296;
     }
+  function wgpuReadSupportedLimits(heap32Idx) {
+      let requiredLimits = {}, v;
   
+      // Marshal all the complex 64-bit quantities first ..
+      for(let limitName of _wgpu64BitLimitNames) {
+        if ((v = wgpuReadI53FromU64HeapIdx(heap32Idx))) requiredLimits[limitName] = v;
+        heap32Idx += 2;
+      }
+  
+      // .. followed by the 32-bit quantities.
+      for(let limitName of _wgpu32BitLimitNames) {
+        if ((v = HEAPU32[heap32Idx++])) requiredLimits[limitName] = v;
+      }
+      return requiredLimits;
+    }
+  
+  function wgpuReadQueueDescriptor(heap32Idx) {
+      return HEAPU32[heap32Idx] ? { 'label': utf8(HEAPU32[heap32Idx]) } : void 0;
+    }
+  
+  function wgpuReadFeaturesBitfield(heap32Idx) {
+      let requiredFeatures = [], v = HEAPU32[heap32Idx];
+  
+      assert(_wgpuFeatures.length == 14, "assert(_wgpuFeatures.length == 14) failed!");
+      assert(_wgpuFeatures.length <= 30, "assert(_wgpuFeatures.length <= 30) failed!"); // We can only do up to 30 distinct feature bits here with the current code.
+      
+      for(let i = 0; i < 14/*_wgpuFeatures.length*/; ++i) {
+        if (v & (1 << i)) requiredFeatures.push(_wgpuFeatures[i]);
+      } 
+      return requiredFeatures;
+    }
+  function wgpuReadDeviceDescriptor(descriptor) {
+      assert(descriptor != 0, "assert(descriptor != 0) failed!");
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
+  
+      return {
+        'requiredLimits': wgpuReadSupportedLimits(descriptor),
+        'defaultQueue': wgpuReadQueueDescriptor(descriptor+34/*sizeof(WGpuSupportedLimits)*/),
+        'requiredFeatures': wgpuReadFeaturesBitfield(descriptor+36/*sizeof(WGpuSupportedLimits)+sizeof(WGpuQueueDescriptor)*/)
+      };
+    }
   /** @suppress{checkTypes} */
   function _wgpu_adapter_request_device_async(adapter, descriptor, deviceCallback, userData) {
       
       assert(adapter != 0, "assert(adapter != 0) failed!");
       assert(wgpu[adapter], "assert(wgpu[adapter]) failed!");
       assert(wgpu[adapter] instanceof GPUAdapter, "assert(wgpu[adapter] instanceof GPUAdapter) failed!");
-      assert(descriptor != 0, "assert(descriptor != 0) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
-  
-      descriptor >>= 2
-      let requiredFeatures = [], requiredLimits = {}, v = HEAPU32[descriptor], defaultQueueLabel;
-      descriptor += 2;
-  
-      assert(_wgpuFeatures.length == 9, "assert(_wgpuFeatures.length == 9) failed!");
-      assert(_wgpuFeatures.length <= 30, "assert(_wgpuFeatures.length <= 30) failed!"); // We can only do up to 30 distinct feature bits here with the current code.
-  
-      for(let i = 0; i < 9/*_wgpuFeatures.length*/; ++i) {
-        if (v & (1 << i)) requiredFeatures.push(_wgpuFeatures[i]);
-      }
-  
-      // Marshal all the complex 64-bit quantities first ..
-      for(let limitName of _wgpu64BitLimitNames) {
-        if ((v = wgpuReadI53FromU64HeapIdx(descriptor))) requiredLimits[limitName] = v;
-        descriptor += 2;
-      }
-  
-      // .. followed by the 32-bit quantities.
-      for(let limitName of _wgpu32BitLimitNames) {
-        if ((v = HEAPU32[descriptor++])) requiredLimits[limitName] = v;
-      }
   
       function cb(device) {
         // If device is non-null, initialization succeeded.
         
-        
         if (device) {
-          device.derivedObjects = []; // A large number of objects are derived from GPUDevice (GPUBuffers, GPUTextures, GPUSamplers, ....)
-  
           // Register an ID for the queue of this newly created device
           wgpuStore(device['queue']);
         }
@@ -14417,17 +14849,12 @@ var ASM_CONSTS = {
         ((a1, a2) => dynCall_vii.apply(null, [deviceCallback, a1, a2]))(wgpuStore(device), userData);
       }
   
-      defaultQueueLabel = HEAPU32[descriptor];
-      wgpu[adapter]['requestDevice'](
-        debugDir(
-          {
-            'requiredFeatures': requiredFeatures,
-            'requiredLimits': requiredLimits,
-            'defaultQueue': defaultQueueLabel ? { 'label': UTF8ToString(defaultQueueLabel) } : void 0
-          },
-          'GPUAdapter.requestDevice() with desc'
-        )
-      ).then(cb).catch(
+      let desc = wgpuReadDeviceDescriptor(descriptor);
+  
+      ;
+      wgpu[adapter]['requestDevice'](desc)
+        .then(_wgpuMuteJsExceptions(cb))
+        .catch(
         (e)=>{console.error(`GPUAdapter.requestDevice() Promise failed: ${e}`); cb(/*intentionally omit arg to pass undefined*/)}
       );
     }
@@ -14445,20 +14872,17 @@ var ASM_CONSTS = {
       
       gpuBuffer = wgpu[gpuBuffer];
       try {
-        // Awkward polymorphism: cannot pass undefined as size to map whole buffer, but must call the shorter function.
-        gpuBuffer.mappedRanges[offset] = size < 0 ? gpuBuffer['getMappedRange'](offset) : gpuBuffer['getMappedRange'](offset, size);
+        gpuBuffer.mappedRanges[offset] = gpuBuffer['getMappedRange'](offset, size < 0 ? void 0 : size);
       } catch(e) {
         // E.g. if the GPU ran out of memory when creating a new buffer, this can fail. 
-        
         
         return -1;
       }
       
-      
       return offset;
     }
 
-  function _wgpu_buffer_map_async(buffer, callback, userData, mode, offset, size) { // TODO: this function is untested. Write a test case
+  function _wgpu_buffer_map_async(buffer, callback, userData, mode, offset, size) {
       
       assert(buffer != 0, "assert(buffer != 0) failed!");
       assert(wgpu[buffer], "assert(wgpu[buffer]) failed!");
@@ -14468,9 +14892,7 @@ var ASM_CONSTS = {
       assert(Number.isSafeInteger(size), "assert(Number.isSafeInteger(size)) failed!");
       assert(size >= -1, "assert(size >= -1) failed!");
   
-      let bufferObject = wgpu[buffer];
-      // Awkward polymorphism: must call different version of mapAsync to use default 'size' value.
-      (size < 0 ? bufferObject['mapAsync'](mode, offset) : bufferObject['mapAsync'](mode, offset, size)).then(() => {
+      wgpu[buffer]['mapAsync'](mode, offset, size < 0 ? void 0 : size).then(() => {
         ((a1, a2, a3, a4, a5) => dynCall_viiidd.apply(null, [callback, a1, a2, a3, a4, a5]))(buffer, userData, mode, offset, size);
       });
     }
@@ -14512,14 +14934,14 @@ var ASM_CONSTS = {
   function wgpuReadArrayOfWgpuObjects(ptr, numObjects) {
       assert(numObjects >= 0, "assert(numObjects >= 0) failed!");
       assert(ptr != 0 || numObjects == 0, "assert(ptr != 0 || numObjects == 0) failed!"); // Must be non-null pointer
-      assert(ptr % 4 == 0, "assert(ptr % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
-      ptr >>= 2
+      assert((ptr >> 2) << 2 == ptr);
+  ptr >>= 2;
   
-      let arrayOfObjects = [];
-      while(numObjects--) {
+      var arrayOfObjects = new Array(numObjects);
+      for(var i = 0; i < numObjects;) {
         assert(HEAPU32[ptr], "assert(HEAPU32[ptr]) failed!"); // Must reference a nonzero WebGPU object handle
         assert(wgpu[HEAPU32[ptr]], "assert(wgpu[HEAPU32[ptr]]) failed!"); // Must reference a valid WebGPU object
-        arrayOfObjects.push(wgpu[HEAPU32[ptr++]]);
+        arrayOfObjects[i++] = wgpu[HEAPU32[ptr++]];
       }
       return arrayOfObjects;
     }
@@ -14529,36 +14951,52 @@ var ASM_CONSTS = {
       assert(wgpu[canvasContext], "assert(wgpu[canvasContext]) failed!");
       assert(wgpu[canvasContext] instanceof GPUCanvasContext, "assert(wgpu[canvasContext] instanceof GPUCanvasContext) failed!");
       assert(config != 0, "assert(config != 0) failed!"); // Must be non-null
-      assert(config % 4 == 0, "assert(config % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
   
-      config >>= 2
-      wgpu[canvasContext]['configure'](
-        debugDir(
-          {
-            'device': wgpu[HEAPU32[config]],
-            'format': GPUTextureAndVertexFormats[HEAPU32[config+1]],
-            'usage': HEAPU32[config+2],
-            'viewFormats': wgpuReadArrayOfWgpuObjects(HEAPU32[config+4], HEAPU32[config+3]),
-            'colorSpace': HTMLPredefinedColorSpaces[HEAPU32[config+5]],
-            'alphaMode': [, 'opaque', 'premultiplied'][HEAPU32[config+6]]
-          },
-          'canvasContext.configure() with config'
-        )
-      );
+      assert((config >> 2) << 2 == config);
+  config >>= 2;
+  
+      let desc = {
+        'device': wgpu[HEAPU32[config]],
+        'format': GPUTextureAndVertexFormats[HEAPU32[config+1]],
+        'usage': HEAPU32[config+2],
+        'viewFormats': wgpuReadArrayOfWgpuObjects(HEAPU32[config  + 4], HEAPU32[config+3]),
+        'colorSpace': HTMLPredefinedColorSpaces[HEAPU32[config+6]],
+        'toneMapping': {
+          'mode': [, 'standard', 'extended'][HEAPU32[config+7]]
+        },
+        'alphaMode': [, 'opaque', 'premultiplied'][HEAPU32[config+8]]
+      };
+  
+      ;
+      wgpu[canvasContext]['configure'](desc);
     }
 
   function _wgpu_object_destroy(object) {
       let o = wgpu[object];
       assert(o || !wgpu.hasOwnProperty(object), 'wgpu dictionary should never be storing key-values with null/undefined value in it', "assert(o || !wgpu.hasOwnProperty(object), 'wgpu dictionary should never be storing key-values with null/undefined value in it') failed!");
       if (o) {
+        // Make sure if there might exist any other references to this JS object, that they will no longer see the .wid
+        // field, since this object no longer exists in the wgpu table.
+        o.wid = 0;
         // WebGPU objects of type GPUDevice, GPUBuffer, GPUTexture and GPUQuerySet have an explicit .destroy() function. Call that if applicable.
         if (o['destroy']) o['destroy']();
         // If the given object has derived objects (GPUTexture -> GPUTextureViews), delete those in a hierarchy as well.
-        if (o.derivedObjects) o.derivedObjects.forEach(_wgpu_object_destroy);
+        if (o.derivedObjects) Object.keys(o.derivedObjects).forEach(_wgpu_object_destroy);
+        // If this object has a parent, unlink this object from its parent.
+        if (o.parentObject) delete o.parentObject.derivedObjects[object];
         // Finally erase reference to this object.
         delete wgpu[object];
       }
       assert(!wgpu.hasOwnProperty(object), 'object should have gotten deleted', "assert(!wgpu.hasOwnProperty(object), 'object should have gotten deleted') failed!");
+    }
+  
+  function wgpuLinkParentAndChild(parent, childId, child) {
+      child.parentObject = parent; // Link child->parent
+  
+      // WebGPU objects form an object hierarchy, and deleting an object (adapter, device, texture, etc.) will
+      // destroy all child objects in the hierarchy)
+      if (!parent.derivedObjects) parent.derivedObjects = {};
+      parent.derivedObjects[childId] = child; // Link parent->child
     }
   function _wgpu_canvas_context_get_current_texture(canvasContext) {
       
@@ -14566,198 +15004,143 @@ var ASM_CONSTS = {
       assert(wgpu[canvasContext], "assert(wgpu[canvasContext]) failed!");
       assert(wgpu[canvasContext] instanceof GPUCanvasContext, "assert(wgpu[canvasContext] instanceof GPUCanvasContext) failed!");
   
+      canvasContext = wgpu[canvasContext];
       // The canvas context texture is a special texture that automatically invalidates itself after the current rAF()
       // callback if over. Therefore when a new swap chain texture is produced, we need to delete the old one to avoid
       // accumulating references to stale textures from each frame.
   
       // Acquire the new canvas context texture..
-      canvasContext = wgpu[canvasContext]['getCurrentTexture']();
-      assert(canvasContext, "assert(canvasContext) failed!");
-      // The browser implementation for getCurrentTexture() should always return a new texture for each frame, so
-      // derivedObjects array should not have a chance to pile up (a lot of) derived views. It is observed that
-      // Chrome at least will temporarily return the same texture when it is not compositing, in which case
-      // derivedObjects will have ~20-50(?) old derived views simultaneously. These will clear up when Chrome
-      // actually starts compositing.
-      assert(!canvasContext.derivedObjects || canvasContext.derivedObjects.length < 1000, "assert(!canvasContext.derivedObjects || canvasContext.derivedObjects.length < 1000) failed!");
-      if (canvasContext != wgpu[1]) {
+      var canvasTexture = canvasContext['getCurrentTexture']();
+      assert(canvasTexture, "assert(canvasTexture) failed!");
+      if (canvasTexture != wgpu[1]) {
         // ... and destroy previous special canvas context texture, if it was an old one.
         _wgpu_object_destroy(1);
-        wgpu[1] = canvasContext;
-        canvasContext.wid = 1;
-        canvasContext.derivedObjects = []; // GPUTextureViews are derived off of GPUTextures
+        wgpu[1] = canvasTexture;
+        canvasTexture.wid = 1;
+        wgpuLinkParentAndChild(canvasContext, 1, canvasTexture);
       }
-      // The canvas context texture is hardcoded the special ID 1. Return that to caller.
+      // The canvas context texture is hardcoded the special ID 1. Return that ID to caller.
       return 1;
     }
 
-  
-  
   function _wgpu_canvas_get_webgpu_context(canvasSelector) {
       
-      return wgpuStore(
-        debugDir(
-          debugDir(
-            document.querySelector(UTF8ToString(canvasSelector)),
-            'canvas'
-          )
-          .getContext('webgpu'),
-          'canvas.getContext("webgpu")'
-        )
-      );
+      assert(canvasSelector, "assert(canvasSelector) failed!");
+  
+      // Search Canvas elements in DOM.
+      let canvas = document.querySelector(utf8(canvasSelector));
+      ;
+  
+      let ctx = canvas.getContext('webgpu');
+      ;
+  
+      if (ctx.wid) return ctx.wid;
+  
+      return wgpuStore(ctx);
     }
 
-  var GPUComputePassTimestampLocations = ["beginning","end"];
   function wgpuReadTimestampWrites(timestampWritesIndex) {
-      if (!timestampWritesIndex) return /*undefined*/; // If timestampWrites pointer is zero, there is no timestamps array to generate, so set an undefined in the descriptor for that field.
-      let numTimestampWrites = timestampWritesIndex && HEAP32[timestampWritesIndex++];
-      assert(numTimestampWrites >= 0, numTimestampWrites, "assert(numTimestampWrites >= 0, numTimestampWrites) failed!"); // Sanity check against corrupted memory
-      assert(numTimestampWrites <= 1024, numTimestampWrites, "assert(numTimestampWrites <= 1024, numTimestampWrites) failed!"); // Sanity check against corrupted memory (this limit is arbitrary to catch likely corrupted data)
-      let timestampWrites = [];
-      assert(HEAPU32[timestampWritesIndex] % 4 == 0, "assert(HEAPU32[timestampWritesIndex] % 4 == 0) failed!"); // Pointer to timestamp write struct must be aligned to uint32_t.
-      let idx = HEAPU32[timestampWritesIndex] >> 2;
-      assert(numTimestampWrites == 0 || idx != 0, "assert(numTimestampWrites == 0 || idx != 0) failed!"); // If numTimestampWrites > 0, then we must have a nonzero index.
-      while(numTimestampWrites--) {
-        timestampWrites.push({
-          'querySet': wgpu[HEAPU32[idx]],
-          'queryIndex': HEAPU32[idx+1],
-          'location': GPUComputePassTimestampLocations[HEAPU32[idx+2]]
-        });
-        idx += 3;
+      let querySet = HEAPU32[timestampWritesIndex];
+      if (querySet) {
+        let timestampWrites = { 'querySet': wgpu[querySet] }, i;
+        if ((i = HEAP32[timestampWritesIndex+1]) >= 0) timestampWrites['beginningOfPassWriteIndex'] = i;
+        if ((i = HEAP32[timestampWritesIndex+2]) >= 0) timestampWrites['endOfPassWriteIndex'] = i;
+        return timestampWrites;
       }
-      return timestampWrites;
     }
-  function _wgpu_command_encoder_begin_compute_pass(commandEncoder, descriptor) { // TODO: this function is untested. Write a test case
+  function _wgpu_command_encoder_begin_compute_pass(commandEncoder, descriptor) {
       
       assert(commandEncoder != 0, "assert(commandEncoder != 0) failed!");
       assert(wgpu[commandEncoder], "assert(wgpu[commandEncoder]) failed!");
       assert(wgpu[commandEncoder] instanceof GPUCommandEncoder, "assert(wgpu[commandEncoder] instanceof GPUCommandEncoder) failed!");
       // descriptor may be a null pointer
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
   
       commandEncoder = wgpu[commandEncoder];
-      descriptor >>= 2
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
   
       let desc = {
         'timestampWrites': wgpuReadTimestampWrites(descriptor)
       };
   
       
-      
-      let computePassEncoder = commandEncoder['beginComputePass'](desc);
-      
-      
-  
-      return wgpuStore(computePassEncoder);
+      return wgpuStore(commandEncoder['beginComputePass'](desc));
     }
 
   var GPULoadOps = [,"load","clear"];
   
   var GPUStoreOps = [,"store","discard"];
   
+  
+  function wgpuReadRenderPassDepthStencilAttachment(heap32Idx) {
+      return HEAPU32[heap32Idx] ? {
+          'view': wgpu[HEAPU32[heap32Idx]],
+          'depthLoadOp': GPULoadOps[HEAPU32[heap32Idx+1]],
+          'depthClearValue': HEAPF32[heap32Idx+2],
+          'depthStoreOp': GPUStoreOps[HEAPU32[heap32Idx+3]],
+          'depthReadOnly': !!HEAPU32[heap32Idx+4],
+          'stencilLoadOp': GPULoadOps[HEAPU32[heap32Idx+5]],
+          'stencilClearValue': HEAPU32[heap32Idx+6],
+          'stencilStoreOp': GPUStoreOps[HEAPU32[heap32Idx+7]],
+          'stencilReadOnly': !!HEAPU32[heap32Idx+8],
+        } : void 0;
+    }
   function _wgpu_command_encoder_begin_render_pass(commandEncoder, descriptor) {
       
       assert(commandEncoder != 0, "assert(commandEncoder != 0) failed!");
       assert(wgpu[commandEncoder], "assert(wgpu[commandEncoder]) failed!");
       assert(wgpu[commandEncoder] instanceof GPUCommandEncoder, "assert(wgpu[commandEncoder] instanceof GPUCommandEncoder) failed!");
       assert(descriptor != 0, "assert(descriptor != 0) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
   
-      descriptor >>= 2
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
   
       let colorAttachments = [],
-        numColorAttachments = HEAP32[descriptor++],
-        colorAttachmentsIdx = HEAPU32[descriptor++] >> 2,
-        colorAttachmentsIdxDbl = colorAttachmentsIdx + 4 >> 1, // Alias the view for HEAPF64.
-        depthStencilView = wgpu[HEAPU32[descriptor]];
+        numColorAttachments = HEAP32[descriptor+4],
+        colorAttachmentsIdx = wgpu_checked_shift(HEAPU32[descriptor+2], 2),
+        colorAttachmentsIdxDbl = colorAttachmentsIdx + 6 >> 1, // Alias the view for HEAPF64.
+        maxDrawCount = HEAPF64[descriptor >> 1],
+        depthStencilAttachment = HEAPU32[descriptor+5];
+  
+      assert(Number.isSafeInteger(maxDrawCount), "assert(Number.isSafeInteger(maxDrawCount)) failed!"); // 'maxDrawCount' is a double_int53_t
+      assert(maxDrawCount >= 0, "assert(maxDrawCount >= 0) failed!");
   
       assert(colorAttachmentsIdx % 2 == 0, "assert(colorAttachmentsIdx % 2 == 0) failed!"); // Must be aligned at double boundary
-      assert(depthStencilView || !HEAPU32[descriptor], "assert(depthStencilView || !HEAPU32[descriptor]) failed!");
+      assert(depthStencilAttachment == 0 || wgpu[depthStencilAttachment] instanceof GPUTextureView, "assert(depthStencilAttachment == 0 || wgpu[depthStencilAttachment] instanceof GPUTextureView) failed!"); // Must point to a valid WebGPU texture view object if nonzero
   
       assert(numColorAttachments >= 0, "assert(numColorAttachments >= 0) failed!");
       while(numColorAttachments--) {
         // If view is 0, then this attachment is to be sparse.
         colorAttachments.push(HEAPU32[colorAttachmentsIdx] ? {
           'view': wgpu[HEAPU32[colorAttachmentsIdx]],
-          'resolveTarget': wgpu[HEAPU32[colorAttachmentsIdx+1]],
-          'storeOp': GPUStoreOps[HEAPU32[colorAttachmentsIdx+2]],
-          'loadOp': GPULoadOps[HEAPU32[colorAttachmentsIdx+3]],
+          'depthSlice': HEAP32[colorAttachmentsIdx+1] < 0 ? void 0 : HEAP32[colorAttachmentsIdx+1], // Awkward polymorphism: spec does not allow 'depthSlice' to be given a value (even 0) if attachment is not a 3D texture.
+          'resolveTarget': wgpu[HEAPU32[colorAttachmentsIdx+2]],
+          'storeOp': GPUStoreOps[HEAPU32[colorAttachmentsIdx+3]],
+          'loadOp': GPULoadOps[HEAPU32[colorAttachmentsIdx+4]],
           'clearValue': [HEAPF64[colorAttachmentsIdxDbl  ], HEAPF64[colorAttachmentsIdxDbl+1],
                          HEAPF64[colorAttachmentsIdxDbl+2], HEAPF64[colorAttachmentsIdxDbl+3]]
         } : null);
   
-        colorAttachmentsIdx += 12;
-        colorAttachmentsIdxDbl += 6;
+        colorAttachmentsIdx += 14; // sizeof(WGpuRenderPassColorAttachment)
+        colorAttachmentsIdxDbl += 7; // sizeof(WGpuRenderPassColorAttachment)/2
       }
   
-      assert(Number.isSafeInteger(HEAPF64[descriptor+10>>1]), "assert(Number.isSafeInteger(HEAPF64[descriptor+10>>1])) failed!"); // 'maxDrawCount' is a double_int53_t
-      assert(HEAPF64[descriptor+10>>1] >= 0, "assert(HEAPF64[descriptor+10>>1] >= 0) failed!");
-  
-      return wgpuStore(
-        debugDir(
-          wgpu[commandEncoder]['beginRenderPass'](
-            debugDir(
-              {
-                'colorAttachments': colorAttachments,
-                // Awkward polymorphism: cannot specify 'view': undefined if no depth-stencil attachment
-                // is to be present, but must pass null as the whole attachment object.
-                'depthStencilAttachment': depthStencilView ? {
-                  'view': depthStencilView,
-                  'depthLoadOp': GPULoadOps[HEAPU32[descriptor+1]],
-                  'depthClearValue': HEAPF32[descriptor+2],
-                  'depthStoreOp': GPUStoreOps[HEAPU32[descriptor+3]],
-                  'depthReadOnly': !!HEAPU32[descriptor+4],
-                  'stencilLoadOp': GPULoadOps[HEAPU32[descriptor+5]],
-                  'stencilClearValue': HEAPU32[descriptor+6],
-                  'stencilStoreOp': GPUStoreOps[HEAPU32[descriptor+7]],
-                  'stencilReadOnly': !!HEAPU32[descriptor+8],
-                } : void 0,
-                'occlusionQuerySet': wgpu[HEAPU32[descriptor+9]],
-                // Read 'maxDrawCount'. If set to zero, pass in undefined to use the default value
-                // (likely 50 million, but omit it in case the spec might change in the future)
-                'maxDrawCount': HEAPF64[descriptor+10>>1] || void 0,
-                'timestampWrites': wgpuReadTimestampWrites(descriptor+11)
-  
-              },
-              'GPUCommandEncoder.beginRenderPass() with desc'
-            )
-          ),
-          'returned'
-        )
-      );
+      let desc = {
+        'colorAttachments': colorAttachments,
+        // Awkward polymorphism: cannot specify 'view': undefined if no depth-stencil attachment
+        // is to be present, but must pass undefined as the whole attachment object.
+        'depthStencilAttachment': wgpuReadRenderPassDepthStencilAttachment(descriptor+5),
+        'occlusionQuerySet': wgpu[HEAPU32[descriptor+14]], // 5 + 9==sizeof(WGpuRenderPassDepthStencilAttachment)
+        // If maxDrawCount is set to zero, pass in undefined to use the default value
+        // (likely 50 million, but omit it in case the spec might change in the future)
+        'maxDrawCount': maxDrawCount || void 0,
+        'timestampWrites': wgpuReadTimestampWrites(descriptor+15) // 14 + 1==sizeof(WGpuQuerySet) + 1
+      };
+      ;
+      return wgpuStore(wgpu[commandEncoder]['beginRenderPass'](desc));
     }
 
-  
-  function _wgpu_command_encoder_begin_render_pass_1color_0depth(commandEncoder, descriptor) {
-      
-      assert(commandEncoder != 0, "assert(commandEncoder != 0) failed!");
-      assert(wgpu[commandEncoder], "assert(wgpu[commandEncoder]) failed!");
-      assert(wgpu[commandEncoder] instanceof GPUCommandEncoder, "assert(wgpu[commandEncoder] instanceof GPUCommandEncoder) failed!");
-      assert(descriptor != 0, "assert(descriptor != 0) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
-  
-      descriptor >>= 2
-  
-      assert(HEAP32[descriptor] == 1, "assert(HEAP32[descriptor] == 1) failed!"); // Must be passing exactly one color target.
-      assert(HEAPU32[descriptor+2] == 0, "assert(HEAPU32[descriptor+2] == 0) failed!"); // Must be passing no depth-stencil target.
-  
-      let colorAttachmentsIdx = HEAPU32[descriptor+1] >> 2,
-        colorAttachmentsIdxDbl = colorAttachmentsIdx + 4 >> 1; // Alias the view for HEAPF64.
-  
-      assert(colorAttachmentsIdx % 2 == 0, "assert(colorAttachmentsIdx % 2 == 0) failed!"); // Must be aligned at double boundary
-  
-      return wgpuStore(debugDir(wgpu[commandEncoder]['beginRenderPass'](debugDir({
-          'colorAttachments': [{
-            'view': wgpu[HEAPU32[colorAttachmentsIdx]],
-            'resolveTarget': wgpu[HEAPU32[colorAttachmentsIdx+1]],
-            'storeOp': GPUStoreOps[HEAPU32[colorAttachmentsIdx+2]],
-            'loadOp': GPULoadOps[HEAPU32[colorAttachmentsIdx+3]],
-            'clearValue': [HEAPF64[colorAttachmentsIdxDbl  ], HEAPF64[colorAttachmentsIdxDbl+1],
-                           HEAPF64[colorAttachmentsIdxDbl+2], HEAPF64[colorAttachmentsIdxDbl+3]]
-          }]
-        }, 'GPUCommandEncoder.beginRenderPass() with desc')), 'returned'));
-    }
-
-  function _wgpu_command_encoder_copy_buffer_to_buffer(commandEncoder, source, sourceOffset, destination, destinationOffset, size) { // TODO: this function is untested. Write a test case
+  function _wgpu_command_encoder_copy_buffer_to_buffer(commandEncoder, source, sourceOffset, destination, destinationOffset, size) {
       
       assert(commandEncoder != 0, "assert(commandEncoder != 0) failed!");
       assert(wgpu[commandEncoder], "assert(wgpu[commandEncoder]) failed!");
@@ -14776,8 +15159,8 @@ var ASM_CONSTS = {
   var GPUTextureAspects = wgpuDecodeStrings('all stencilA depthA', '-only');
   function wgpuReadGpuImageCopyTexture(ptr) {
       assert(ptr, "assert(ptr) failed!");
-      assert(ptr % 4 == 0, "assert(ptr % 4 == 0) failed!");
-      ptr >>= 2
+      assert((ptr >> 2) << 2 == ptr);
+  ptr >>= 2;
       return {
         'texture': wgpu[HEAPU32[ptr]],
         'mipLevel': HEAP32[ptr+1],
@@ -14788,8 +15171,8 @@ var ASM_CONSTS = {
   
   function wgpuReadGpuImageCopyBuffer(ptr) {
       assert(ptr != 0, "assert(ptr != 0) failed!");
-      assert(ptr % 4 == 0, "assert(ptr % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
-      ptr >>= 2
+      assert((ptr >> 2) << 2 == ptr);
+  ptr >>= 2;
       return {
         'offset': wgpuReadI53FromU64HeapIdx(ptr),
         'bytesPerRow': HEAP32[ptr+2],
@@ -14797,7 +15180,7 @@ var ASM_CONSTS = {
         'buffer': wgpu[HEAPU32[ptr+4]]
       };
     }
-  function _wgpu_command_encoder_copy_texture_to_buffer(commandEncoder, source, destination, copyWidth, copyHeight, copyDepthOrArrayLayers) { // TODO: this function is untested. Write a test case
+  function _wgpu_command_encoder_copy_texture_to_buffer(commandEncoder, source, destination, copyWidth, copyHeight, copyDepthOrArrayLayers) {
       
       assert(commandEncoder != 0, "assert(commandEncoder != 0) failed!");
       assert(wgpu[commandEncoder], "assert(wgpu[commandEncoder]) failed!");
@@ -14807,7 +15190,7 @@ var ASM_CONSTS = {
       wgpu[commandEncoder]['copyTextureToBuffer'](wgpuReadGpuImageCopyTexture(source), wgpuReadGpuImageCopyBuffer(destination), [copyWidth, copyHeight, copyDepthOrArrayLayers]);
     }
 
-  function _wgpu_command_encoder_copy_texture_to_texture(commandEncoder, source, destination, copyWidth, copyHeight, copyDepthOrArrayLayers) { // TODO: this function is untested. Write a test case
+  function _wgpu_command_encoder_copy_texture_to_texture(commandEncoder, source, destination, copyWidth, copyHeight, copyDepthOrArrayLayers) {
       
       assert(commandEncoder != 0, "assert(commandEncoder != 0) failed!");
       assert(wgpu[commandEncoder], "assert(wgpu[commandEncoder]) failed!");
@@ -14817,7 +15200,7 @@ var ASM_CONSTS = {
       wgpu[commandEncoder]['copyTextureToTexture'](wgpuReadGpuImageCopyTexture(source), wgpuReadGpuImageCopyTexture(destination), [copyWidth, copyHeight, copyDepthOrArrayLayers]);
     }
 
-  function _wgpu_compute_pass_encoder_dispatch_workgroups(encoder, workgroupCountX, workgroupCountY, workgroupCountZ) { // TODO: this function is untested. Write a test case
+  function _wgpu_compute_pass_encoder_dispatch_workgroups(encoder, workgroupCountX, workgroupCountY, workgroupCountZ) {
       
       assert(encoder != 0, "assert(encoder != 0) failed!");
       assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
@@ -14825,10 +15208,30 @@ var ASM_CONSTS = {
       wgpu[encoder]['dispatchWorkgroups'](workgroupCountX, workgroupCountY, workgroupCountZ);
     }
 
+  function _wgpu_compute_pass_encoder_dispatch_workgroups_indirect(encoder, indirectBuffer, indirectOffset) {
+      
+      assert(encoder != 0, "assert(encoder != 0) failed!");
+      assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
+      assert(wgpu[encoder] instanceof GPUComputePassEncoder, "assert(wgpu[encoder] instanceof GPUComputePassEncoder) failed!");
+      assert(indirectBuffer != 0, "assert(indirectBuffer != 0) failed!");
+      assert(wgpu[indirectBuffer], "assert(wgpu[indirectBuffer]) failed!");
+      assert(wgpu[indirectBuffer] instanceof GPUBuffer, "assert(wgpu[indirectBuffer] instanceof GPUBuffer) failed!");
+      assert(Number.isSafeInteger(indirectOffset), "assert(Number.isSafeInteger(indirectOffset)) failed!");
+      assert(indirectOffset >= 0, "assert(indirectOffset >= 0) failed!");
+      wgpu[encoder]['dispatchWorkgroupsIndirect'](wgpu[indirectBuffer], indirectOffset);
+    }
+
+  
   function wgpuStoreAndSetParent(object, parent) {
-      object = wgpuStore(object);
-      object && parent.derivedObjects.push(object);
-      return object;
+      if (object) {
+        var objectId = wgpuStore(object);
+        wgpuLinkParentAndChild(parent, objectId, object);
+        // No WebGPU resource such have more children than there are currently total
+        // number of WebGPU resources in existence. Because if that was the case,
+        // it would indicate a memory leak in handling the derivedObjects dictionary.
+        assert(Object.keys(parent.derivedObjects).length < Object.keys(wgpu).length, "assert(Object.keys(parent.derivedObjects).length < Object.keys(wgpu).length) failed!");
+        return objectId;
+      }
     }
   
   function _wgpu_device_create_bind_group(device, layout, entries, numEntries) {
@@ -14842,43 +15245,30 @@ var ASM_CONSTS = {
       assert(wgpu[layout] instanceof GPUBindGroupLayout, "assert(wgpu[layout] instanceof GPUBindGroupLayout) failed!");
       assert(numEntries >= 0, "assert(numEntries >= 0) failed!");
       assert(entries != 0 || numEntries == 0, "assert(entries != 0 || numEntries == 0) failed!"); // Must be non-null pointer
-      assert(entries % 4 == 0, "assert(entries % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
       device = wgpu[device];
-      entries >>= 2
+      assert((entries >> 2) << 2 == entries);
+  entries >>= 2;
       let e = [];
       while(numEntries--) {
-        let bindingIdx = HEAPU32[entries],
-          resource = wgpu[HEAPU32[entries + 1]];
+        let resource = wgpu[HEAPU32[entries + 1]];
         assert(resource, "assert(resource) failed!");
-        let binding = {
-          'binding': bindingIdx,
-          'resource': resource
-        };
-        if (resource.isBuffer) {
-          let resourceBinding = {
+        e.push({
+          'binding': HEAPU32[entries],
+          'resource': resource.isBuffer ? {
             'buffer': resource,
             'offset': wgpuReadI53FromU64HeapIdx(entries + 2),
-          }, size = wgpuReadI53FromU64HeapIdx(entries + 4);
-          // Awkward polymorphism: cannot specify 'size' field if the whole buffer is to be bound.
-          if (size) resourceBinding['size'] = size;
-          binding['resource'] = resourceBinding;
-        };
-        e.push(binding);
+            'size': wgpuReadI53FromU64HeapIdx(entries + 4) || void 0 // Awkward polymorphism: convert size=0 to 'undefined' to mean to bind the whole buffer.
+          } : resource,
+        });
         entries += 6;
       }
   
-      return wgpuStoreAndSetParent(
-        device['createBindGroup'](
-          debugDir(
-            {
-              'layout': wgpu[layout],
-              'entries': e
-            },
-            'GPUDevice.createBindGroup() with desc'
-          )
-        ),
-        device
-      );
+      let desc = {
+        'layout': wgpu[layout],
+        'entries': e
+      };
+      ;
+      return wgpuStoreAndSetParent(device['createBindGroup'](desc), device);
     }
 
   
@@ -14891,12 +15281,14 @@ var ASM_CONSTS = {
   
   var GPUTextureViewDimensions = wgpuDecodeStrings('1B 2dCA AC3d', '-array |d 2d|cube');
   
+  
+  var GPUStorageTextureSampleTypes = wgpuDecodeStrings('A-BBA', 'only read-|write');
   function wgpuReadBindGroupLayoutDescriptor(entries, numEntries) {
       assert(numEntries >= 0, "assert(numEntries >= 0) failed!");
       assert(entries != 0 || numEntries == 0, "assert(entries != 0 || numEntries == 0) failed!"); // Must be non-null pointer
-      assert(entries % 4 == 0, "assert(entries % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
   
-      entries >>= 2
+      assert((entries >> 2) << 2 == entries);
+  entries >>= 2;
       let e = [];
       while(numEntries--) {
         let entry = {
@@ -14923,7 +15315,7 @@ var ASM_CONSTS = {
           };
         } else if (type == 4/*WGPU_BIND_GROUP_LAYOUT_TYPE_STORAGE_TEXTURE*/) {
           entry['storageTexture'] = {
-            'access': [, 'write-only'][HEAPU32[entries]],
+            'access': GPUStorageTextureSampleTypes[HEAPU32[entries]],
             'format': GPUTextureAndVertexFormats[HEAPU32[entries+1]],
             'viewDimension': GPUTextureViewDimensions[HEAPU32[entries+2]]
           };
@@ -14937,7 +15329,7 @@ var ASM_CONSTS = {
         'entries': e
       }
     }
-  function _wgpu_device_create_bind_group_layout(device, entries, numEntries) { // TODO: this function is untested. Write a test case
+  function _wgpu_device_create_bind_group_layout(device, entries, numEntries) {
       
       assert(device != 0, "assert(device != 0) failed!");
       assert(wgpu[device], "assert(wgpu[device]) failed!");
@@ -14946,12 +15338,7 @@ var ASM_CONSTS = {
   
       let desc = wgpuReadBindGroupLayoutDescriptor(entries, numEntries);
       
-      
-      let bgl = device['createBindGroupLayout'](desc);
-      
-      
-  
-      return wgpuStoreAndSetParent(bgl, device);
+      return wgpuStoreAndSetParent(device['createBindGroupLayout'](desc), device);
     }
 
   
@@ -14961,20 +15348,18 @@ var ASM_CONSTS = {
       assert(wgpu[device], "assert(wgpu[device]) failed!");
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
       assert(descriptor != 0, "assert(descriptor != 0) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
       device = wgpu[device];
-      descriptor >>= 2
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
   
-      let buffer = device['createBuffer'](
-        debugDir(
-          {
-            'size': wgpuReadI53FromU64HeapIdx(descriptor),
-            'usage': HEAPU32[descriptor+2],
-            'mappedAtCreation': !!HEAPU32[descriptor+3]
-          },
-          'GPUDevice.createBuffer() with desc'
-        )
-      );
+      let desc = {
+        'size': wgpuReadI53FromU64HeapIdx(descriptor),
+        'usage': HEAPU32[descriptor+2],
+        'mappedAtCreation': !!HEAPU32[descriptor+3]
+      };
+      ;
+      let buffer = device['createBuffer'](desc);
+  
       // Add tracking space for mapped ranges
       buffer.mappedRanges = {};
       // Mark this object to be of type GPUBuffer for wgpu_device_create_bind_group().
@@ -14989,15 +15374,9 @@ var ASM_CONSTS = {
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
       assert(descriptor == 0 && "TODO: passing non-zero desciptor to wgpu_device_create_command_encoder() not yet implemented!", "assert(descriptor == 0 && 'TODO: passing non-zero desciptor to wgpu_device_create_command_encoder() not yet implemented!') failed!");
   
-      return wgpuStoreAndSetParent(
-        wgpu[device]['createCommandEncoder'](
-          debugDir(
-            void 0,
-            'GPUDevice.createCommandEncoder() with desc'
-          )
-        ),
-        wgpu[device]
-      );
+      let desc = void 0;
+      ;
+      return wgpuStoreAndSetParent(wgpu[device]['createCommandEncoder'](desc), wgpu[device]);
     }
 
   function _wgpu_device_create_command_encoder_simple(device) {
@@ -15008,19 +15387,18 @@ var ASM_CONSTS = {
   function wgpuReadConstants(constants, numConstants) {
       assert(numConstants >= 0, "assert(numConstants >= 0) failed!");
       assert(constants != 0 || numConstants == 0, "assert(constants != 0 || numConstants == 0) failed!");
-      assert(constants % 4 == 0, "assert(constants % 4 == 0) failed!");
   
       let c = {};
       while(numConstants--) {
-        c[UTF8ToString(HEAPU32[constants >> 2])] = HEAPF64[constants + 8 >> 3];
+        c[utf8(HEAPU32[constants  + 3 >> 2])] = 
+          HEAPF64[wgpu_checked_shift(constants + 8, 3)];
         constants += 16;
       }
       return c;
     }
   
   var GPUAutoLayoutMode = "auto";
-  
-  function _wgpu_device_create_compute_pipeline(device, computeModule, entryPoint, layout, constants, numConstants) { // TODO: this function is untested. Write a test case
+  function _wgpu_device_create_compute_pipeline(device, computeModule, entryPoint, layout, constants, numConstants) {
       
       assert(device != 0, "assert(device != 0) failed!");
       assert(wgpu[device], "assert(wgpu[device]) failed!");
@@ -15032,47 +15410,34 @@ var ASM_CONSTS = {
       assert(layout <= 1/*"auto"*/ || wgpu[layout] instanceof GPUPipelineLayout, "assert(layout <= 1/*'auto'*/ || wgpu[layout] instanceof GPUPipelineLayout) failed!");
       assert(numConstants >= 0, "assert(numConstants >= 0) failed!");
       assert(numConstants == 0 || constants, "assert(numConstants == 0 || constants) failed!");
-      assert(entryPoint, "assert(entryPoint) failed!"); // Must be a non-null C string pointer
-      assert(UTF8ToString(entryPoint).length > 0, "assert(UTF8ToString(entryPoint).length > 0) failed!"); // Must be a nonempty JS string
+      assert(!entryPoint || utf8(entryPoint).length > 0, "assert(!entryPoint || utf8(entryPoint).length > 0) failed!"); // If entry point string is provided, it must be a nonempty JS string
       device = wgpu[device];
   
-      return wgpuStoreAndSetParent(
-        device['createComputePipeline'](
-          debugDir(
-            {
-              'layout': layout > 1 ? wgpu[layout] : GPUAutoLayoutMode,
-              'compute': {
-                'module': wgpu[computeModule],
-                'entryPoint': UTF8ToString(entryPoint),
-                'constants': wgpuReadConstants(constants, numConstants)
-              }
-            },
-            'GPUDevice.createComputePipeline() with desc'
-          )
-        ),
-        device
-      );
+      let desc = {
+        'layout': layout > 1 ? wgpu[layout] : GPUAutoLayoutMode,
+        'compute': {
+          'module': wgpu[computeModule],
+          'entryPoint': utf8(entryPoint) || void 0, // If null pointer was passed to use the default entry point name, then utf8() would return '', but spec requires undefined.
+          'constants': wgpuReadConstants(constants, numConstants)
+        }
+      };
+      ;
+      return wgpuStoreAndSetParent(device['createComputePipeline'](desc), device);
     }
 
   
-  function _wgpu_device_create_pipeline_layout(device, layouts, numLayouts) { // TODO: this function is untested. Write a test case
+  function _wgpu_device_create_pipeline_layout(device, layouts, numLayouts) {
       
       assert(device != 0, "assert(device != 0) failed!");
       assert(wgpu[device], "assert(wgpu[device]) failed!");
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
       device = wgpu[device];
   
-      return wgpuStoreAndSetParent(
-        device['createPipelineLayout'](
-          debugDir(
-            {
-              'bindGroupLayouts': wgpuReadArrayOfWgpuObjects(layouts, numLayouts)
-            },
-            'GPUDevice.createPipelineLayout() with desc'
-          )
-        ),
-        device
-      );
+      let desc = {
+        'bindGroupLayouts': wgpuReadArrayOfWgpuObjects(layouts, numLayouts)
+      };
+      ;
+      return wgpuStoreAndSetParent(device['createPipelineLayout'](desc), device);
     }
 
   var GPUCompareFunctions = wgpuDecodeStrings('neverA equalACB notCBCalways', '-equal |greater| less');
@@ -15090,7 +15455,7 @@ var ASM_CONSTS = {
   
   var GPUBlendOperations = wgpuDecodeStrings('add Areverse-Amin max', 'subtract ');
   
-  var GPUBlendFactors = wgpuDecodeStrings('zero one BEB BDEBD AEA ADEAD BD-saturated CEC', ' one-minus-|-alpha|constant|src|dst');
+  var GPUBlendFactors = wgpuDecodeStrings('zero one CFC CEFCE AFA AEFAE CE-saturated BFB DFD DEFDE', ' one-minus-|-alpha|src1|src|constant|dst');
   function wgpuReadGpuBlendComponent(idx) {
       assert(idx != 0, "assert(idx != 0) failed!");
       assert(GPUBlendOperations[HEAPU32[idx]], "assert(GPUBlendOperations[HEAPU32[idx]]) failed!");
@@ -15111,26 +15476,26 @@ var ASM_CONSTS = {
   
   var GPUPrimitiveTopologys = wgpuDecodeStrings('pointDADAB CDCB', '-list |triangle|-strip|line');
   
-  
   function wgpuReadRenderPipelineDescriptor(descriptor) {
       assert(descriptor != 0, "assert(descriptor != 0) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!");
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
   
       let vertexBuffers = [],
           targets = [],
-          vertexIdx = descriptor >> 2,
-          numVertexBuffers = HEAP32[vertexIdx+2],
-          vertexBuffersIdx = HEAPU32[vertexIdx+3] >> 2,
-          primitiveIdx = vertexIdx + 6,
-          depthStencilIdx = primitiveIdx + 5,
-          multisampleIdx = depthStencilIdx + 17,
-          fragmentIdx = multisampleIdx + 3,
-          numTargets = HEAP32[fragmentIdx+2],
-          targetsIdx = HEAPU32[fragmentIdx+3] >> 2,
-          depthStencilFormat = HEAPU32[depthStencilIdx++],
+          vertexIdx = descriptor,
+          numVertexBuffers = HEAP32[vertexIdx+7], // +7 == WGpuVertexState.numBuffers
+          vertexBuffersIdx = wgpu_checked_shift(HEAPU32[vertexIdx+2], 2), // +2 == WGpuVertexState.buffers
+          primitiveIdx = vertexIdx + 10, // sizeof(WGpuVertexState)
+          depthStencilIdx = primitiveIdx + 5, // sizeof(WGpuPrimitiveState)
+          multisampleIdx = depthStencilIdx + 17, // sizeof(WGpuDepthStencilState)
+          fragmentIdx = multisampleIdx + 4, // sizeof(WGpuMultisampleState) + 1 for unused padding
+          numTargets = HEAP32[fragmentIdx+7], // +7 == WGpuFragmentState.numTargets
+          targetsIdx = wgpu_checked_shift(HEAPU32[fragmentIdx+2], 2), // +2 == WGpuFragmentState.targets
+          depthStencilFormat = HEAPU32[depthStencilIdx],
           multisampleCount = HEAPU32[multisampleIdx],
-          fragmentModule = HEAPU32[fragmentIdx],
-          pipelineLayoutId = HEAPU32[fragmentIdx+6],
+          fragmentModule = HEAPU32[fragmentIdx+6],
+          pipelineLayoutId = HEAPU32[fragmentIdx+10], // sizeof(WGpuFragmentState)
           desc;
   
       assert(pipelineLayoutId <= 1/*"auto"*/ || wgpu[pipelineLayoutId], "assert(pipelineLayoutId <= 1/*'auto'*/ || wgpu[pipelineLayoutId]) failed!");
@@ -15140,8 +15505,8 @@ var ASM_CONSTS = {
       assert(numVertexBuffers >= 0, "assert(numVertexBuffers >= 0) failed!");
       while(numVertexBuffers--) {
         let attributes = [],
-            numAttributes = HEAP32[vertexBuffersIdx],
-            attributesIdx = HEAPU32[vertexBuffersIdx+1] >> 2;
+            numAttributes = HEAP32[vertexBuffersIdx+2],
+            attributesIdx = wgpu_checked_shift(HEAPU32[vertexBuffersIdx], 2);
         assert(numAttributes >= 0, "assert(numAttributes >= 0) failed!");
         while(numAttributes--) {
           attributes.push({
@@ -15152,11 +15517,11 @@ var ASM_CONSTS = {
           attributesIdx += 4;
         }
         vertexBuffers.push({
-          'arrayStride': wgpuReadI53FromU64HeapIdx(vertexBuffersIdx+2),
-          'stepMode': [, 'vertex', 'instance'][HEAPU32[vertexBuffersIdx+4]],
+          'arrayStride': wgpuReadI53FromU64HeapIdx(vertexBuffersIdx+4),
+          'stepMode': [, 'vertex', 'instance'][HEAPU32[vertexBuffersIdx+3]],
           'attributes': attributes
         });
-        vertexBuffersIdx += 6;
+        vertexBuffersIdx += 6; // sizeof(WGpuVertexBufferLayout)
       }
   
       assert(numTargets >= 0, "assert(numTargets >= 0) failed!");
@@ -15176,11 +15541,19 @@ var ASM_CONSTS = {
   
       desc = {
         'vertex': {
-          'module': wgpu[HEAPU32[vertexIdx]],
-          'entryPoint': UTF8ToString(HEAPU32[vertexIdx+1]),
+          'module': wgpu[HEAPU32[vertexIdx+6]],
+          // If null pointer was passed to use the default entry point name, then utf8() would return '', but spec requires undefined.
+          'entryPoint': utf8(HEAPU32[vertexIdx]) || void 0,
           'buffers': vertexBuffers,
-          'constants': wgpuReadConstants(HEAPU32[vertexIdx+5], HEAP32[vertexIdx+4])
+          'constants': wgpuReadConstants(HEAPU32[vertexIdx+4  >> 2], HEAP32[vertexIdx+8])
         },
+        'fragment': fragmentModule ? {
+          'module': wgpu[fragmentModule],
+          // If null pointer was passed to use the default entry point name, then utf8() would return '', but spec requires undefined.
+          'entryPoint': utf8(HEAPU32[fragmentIdx]) || void 0,
+          'targets': targets,
+          'constants': wgpuReadConstants(HEAPU32[fragmentIdx+4  >> 2], HEAP32[fragmentIdx+8])
+        } : void 0,
         'primitive': {
           'topology': GPUPrimitiveTopologys[HEAPU32[primitiveIdx]],
           'stripIndexFormat': GPUIndexFormats[HEAPU32[primitiveIdx+1]],
@@ -15188,41 +15561,26 @@ var ASM_CONSTS = {
           'cullMode': [, 'none', 'front', 'back'][HEAPU32[primitiveIdx+3]],
           'unclippedDepth': !!HEAPU32[primitiveIdx+4]
         },
-        'layout': pipelineLayoutId > 1 ? wgpu[pipelineLayoutId] : GPUAutoLayoutMode
-      };
-  
-      // Awkward polymorphism: we cannot statically write desc['depthStencil'] = null above.
-      // but Chrome will complain that null.format member does not exist.
-      if (depthStencilFormat) desc['depthStencil'] = {
+        'depthStencil': depthStencilFormat ? {
           'format': GPUTextureAndVertexFormats[depthStencilFormat],
-          'depthWriteEnabled': !!HEAPU32[depthStencilIdx++],
-          'depthCompare': GPUCompareFunctions[HEAPU32[depthStencilIdx++]],
-          'stencilReadMask': HEAPU32[depthStencilIdx++],
-          'stencilWriteMask': HEAPU32[depthStencilIdx++],
-          'depthBias': HEAP32[depthStencilIdx++],
-          'depthBiasSlopeScale': HEAPF32[depthStencilIdx++],
-          'depthBiasClamp': HEAPF32[depthStencilIdx++],
-          'stencilFront': wgpuReadGpuStencilFaceState(depthStencilIdx),
-          'stencilBack': wgpuReadGpuStencilFaceState(depthStencilIdx+4),
-          'clampDepth': !!HEAPU32[depthStencilIdx+8],
-        };
-  
-      // Awkward polymorphism: we cannot statically write desc['multisample'] with count=0,
-      // but must dynamically populate the multisample object only if doing MSAA.
-      if (multisampleCount) desc['multisample'] = {
+          'depthWriteEnabled': !!HEAPU32[depthStencilIdx+1],
+          'depthCompare': GPUCompareFunctions[HEAPU32[depthStencilIdx+2]],
+          'stencilReadMask': HEAPU32[depthStencilIdx+3],
+          'stencilWriteMask': HEAPU32[depthStencilIdx+4],
+          'depthBias': HEAP32[depthStencilIdx+5],
+          'depthBiasSlopeScale': HEAPF32[depthStencilIdx+6],
+          'depthBiasClamp': HEAPF32[depthStencilIdx+7],
+          'stencilFront': wgpuReadGpuStencilFaceState(depthStencilIdx+8),
+          'stencilBack': wgpuReadGpuStencilFaceState(depthStencilIdx+12),
+          'clampDepth': !!HEAPU32[depthStencilIdx+16],
+        } : void 0,
+        'multisample': multisampleCount ? {
           'count': multisampleCount,
           'mask': HEAPU32[multisampleIdx+1],
           'alphaToCoverageEnabled': !!HEAPU32[multisampleIdx+2]
-        };
-  
-      // Awkward polymorphism: we cannot statically write desc['fragment']['module'] = null,
-      // but must omit 'fragment' object altogether if no fragment module is to be used.
-      if (fragmentModule) desc['fragment'] = {
-          'module': wgpu[fragmentModule],
-          'entryPoint': UTF8ToString(HEAPU32[fragmentIdx+1]),
-          'targets': targets,
-          'constants': wgpuReadConstants(HEAPU32[fragmentIdx+5], HEAP32[fragmentIdx+4])
-        };
+        } : void 0,
+        'layout': pipelineLayoutId > 1 ? wgpu[pipelineLayoutId] : GPUAutoLayoutMode
+      };
   
       return desc;
     }
@@ -15234,12 +15592,9 @@ var ASM_CONSTS = {
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
       assert(descriptor, "assert(descriptor) failed!");
   
-      return wgpuStoreAndSetParent(
-        wgpu[device]['createRenderPipeline'](
-          debugDir(wgpuReadRenderPipelineDescriptor(descriptor), 'GPUDevice.createRenderPipeline() with desc')
-        ),
-        wgpu[device]
-      );
+      let desc = wgpuReadRenderPipelineDescriptor(descriptor);
+      ;
+      return wgpuStoreAndSetParent(wgpu[device]['createRenderPipeline'](desc), wgpu[device]);
     }
 
   
@@ -15254,10 +15609,10 @@ var ASM_CONSTS = {
       assert(device != 0, "assert(device != 0) failed!");
       assert(wgpu[device], "assert(wgpu[device]) failed!");
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
       device = wgpu[device];
   
-      descriptor >>= 2
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
       let desc = descriptor ? {
         'addressModeU': GPUAddressModes[HEAPU32[descriptor]],
         'addressModeV': GPUAddressModes[HEAPU32[descriptor+1]],
@@ -15271,44 +15626,40 @@ var ASM_CONSTS = {
         'maxAnisotropy': HEAPU32[descriptor+9]
       } : void 0;
       
-      
-      let sampler = device['createSampler'](desc);
-      
-      
   
-      return wgpuStoreAndSetParent(sampler, device);
+      return wgpuStoreAndSetParent(device['createSampler'](desc), device);
     }
 
   
-  
   function wgpuReadShaderModuleCompilationHints(index) {
-      let numHints = HEAP32[index],
-        hints = {},
-        hintsIndex = HEAPU32[index+1] >> 2,
-        hint;
+      let numHints = HEAP32[index+2],
+        hints = [],
+        hintsIndex = wgpu_checked_shift(HEAPU32[index], 2),
+        layout;
       assert(numHints >= 0, "assert(numHints >= 0) failed!");
       while(numHints--) {
-        hint = HEAPU32[hintsIndex+1];
-        // hint == 0 (WGPU_AUTO_LAYOUT_MODE_NO_HINT) means no compilation hints are passed,
-        // hint == 1 (WGPU_AUTO_LAYOUT_MODE_AUTO) means { layout: 'auto' } hint will be passed.
-        // hint > 1: A handle to a given GPUPipelineLayout object is specified as a hint for creating the shader.
+        layout = HEAPU32[hintsIndex+2];
+        // layout == 0 (WGPU_AUTO_LAYOUT_MODE_NO_HINT) means no compilation hints are passed,
+        // layout == 1 (WGPU_AUTO_LAYOUT_MODE_AUTO) means { layout: 'auto' } hint will be passed.
+        // layout > 1: A handle to a given GPUPipelineLayout object is specified as a hint for creating the shader.
         // See https://github.com/gpuweb/gpuweb/pull/2876#issuecomment-1218341636
-        assert(hint <= 1 || wgpu[hint], "assert(hint <= 1 || wgpu[hint]) failed!");
-        assert(hint <= 1 || wgpu[hint] instanceof GPUPipelineLayout, "assert(hint <= 1 || wgpu[hint] instanceof GPUPipelineLayout) failed!");
-        hints[UTF8ToString(HEAPU32[hintsIndex])] = hint ? { 'layout': hint > 1 ? wgpu[hint] : GPUAutoLayoutMode } : null;
-        hintsIndex += 2;
+        assert(layout <= 1 || wgpu[layout], "assert(layout <= 1 || wgpu[layout]) failed!");
+        assert(layout <= 1 || wgpu[layout] instanceof GPUPipelineLayout, "assert(layout <= 1 || wgpu[layout] instanceof GPUPipelineLayout) failed!");
+        hints.push({
+          'entryPoint': utf8(HEAPU32[hintsIndex  >> 2]),
+          'layout': layout > 1 ? wgpu[layout] : (layout ? GPUAutoLayoutMode : null)
+        });
+        hintsIndex += 4;
       }
       return hints;
     }
-  
   function wgpuReadShaderModuleDescriptor(descriptor) {
       assert(descriptor != 0, "assert(descriptor != 0) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
-      descriptor = descriptor >> 2;
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
       return {
-        'code': UTF8ToString(HEAPU32[descriptor]),
-        // TODO: add support for 'sourceMap' field
-        'hints': wgpuReadShaderModuleCompilationHints(descriptor+1)
+        'code': utf8(HEAPU32[descriptor]),
+        'compilationHints': wgpuReadShaderModuleCompilationHints(descriptor+2)
       }
     }
   function _wgpu_device_create_shader_module(device, descriptor) {
@@ -15316,12 +15667,10 @@ var ASM_CONSTS = {
       assert(device != 0, "assert(device != 0) failed!");
       assert(wgpu[device], "assert(wgpu[device]) failed!");
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
-      return wgpuStoreAndSetParent(
-        wgpu[device]['createShaderModule'](
-          debugDir(wgpuReadShaderModuleDescriptor(descriptor), 'device.createShaderModule() with desc')
-        ),
-        wgpu[device]
-      );
+  
+      let desc = wgpuReadShaderModuleDescriptor(descriptor);
+      ;
+      return wgpuStoreAndSetParent(wgpu[device]['createShaderModule'](desc), wgpu[device]);
     }
 
   
@@ -15332,26 +15681,24 @@ var ASM_CONSTS = {
       assert(wgpu[device], "assert(wgpu[device]) failed!");
       assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
       assert(descriptor != 0, "assert(descriptor != 0) failed!"); // Must be non-null
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
       device = wgpu[device];
   
-      descriptor >>= 2
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
+      assert(HEAPU32[descriptor+8] >= 1, "assert(HEAPU32[descriptor+8] >= 1) failed!"); // 'dimension' must be one of 1d, 2d or 3d.
+      assert(HEAPU32[descriptor+8] <= 3, "assert(HEAPU32[descriptor+8] <= 3) failed!"); // 'dimension' must be one of 1d, 2d or 3d.
+  
       let desc = {
-        'size': [HEAP32[descriptor], HEAP32[descriptor+1], HEAP32[descriptor+2]],
-        'mipLevelCount': HEAP32[descriptor+3],
-        'sampleCount': HEAP32[descriptor+4],
-        'dimension': HEAPU32[descriptor+5] + 'd',
-        'format': GPUTextureAndVertexFormats[HEAPU32[descriptor+6]],
-        'usage': HEAPU32[descriptor+7],
-        'viewFormats': wgpuReadArrayOfWgpuObjects(HEAPU32[descriptor+9], HEAPU32[descriptor+8])
+        'viewFormats': wgpuReadArrayOfWgpuObjects(HEAPU32[descriptor ], HEAPU32[descriptor+2]),
+        'size': [HEAP32[descriptor+3], HEAP32[descriptor+4], HEAP32[descriptor+5]],
+        'mipLevelCount': HEAP32[descriptor+6],
+        'sampleCount': HEAP32[descriptor+7],
+        'dimension': HEAPU32[descriptor+8] + 'd',
+        'format': GPUTextureAndVertexFormats[HEAPU32[descriptor+9]],
+        'usage': HEAPU32[descriptor+10]
       };
       
-      
       let texture = device['createTexture'](desc);
-      
-      
-      // Textures get TextureViews derived from them.
-      texture.derivedObjects = [];
   
       return wgpuStoreAndSetParent(texture, device);
     }
@@ -15396,6 +15743,29 @@ var ASM_CONSTS = {
         error && error['message'],
         userData);
     }
+  
+  function _wgpu_device_pop_error_scope_async(device, callback, userData) {
+      assert(device != 0, "assert(device != 0) failed!");
+      assert(wgpu[device], "assert(wgpu[device]) failed!");
+      assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
+      assert(callback, "assert(callback) failed!");
+  
+      function dispatchErrorCallback(error) {
+        _wgpuDispatchWebGpuErrorEvent(device, callback, error, userData);
+      }
+  
+      wgpu[device]['popErrorScope']()
+        .then(_wgpuMuteJsExceptions(dispatchErrorCallback))
+        .catch(dispatchErrorCallback);
+    }
+
+  function _wgpu_device_push_error_scope(device, filter) {
+      assert(device != 0, "assert(device != 0) failed!");
+      assert(wgpu[device], "assert(wgpu[device]) failed!");
+      assert(wgpu[device] instanceof GPUDevice, "assert(wgpu[device] instanceof GPUDevice) failed!");
+      wgpu[device]['pushErrorScope']([, 'out-of-memory', 'validation', 'internal'][filter]);
+    }
+
   function _wgpu_device_set_uncapturederror_callback(device, callback, userData) {
       assert(device != 0, "assert(device != 0) failed!");
       assert(wgpu[device], "assert(wgpu[device]) failed!");
@@ -15433,8 +15803,6 @@ var ASM_CONSTS = {
   
       
       let cmdBuffer = wgpu[encoder]['finish']();
-      
-      
   
       /* https://gpuweb.github.io/gpuweb/#command-encoder-finalization:
         "A GPUCommandBuffer containing the commands recorded by the GPUCommandEncoder can be
@@ -15449,17 +15817,33 @@ var ASM_CONSTS = {
       return wgpuStore(cmdBuffer);
     }
 
-  function _wgpu_encoder_set_bind_group(encoder, index, bindGroup, dynamicOffsets, numDynamicOffsets) {
+  function _wgpu_encoder_pop_debug_group(encoder) {
+      
+      assert(encoder != 0, "assert(encoder != 0) failed!");
+      assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
+      assert(wgpu[encoder] instanceof GPUCommandEncoder || wgpu[encoder] instanceof GPUComputePassEncoder || wgpu[encoder] instanceof GPURenderPassEncoder || wgpu[encoder] instanceof GPURenderBundleEncoder, "assert(wgpu[encoder] instanceof GPUCommandEncoder || wgpu[encoder] instanceof GPUComputePassEncoder || wgpu[encoder] instanceof GPURenderPassEncoder || wgpu[encoder] instanceof GPURenderBundleEncoder) failed!");
+      wgpu[encoder]['popDebugGroup']();
+    }
+
+  function _wgpu_encoder_push_debug_group(encoder, groupLabel) {
+      
+      assert(encoder != 0, "assert(encoder != 0) failed!");
+      assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
+      assert(wgpu[encoder] instanceof GPUCommandEncoder || wgpu[encoder] instanceof GPUComputePassEncoder || wgpu[encoder] instanceof GPURenderPassEncoder || wgpu[encoder] instanceof GPURenderBundleEncoder, "assert(wgpu[encoder] instanceof GPUCommandEncoder || wgpu[encoder] instanceof GPUComputePassEncoder || wgpu[encoder] instanceof GPURenderPassEncoder || wgpu[encoder] instanceof GPURenderBundleEncoder) failed!");
+      assert(groupLabel != 0, "assert(groupLabel != 0) failed!");
+      wgpu[encoder]['pushDebugGroup'](utf8(groupLabel));
+    }
+
+  function _wgpu_encoder_set_bind_group(encoder, index, /*nullable*/ bindGroup, dynamicOffsets, numDynamicOffsets) {
       
       assert(encoder != 0, "assert(encoder != 0) failed!");
       assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
       assert(wgpu[encoder] instanceof GPUComputePassEncoder || wgpu[encoder] instanceof GPURenderPassEncoder || wgpu[encoder] instanceof GPURenderBundleEncoder, "assert(wgpu[encoder] instanceof GPUComputePassEncoder || wgpu[encoder] instanceof GPURenderPassEncoder || wgpu[encoder] instanceof GPURenderBundleEncoder) failed!");
-      assert(bindGroup != 0, "assert(bindGroup != 0) failed!");
-      assert(wgpu[bindGroup], "assert(wgpu[bindGroup]) failed!");
-      assert(wgpu[bindGroup] instanceof GPUBindGroup, "assert(wgpu[bindGroup] instanceof GPUBindGroup) failed!");
+      // N.b. bindGroup may be null here, in which case the existing bind group is intended to be unbound.
+      assert(bindGroup == 0 || wgpu[bindGroup], "assert(bindGroup == 0 || wgpu[bindGroup]) failed!");
+      assert(bindGroup == 0 || wgpu[bindGroup] instanceof GPUBindGroup, "assert(bindGroup == 0 || wgpu[bindGroup] instanceof GPUBindGroup) failed!");
       assert(dynamicOffsets != 0 || numDynamicOffsets == 0, "assert(dynamicOffsets != 0 || numDynamicOffsets == 0) failed!");
-      assert(dynamicOffsets % 4 == 0, "assert(dynamicOffsets % 4 == 0) failed!");
-      wgpu[encoder]['setBindGroup'](index, wgpu[bindGroup], HEAPU32, dynamicOffsets >> 2, numDynamicOffsets);
+      wgpu[encoder]['setBindGroup'](index, wgpu[bindGroup], HEAPU32, wgpu_checked_shift(dynamicOffsets, 2), numDynamicOffsets);
     }
 
   function _wgpu_encoder_set_pipeline(encoder, pipeline) {
@@ -15472,10 +15856,12 @@ var ASM_CONSTS = {
       wgpu[encoder]['setPipeline'](wgpu[pipeline]);
     }
 
+  function _wgpu_is_valid_object(o) { return !!wgpu[o]; }
+
 
   function _wgpu_object_set_label(o, label) {
       assert(wgpu[o], "assert(wgpu[o]) failed!");
-      wgpu[o]['label'] = UTF8ToString(label);
+      wgpu[o]['label'] = utf8(label);
     }
 
   function _wgpu_pipeline_get_bind_group_layout(pipelineBase, index) {
@@ -15483,19 +15869,22 @@ var ASM_CONSTS = {
       assert(pipelineBase != 0, "assert(pipelineBase != 0) failed!");
       assert(wgpu[pipelineBase], "assert(wgpu[pipelineBase]) failed!");
       assert(wgpu[pipelineBase] instanceof GPURenderPipeline || wgpu[pipelineBase] instanceof GPUComputePipeline, "assert(wgpu[pipelineBase] instanceof GPURenderPipeline || wgpu[pipelineBase] instanceof GPUComputePipeline) failed!");
-  
-      return wgpuStore(debugDir(wgpu[pipelineBase]['getBindGroupLayout'](index), 'returned'));
+      return wgpuStore(wgpu[pipelineBase]['getBindGroupLayout'](index));
     }
 
-  function _wgpu_queue_submit_multiple(queue, commandBuffers, numCommandBuffers) {
+  function _wgpu_queue_submit_multiple_and_destroy(queue, commandBuffers, numCommandBuffers) {
       
       assert(queue != 0, "assert(queue != 0) failed!");
       assert(wgpu[queue], "assert(wgpu[queue]) failed!");
       assert(wgpu[queue] instanceof GPUQueue, "assert(wgpu[queue] instanceof GPUQueue) failed!");
       wgpu[queue]['submit'](wgpuReadArrayOfWgpuObjects(commandBuffers, numCommandBuffers));
+  
+      assert((commandBuffers >> 2) << 2 == commandBuffers);
+  commandBuffers >>= 2;
+      while(numCommandBuffers--) _wgpu_object_destroy(HEAPU32[commandBuffers++]);
     }
 
-  function _wgpu_queue_submit_one(queue, commandBuffer) {
+  function _wgpu_queue_submit_one_and_destroy(queue, commandBuffer) {
       
       assert(queue != 0, "assert(queue != 0) failed!");
       assert(wgpu[queue], "assert(wgpu[queue]) failed!");
@@ -15504,15 +15893,10 @@ var ASM_CONSTS = {
       assert(wgpu[commandBuffer], "assert(wgpu[commandBuffer]) failed!");
       assert(wgpu[commandBuffer] instanceof GPUCommandBuffer, "assert(wgpu[commandBuffer] instanceof GPUCommandBuffer) failed!");
       wgpu[queue]['submit']([wgpu[commandBuffer]]);
-    }
-
-  
-  function _wgpu_queue_submit_one_and_destroy(queue, commandBuffer) {
-      _wgpu_queue_submit_one(queue, commandBuffer);
       _wgpu_object_destroy(commandBuffer);
     }
 
-  function _wgpu_queue_write_buffer(queue, buffer, bufferOffset, data, size) { // TODO: this function is untested. Write a test case
+  function _wgpu_queue_write_buffer(queue, buffer, bufferOffset, data, size) {
       
       assert(queue != 0, "assert(queue != 0) failed!");
       assert(wgpu[queue], "assert(wgpu[queue]) failed!");
@@ -15523,7 +15907,7 @@ var ASM_CONSTS = {
       wgpu[queue]['writeBuffer'](wgpu[buffer], bufferOffset, HEAPU8, data, size);
     }
 
-  function _wgpu_queue_write_texture(queue, destination, data, bytesPerBlockRow, blockRowsPerImage, writeWidth, writeHeight, writeDepthOrArrayLayers) { // TODO: this function is untested. Write a test case
+  function _wgpu_queue_write_texture(queue, destination, data, bytesPerBlockRow, blockRowsPerImage, writeWidth, writeHeight, writeDepthOrArrayLayers) {
       
       assert(queue != 0, "assert(queue != 0) failed!");
       assert(wgpu[queue], "assert(wgpu[queue]) failed!");
@@ -15541,7 +15925,7 @@ var ASM_CONSTS = {
       wgpu[passEncoder]['draw'](vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-  function _wgpu_render_commands_mixin_draw_indexed(passEncoder, indexCount, instanceCount, firstVertex, baseVertex, firstInstance) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_commands_mixin_draw_indexed(passEncoder, indexCount, instanceCount, firstVertex, baseVertex, firstInstance) {
       
       assert(passEncoder != 0, "assert(passEncoder != 0) failed!");
       assert(wgpu[passEncoder], "assert(wgpu[passEncoder]) failed!");
@@ -15550,7 +15934,7 @@ var ASM_CONSTS = {
       wgpu[passEncoder]['drawIndexed'](indexCount, instanceCount, firstVertex, baseVertex, firstInstance);
     }
 
-  function _wgpu_render_commands_mixin_draw_indexed_indirect(passEncoder, indirectBuffer, indirectOffset) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_commands_mixin_draw_indexed_indirect(passEncoder, indirectBuffer, indirectOffset) {
       
       assert(passEncoder != 0, "assert(passEncoder != 0) failed!");
       assert(wgpu[passEncoder], "assert(wgpu[passEncoder]) failed!");
@@ -15562,7 +15946,7 @@ var ASM_CONSTS = {
       wgpu[passEncoder]['drawIndexedIndirect'](wgpu[indirectBuffer], indirectOffset);
     }
 
-  function _wgpu_render_commands_mixin_draw_indirect(passEncoder, indirectBuffer, indirectOffset) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_commands_mixin_draw_indirect(passEncoder, indirectBuffer, indirectOffset) {
       
       assert(passEncoder != 0, "assert(passEncoder != 0) failed!");
       assert(wgpu[passEncoder], "assert(wgpu[passEncoder]) failed!");
@@ -15574,7 +15958,7 @@ var ASM_CONSTS = {
       wgpu[passEncoder]['drawIndirect'](wgpu[indirectBuffer], indirectOffset);
     }
 
-  function _wgpu_render_commands_mixin_set_index_buffer(passEncoder, buffer, indexFormat, offset, size) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_commands_mixin_set_index_buffer(passEncoder, buffer, indexFormat, offset, size) {
       
       assert(passEncoder != 0, "assert(passEncoder != 0) failed!");
       assert(wgpu[passEncoder], "assert(wgpu[passEncoder]) failed!");
@@ -15585,9 +15969,7 @@ var ASM_CONSTS = {
       assert(Number.isSafeInteger(size), "assert(Number.isSafeInteger(size)) failed!");
       assert(size >= -1, "assert(size >= -1) failed!");
   
-      // Awkward API polymorphism: must omit size parameter altogether (instead of specifying e.g. -1 for whole buffer)
-      size < 0 ? wgpu[passEncoder]['setIndexBuffer'](wgpu[buffer], GPUIndexFormats[indexFormat], offset)
-        : wgpu[passEncoder]['setIndexBuffer'](wgpu[buffer], GPUIndexFormats[indexFormat], offset, size);
+      wgpu[passEncoder]['setIndexBuffer'](wgpu[buffer], GPUIndexFormats[indexFormat], offset, size < 0 ? void 0 : size);
     }
 
   function _wgpu_render_commands_mixin_set_vertex_buffer(passEncoder, slot, buffer, offset, size) {
@@ -15595,18 +15977,18 @@ var ASM_CONSTS = {
       assert(passEncoder != 0, "assert(passEncoder != 0) failed!");
       assert(wgpu[passEncoder], "assert(wgpu[passEncoder]) failed!");
       assert(wgpu[passEncoder] instanceof GPURenderPassEncoder || wgpu[passEncoder] instanceof GPURenderBundleEncoder, "assert(wgpu[passEncoder] instanceof GPURenderPassEncoder || wgpu[passEncoder] instanceof GPURenderBundleEncoder) failed!");
-      assert(wgpu[buffer] instanceof GPUBuffer, "assert(wgpu[buffer] instanceof GPUBuffer) failed!");
+      // N.b. buffer may be null here, in which case the existing buffer is intended to be unbound.
+      assert(buffer == 0 || wgpu[buffer], "assert(buffer == 0 || wgpu[buffer]) failed!");
+      assert(buffer == 0 || wgpu[buffer] instanceof GPUBuffer, "assert(buffer == 0 || wgpu[buffer] instanceof GPUBuffer) failed!");
       assert(Number.isSafeInteger(offset), "assert(Number.isSafeInteger(offset)) failed!");
       assert(offset >= 0, "assert(offset >= 0) failed!");
       assert(Number.isSafeInteger(size), "assert(Number.isSafeInteger(size)) failed!");
       assert(size >= -1, "assert(size >= -1) failed!");
   
-      // Awkward API polymorphism: must omit size parameter altogether (instead of specifying e.g. -1 for whole buffer)
-      size < 0 ? wgpu[passEncoder]['setVertexBuffer'](slot, wgpu[buffer], offset)
-        : wgpu[passEncoder]['setVertexBuffer'](slot, wgpu[buffer], offset, size);
+      wgpu[passEncoder]['setVertexBuffer'](slot, wgpu[buffer], offset, size < 0 ? void 0 : size);
     }
 
-  function _wgpu_render_pass_encoder_set_scissor_rect(encoder, x, y, width, height) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_pass_encoder_set_scissor_rect(encoder, x, y, width, height) {
       
       assert(encoder != 0, "assert(encoder != 0) failed!");
       assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
@@ -15614,7 +15996,7 @@ var ASM_CONSTS = {
       wgpu[encoder]['setScissorRect'](x, y, width, height);
     }
 
-  function _wgpu_render_pass_encoder_set_stencil_reference(encoder, stencilValue) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_pass_encoder_set_stencil_reference(encoder, stencilValue) {
       
       assert(encoder != 0, "assert(encoder != 0) failed!");
       assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
@@ -15622,7 +16004,7 @@ var ASM_CONSTS = {
       wgpu[encoder]['setStencilReference'](stencilValue);
     }
 
-  function _wgpu_render_pass_encoder_set_viewport(encoder, x, y, width, height, minDepth, maxDepth) { // TODO: this function is untested. Write a test case
+  function _wgpu_render_pass_encoder_set_viewport(encoder, x, y, width, height, minDepth, maxDepth) {
       
       assert(encoder != 0, "assert(encoder != 0) failed!");
       assert(wgpu[encoder], "assert(wgpu[encoder]) failed!");
@@ -15638,26 +16020,22 @@ var ASM_CONSTS = {
       assert(texture != 0, "assert(texture != 0) failed!");
       assert(wgpu[texture], "assert(wgpu[texture]) failed!");
       assert(wgpu[texture] instanceof GPUTexture, "assert(wgpu[texture] instanceof GPUTexture) failed!");
-      assert(descriptor % 4 == 0, "assert(descriptor % 4 == 0) failed!"); // Must be aligned at uint32_t boundary
   
-      descriptor >>= 2
-      return wgpuStoreAndSetParent(
-        wgpu[texture]['createView'](
-          debugDir(
-            descriptor ? {
-              'format': GPUTextureAndVertexFormats[HEAPU32[descriptor]],
-              'dimension': GPUTextureViewDimensions[HEAPU32[descriptor+1]],
-              'aspect': GPUTextureAspects[HEAPU32[descriptor+2]],
-              'baseMipLevel': HEAP32[descriptor+3],
-              'mipLevelCount': HEAP32[descriptor+4],
-              'baseArrayLayer': HEAP32[descriptor+5],
-              'arrayLayerCount': HEAP32[descriptor+6],
-            } : void 0,
-            'GPUTexture.createView() with desc'
-          )
-        ),
-        wgpu[texture]
-      );
+      assert((descriptor >> 2) << 2 == descriptor);
+  descriptor >>= 2;
+  
+      let desc = descriptor ? {
+        'format': GPUTextureAndVertexFormats[HEAPU32[descriptor]],
+        'dimension': GPUTextureViewDimensions[HEAPU32[descriptor+1]],
+        'usage': HEAPU32[descriptor+2],
+        'aspect': GPUTextureAspects[HEAPU32[descriptor+3]],
+        'baseMipLevel': HEAP32[descriptor+4],
+        'mipLevelCount': HEAP32[descriptor+5],
+        'baseArrayLayer': HEAP32[descriptor+6],
+        'arrayLayerCount': HEAP32[descriptor+7],
+      } : void 0;
+      ;
+      return wgpuStoreAndSetParent(wgpu[texture]['createView'](desc), wgpu[texture]);
     }
 
   function _wgpu_texture_create_view_simple(texture) {
@@ -15707,7 +16085,7 @@ var ASM_CONSTS = {
   
       function convertReturnValue(ret) {
         if (returnType === 'string') {
-          return UTF8ToString((ret >>> 0));
+          return UTF8ToString(ret);
         }
         if (returnType === 'boolean') return Boolean(ret);
         return ret;
@@ -15955,6 +16333,7 @@ var wasmImports = {
   "JS_Accelerometer_IsRunning": _JS_Accelerometer_IsRunning,
   "JS_Accelerometer_Start": _JS_Accelerometer_Start,
   "JS_Accelerometer_Stop": _JS_Accelerometer_Stop,
+  "JS_CallAsLongAsNoExceptionsSeen": _JS_CallAsLongAsNoExceptionsSeen,
   "JS_Cursor_SetImage": _JS_Cursor_SetImage,
   "JS_Cursor_SetShow": _JS_Cursor_SetShow,
   "JS_DOM_MapViewportCoordinateToElementLocalCoordinate": _JS_DOM_MapViewportCoordinateToElementLocalCoordinate,
@@ -15962,6 +16341,7 @@ var wasmImports = {
   "JS_Eval_OpenURL": _JS_Eval_OpenURL,
   "JS_FileSystem_Initialize": _JS_FileSystem_Initialize,
   "JS_FileSystem_Sync": _JS_FileSystem_Sync,
+  "JS_GetRandomBytes": _JS_GetRandomBytes,
   "JS_Get_WASM_Size": _JS_Get_WASM_Size,
   "JS_GravitySensor_IsRunning": _JS_GravitySensor_IsRunning,
   "JS_GravitySensor_Start": _JS_GravitySensor_Start,
@@ -15970,6 +16350,7 @@ var wasmImports = {
   "JS_Gyroscope_Start": _JS_Gyroscope_Start,
   "JS_Gyroscope_Stop": _JS_Gyroscope_Stop,
   "JS_Init_ContextMenuHandler": _JS_Init_ContextMenuHandler,
+  "JS_Init_CopyPaste": _JS_Init_CopyPaste,
   "JS_LinearAccelerationSensor_IsRunning": _JS_LinearAccelerationSensor_IsRunning,
   "JS_LinearAccelerationSensor_Start": _JS_LinearAccelerationSensor_Start,
   "JS_LinearAccelerationSensor_Stop": _JS_LinearAccelerationSensor_Stop,
@@ -15984,6 +16365,9 @@ var wasmImports = {
   "JS_MobileKeyboard_SetText": _JS_MobileKeyboard_SetText,
   "JS_MobileKeyboard_SetTextSelection": _JS_MobileKeyboard_SetTextSelection,
   "JS_MobileKeyboard_Show": _JS_MobileKeyboard_Show,
+  "JS_Module_WebGLContextAttributes_PowerPreference": _JS_Module_WebGLContextAttributes_PowerPreference,
+  "JS_Module_WebGLContextAttributes_PremultipliedAlpha": _JS_Module_WebGLContextAttributes_PremultipliedAlpha,
+  "JS_Module_WebGLContextAttributes_PreserveDrawingBuffer": _JS_Module_WebGLContextAttributes_PreserveDrawingBuffer,
   "JS_OrientationSensor_IsRunning": _JS_OrientationSensor_IsRunning,
   "JS_OrientationSensor_Start": _JS_OrientationSensor_Start,
   "JS_OrientationSensor_Stop": _JS_OrientationSensor_Stop,
@@ -15995,11 +16379,12 @@ var wasmImports = {
   "JS_ScreenOrientation_Lock": _JS_ScreenOrientation_Lock,
   "JS_SetMainLoop": _JS_SetMainLoop,
   "JS_Sound_Create_Channel": _JS_Sound_Create_Channel,
+  "JS_Sound_GetAudioBufferSampleRate": _JS_Sound_GetAudioBufferSampleRate,
+  "JS_Sound_GetAudioContextSampleRate": _JS_Sound_GetAudioContextSampleRate,
   "JS_Sound_GetLength": _JS_Sound_GetLength,
   "JS_Sound_GetLoadState": _JS_Sound_GetLoadState,
   "JS_Sound_GetMetaData": _JS_Sound_GetMetaData,
   "JS_Sound_Init": _JS_Sound_Init,
-  "JS_Sound_IsStopped": _JS_Sound_IsStopped,
   "JS_Sound_Load": _JS_Sound_Load,
   "JS_Sound_Load_PCM": _JS_Sound_Load_PCM,
   "JS_Sound_Play": _JS_Sound_Play,
@@ -16030,8 +16415,12 @@ var wasmImports = {
   "JS_SystemInfo_HasWebGPU": _JS_SystemInfo_HasWebGPU,
   "JS_SystemInfo_IsMobile": _JS_SystemInfo_IsMobile,
   "JS_UnityEngineShouldQuit": _JS_UnityEngineShouldQuit,
+  "JS_WebCamVideo_GetNativeHeight": _JS_WebCamVideo_GetNativeHeight,
+  "JS_WebCamVideo_GetNativeWidth": _JS_WebCamVideo_GetNativeWidth,
+  "JS_WebCamVideo_GrabFrame": _JS_WebCamVideo_GrabFrame,
   "JS_WebGPU_SetCommandEncoder": _JS_WebGPU_SetCommandEncoder,
   "JS_WebGPU_Setup": _JS_WebGPU_Setup,
+  "JS_WebPlayer_FinishInitialization": _JS_WebPlayer_FinishInitialization,
   "__assert_fail": ___assert_fail,
   "__cxa_begin_catch": ___cxa_begin_catch,
   "__cxa_end_catch": ___cxa_end_catch,
@@ -16040,6 +16429,7 @@ var wasmImports = {
   "__cxa_find_matching_catch_4": ___cxa_find_matching_catch_4,
   "__cxa_rethrow": ___cxa_rethrow,
   "__cxa_throw": ___cxa_throw,
+  "__cxa_uncaught_exceptions": ___cxa_uncaught_exceptions,
   "__dlsym": ___dlsym,
   "__resumeException": ___resumeException,
   "__syscall__newselect": ___syscall__newselect,
@@ -16065,6 +16455,7 @@ var wasmImports = {
   "__syscall_socket": ___syscall_socket,
   "__syscall_stat64": ___syscall_stat64,
   "__syscall_statfs64": ___syscall_statfs64,
+  "__syscall_symlink": ___syscall_symlink,
   "__syscall_truncate64": ___syscall_truncate64,
   "__syscall_unlinkat": ___syscall_unlinkat,
   "__syscall_utimensat": ___syscall_utimensat,
@@ -16079,7 +16470,6 @@ var wasmImports = {
   "abort": _abort,
   "dlopen": _dlopen,
   "emscripten_asm_const_int": _emscripten_asm_const_int,
-  "emscripten_asm_const_int_sync_on_main_thread": _emscripten_asm_const_int_sync_on_main_thread,
   "emscripten_cancel_main_loop": _emscripten_cancel_main_loop,
   "emscripten_clear_interval": _emscripten_clear_interval,
   "emscripten_console_error": _emscripten_console_error,
@@ -16315,31 +16705,32 @@ var wasmImports = {
   "invoke_fiiiii": invoke_fiiiii,
   "invoke_fiiiiii": invoke_fiiiiii,
   "invoke_i": invoke_i,
-  "invoke_ifi": invoke_ifi,
+  "invoke_iffi": invoke_iffi,
   "invoke_ii": invoke_ii,
   "invoke_iifi": invoke_iifi,
-  "invoke_iifii": invoke_iifii,
   "invoke_iifiii": invoke_iifiii,
   "invoke_iii": invoke_iii,
+  "invoke_iiif": invoke_iiif,
   "invoke_iiifi": invoke_iiifi,
   "invoke_iiifii": invoke_iiifii,
   "invoke_iiii": invoke_iiii,
   "invoke_iiiidii": invoke_iiiidii,
   "invoke_iiiifii": invoke_iiiifii,
   "invoke_iiiii": invoke_iiiii,
+  "invoke_iiiiifi": invoke_iiiiifi,
   "invoke_iiiiifiiiii": invoke_iiiiifiiiii,
   "invoke_iiiiii": invoke_iiiiii,
   "invoke_iiiiiiffiiiiiiiiiffffiii": invoke_iiiiiiffiiiiiiiiiffffiii,
   "invoke_iiiiiifii": invoke_iiiiiifii,
   "invoke_iiiiiii": invoke_iiiiiii,
   "invoke_iiiiiiidii": invoke_iiiiiiidii,
-  "invoke_iiiiiiifii": invoke_iiiiiiifii,
   "invoke_iiiiiiii": invoke_iiiiiiii,
   "invoke_iiiiiiiifiii": invoke_iiiiiiiifiii,
   "invoke_iiiiiiiii": invoke_iiiiiiiii,
   "invoke_iiiiiiiiii": invoke_iiiiiiiiii,
   "invoke_iiiiiiiiiii": invoke_iiiiiiiiiii,
   "invoke_iiiiiiiiiiii": invoke_iiiiiiiiiiii,
+  "invoke_iiiiiiiiiiiii": invoke_iiiiiiiiiiiii,
   "invoke_iiiiiiiiiji": invoke_iiiiiiiiiji,
   "invoke_iiiijii": invoke_iiiijii,
   "invoke_iiijii": invoke_iiijii,
@@ -16355,20 +16746,21 @@ var wasmImports = {
   "invoke_ji": invoke_ji,
   "invoke_jii": invoke_jii,
   "invoke_jiii": invoke_jiii,
+  "invoke_jiiii": invoke_jiiii,
   "invoke_jiiiii": invoke_jiiiii,
   "invoke_jiiiiiiiiii": invoke_jiiiiiiiiii,
   "invoke_jiji": invoke_jiji,
   "invoke_jijii": invoke_jijii,
   "invoke_jjji": invoke_jjji,
   "invoke_v": invoke_v,
+  "invoke_vffi": invoke_vffi,
   "invoke_vfi": invoke_vfi,
   "invoke_vi": invoke_vi,
   "invoke_vidi": invoke_vidi,
-  "invoke_viffffi": invoke_viffffi,
   "invoke_vifffi": invoke_vifffi,
   "invoke_viffi": invoke_viffi,
   "invoke_vifi": invoke_vifi,
-  "invoke_vififiii": invoke_vififiii,
+  "invoke_vififiiii": invoke_vififiiii,
   "invoke_vifii": invoke_vifii,
   "invoke_vii": invoke_vii,
   "invoke_viidi": invoke_viidi,
@@ -16379,25 +16771,27 @@ var wasmImports = {
   "invoke_viifi": invoke_viifi,
   "invoke_viifii": invoke_viifii,
   "invoke_viifiii": invoke_viifiii,
-  "invoke_viifiiiiii": invoke_viifiiiiii,
   "invoke_viii": invoke_viii,
   "invoke_viiifi": invoke_viiifi,
   "invoke_viiififiii": invoke_viiififiii,
   "invoke_viiifii": invoke_viiifii,
   "invoke_viiii": invoke_viiii,
   "invoke_viiiidi": invoke_viiiidi,
+  "invoke_viiiiffiiiiiiii": invoke_viiiiffiiiiiiii,
   "invoke_viiiifi": invoke_viiiifi,
+  "invoke_viiiifiiii": invoke_viiiifiiii,
   "invoke_viiiii": invoke_viiiii,
-  "invoke_viiiiifffiii": invoke_viiiiifffiii,
   "invoke_viiiiiffi": invoke_viiiiiffi,
   "invoke_viiiiifi": invoke_viiiiifi,
   "invoke_viiiiii": invoke_viiiiii,
+  "invoke_viiiiiifii": invoke_viiiiiifii,
   "invoke_viiiiiii": invoke_viiiiiii,
   "invoke_viiiiiiii": invoke_viiiiiiii,
   "invoke_viiiiiiiii": invoke_viiiiiiiii,
   "invoke_viiiiiiiiii": invoke_viiiiiiiiii,
   "invoke_viiiiiiiiiii": invoke_viiiiiiiiiii,
   "invoke_viiiiiiiiiiiii": invoke_viiiiiiiiiiiii,
+  "invoke_viiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiii,
   "invoke_viiiji": invoke_viiiji,
   "invoke_viiji": invoke_viiji,
   "invoke_viijii": invoke_viijii,
@@ -16411,6 +16805,7 @@ var wasmImports = {
   "navigator_gpu_get_preferred_canvas_format": _navigator_gpu_get_preferred_canvas_format,
   "navigator_gpu_request_adapter_async": _navigator_gpu_request_adapter_async,
   "strftime": _strftime,
+  "strftime_l": _strftime_l,
   "wgpu_adapter_or_device_get_features": _wgpu_adapter_or_device_get_features,
   "wgpu_adapter_or_device_get_limits": _wgpu_adapter_or_device_get_limits,
   "wgpu_adapter_request_device_async": _wgpu_adapter_request_device_async,
@@ -16423,11 +16818,11 @@ var wasmImports = {
   "wgpu_canvas_get_webgpu_context": _wgpu_canvas_get_webgpu_context,
   "wgpu_command_encoder_begin_compute_pass": _wgpu_command_encoder_begin_compute_pass,
   "wgpu_command_encoder_begin_render_pass": _wgpu_command_encoder_begin_render_pass,
-  "wgpu_command_encoder_begin_render_pass_1color_0depth": _wgpu_command_encoder_begin_render_pass_1color_0depth,
   "wgpu_command_encoder_copy_buffer_to_buffer": _wgpu_command_encoder_copy_buffer_to_buffer,
   "wgpu_command_encoder_copy_texture_to_buffer": _wgpu_command_encoder_copy_texture_to_buffer,
   "wgpu_command_encoder_copy_texture_to_texture": _wgpu_command_encoder_copy_texture_to_texture,
   "wgpu_compute_pass_encoder_dispatch_workgroups": _wgpu_compute_pass_encoder_dispatch_workgroups,
+  "wgpu_compute_pass_encoder_dispatch_workgroups_indirect": _wgpu_compute_pass_encoder_dispatch_workgroups_indirect,
   "wgpu_device_create_bind_group": _wgpu_device_create_bind_group,
   "wgpu_device_create_bind_group_layout": _wgpu_device_create_bind_group_layout,
   "wgpu_device_create_buffer": _wgpu_device_create_buffer,
@@ -16440,16 +16835,20 @@ var wasmImports = {
   "wgpu_device_create_shader_module": _wgpu_device_create_shader_module,
   "wgpu_device_create_texture": _wgpu_device_create_texture,
   "wgpu_device_get_queue": _wgpu_device_get_queue,
+  "wgpu_device_pop_error_scope_async": _wgpu_device_pop_error_scope_async,
+  "wgpu_device_push_error_scope": _wgpu_device_push_error_scope,
   "wgpu_device_set_uncapturederror_callback": _wgpu_device_set_uncapturederror_callback,
   "wgpu_encoder_end": _wgpu_encoder_end,
   "wgpu_encoder_finish": _wgpu_encoder_finish,
+  "wgpu_encoder_pop_debug_group": _wgpu_encoder_pop_debug_group,
+  "wgpu_encoder_push_debug_group": _wgpu_encoder_push_debug_group,
   "wgpu_encoder_set_bind_group": _wgpu_encoder_set_bind_group,
   "wgpu_encoder_set_pipeline": _wgpu_encoder_set_pipeline,
+  "wgpu_is_valid_object": _wgpu_is_valid_object,
   "wgpu_object_destroy": _wgpu_object_destroy,
   "wgpu_object_set_label": _wgpu_object_set_label,
   "wgpu_pipeline_get_bind_group_layout": _wgpu_pipeline_get_bind_group_layout,
-  "wgpu_queue_submit_multiple": _wgpu_queue_submit_multiple,
-  "wgpu_queue_submit_one": _wgpu_queue_submit_one,
+  "wgpu_queue_submit_multiple_and_destroy": _wgpu_queue_submit_multiple_and_destroy,
   "wgpu_queue_submit_one_and_destroy": _wgpu_queue_submit_one_and_destroy,
   "wgpu_queue_write_buffer": _wgpu_queue_write_buffer,
   "wgpu_queue_write_texture": _wgpu_queue_write_texture,
@@ -16471,6 +16870,8 @@ var ___wasm_call_ctors = createExportWrapper("__wasm_call_ctors");
 /** @type {function(...*):?} */
 var _ReleaseKeys = Module["_ReleaseKeys"] = createExportWrapper("ReleaseKeys");
 /** @type {function(...*):?} */
+var _GetCopyBufferAsCStr = Module["_GetCopyBufferAsCStr"] = createExportWrapper("GetCopyBufferAsCStr");
+/** @type {function(...*):?} */
 var _getMetricsInfo = Module["_getMetricsInfo"] = createExportWrapper("getMetricsInfo");
 /** @type {function(...*):?} */
 var _SendMessageFloat = Module["_SendMessageFloat"] = createExportWrapper("SendMessageFloat");
@@ -16484,6 +16885,8 @@ var _SetFullscreen = Module["_SetFullscreen"] = createExportWrapper("SetFullscre
 var _main = Module["_main"] = createExportWrapper("__main_argc_argv");
 /** @type {function(...*):?} */
 var _InjectProfilerSample = Module["_InjectProfilerSample"] = createExportWrapper("InjectProfilerSample");
+/** @type {function(...*):?} */
+var _SendPasteEvent = Module["_SendPasteEvent"] = createExportWrapper("SendPasteEvent");
 /** @type {function(...*):?} */
 var ___errno_location = createExportWrapper("__errno_location");
 /** @type {function(...*):?} */
@@ -16588,167 +16991,183 @@ var dynCall_iiiiiii = Module["dynCall_iiiiiii"] = createExportWrapper("dynCall_i
 /** @type {function(...*):?} */
 var dynCall_jii = Module["dynCall_jii"] = createExportWrapper("dynCall_jii");
 /** @type {function(...*):?} */
-var dynCall_viiiii = Module["dynCall_viiiii"] = createExportWrapper("dynCall_viiiii");
+var dynCall_iiiiiiiiiii = Module["dynCall_iiiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_jiiii = Module["dynCall_jiiii"] = createExportWrapper("dynCall_jiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiiiiii = Module["dynCall_iiiiiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_fiii = Module["dynCall_fiii"] = createExportWrapper("dynCall_fiii");
+/** @type {function(...*):?} */
+var dynCall_diii = Module["dynCall_diii"] = createExportWrapper("dynCall_diii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiii = Module["dynCall_viiiiiii"] = createExportWrapper("dynCall_viiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiiiii = Module["dynCall_iiiiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiii = Module["dynCall_viiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiii = Module["dynCall_iiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiij = Module["dynCall_iiiiij"] = createExportWrapper("dynCall_iiiiij");
+/** @type {function(...*):?} */
+var dynCall_iiiiid = Module["dynCall_iiiiid"] = createExportWrapper("dynCall_iiiiid");
+/** @type {function(...*):?} */
+var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = createExportWrapper("dynCall_iiiiijj");
+/** @type {function(...*):?} */
+var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = createExportWrapper("dynCall_iiiiiijj");
 /** @type {function(...*):?} */
 var dynCall_viiiiii = Module["dynCall_viiiiii"] = createExportWrapper("dynCall_viiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiifii = Module["dynCall_iiiifii"] = createExportWrapper("dynCall_iiiifii");
+var dynCall_viijii = Module["dynCall_viijii"] = createExportWrapper("dynCall_viijii");
 /** @type {function(...*):?} */
-var dynCall_iiiijii = Module["dynCall_iiiijii"] = createExportWrapper("dynCall_iiiijii");
-/** @type {function(...*):?} */
-var dynCall_iji = Module["dynCall_iji"] = createExportWrapper("dynCall_iji");
-/** @type {function(...*):?} */
-var dynCall_jjji = Module["dynCall_jjji"] = createExportWrapper("dynCall_jjji");
-/** @type {function(...*):?} */
-var dynCall_jiiiii = Module["dynCall_jiiiii"] = createExportWrapper("dynCall_jiiiii");
+var dynCall_viiiii = Module["dynCall_viiiii"] = createExportWrapper("dynCall_viiiii");
 /** @type {function(...*):?} */
 var dynCall_iiiidii = Module["dynCall_iiiidii"] = createExportWrapper("dynCall_iiiidii");
 /** @type {function(...*):?} */
-var dynCall_viiji = Module["dynCall_viiji"] = createExportWrapper("dynCall_viiji");
+var dynCall_iiiijii = Module["dynCall_iiiijii"] = createExportWrapper("dynCall_iiiijii");
 /** @type {function(...*):?} */
-var dynCall_iiijii = Module["dynCall_iiijii"] = createExportWrapper("dynCall_iiijii");
-/** @type {function(...*):?} */
-var dynCall_vijii = Module["dynCall_vijii"] = createExportWrapper("dynCall_vijii");
-/** @type {function(...*):?} */
-var dynCall_iijiii = Module["dynCall_iijiii"] = createExportWrapper("dynCall_iijiii");
-/** @type {function(...*):?} */
-var dynCall_viiiifi = Module["dynCall_viiiifi"] = createExportWrapper("dynCall_viiiifi");
+var dynCall_iiiifii = Module["dynCall_iiiifii"] = createExportWrapper("dynCall_iiiifii");
 /** @type {function(...*):?} */
 var dynCall_vifi = Module["dynCall_vifi"] = createExportWrapper("dynCall_vifi");
 /** @type {function(...*):?} */
 var dynCall_viifi = Module["dynCall_viifi"] = createExportWrapper("dynCall_viifi");
 /** @type {function(...*):?} */
-var dynCall_fii = Module["dynCall_fii"] = createExportWrapper("dynCall_fii");
+var dynCall_iji = Module["dynCall_iji"] = createExportWrapper("dynCall_iji");
 /** @type {function(...*):?} */
-var dynCall_di = Module["dynCall_di"] = createExportWrapper("dynCall_di");
+var dynCall_iiiiiiiiii = Module["dynCall_iiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiifii = Module["dynCall_iiifii"] = createExportWrapper("dynCall_iiifii");
+var dynCall_viiji = Module["dynCall_viiji"] = createExportWrapper("dynCall_viiji");
+/** @type {function(...*):?} */
+var dynCall_iiijii = Module["dynCall_iiijii"] = createExportWrapper("dynCall_iiijii");
 /** @type {function(...*):?} */
 var dynCall_viiiiiiii = Module["dynCall_viiiiiiii"] = createExportWrapper("dynCall_viiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_iifi = Module["dynCall_iifi"] = createExportWrapper("dynCall_iifi");
-/** @type {function(...*):?} */
-var dynCall_fiii = Module["dynCall_fiii"] = createExportWrapper("dynCall_fiii");
-/** @type {function(...*):?} */
-var dynCall_vidi = Module["dynCall_vidi"] = createExportWrapper("dynCall_vidi");
-/** @type {function(...*):?} */
-var dynCall_viidi = Module["dynCall_viidi"] = createExportWrapper("dynCall_viidi");
-/** @type {function(...*):?} */
-var dynCall_viiiifii = Module["dynCall_viiiifii"] = createExportWrapper("dynCall_viiiifii");
-/** @type {function(...*):?} */
-var dynCall_viiiji = Module["dynCall_viiiji"] = createExportWrapper("dynCall_viiiji");
-/** @type {function(...*):?} */
-var dynCall_viiififiii = Module["dynCall_viiififiii"] = createExportWrapper("dynCall_viiififiii");
-/** @type {function(...*):?} */
-var dynCall_fiiffi = Module["dynCall_fiiffi"] = createExportWrapper("dynCall_fiiffi");
-/** @type {function(...*):?} */
-var dynCall_viififiii = Module["dynCall_viififiii"] = createExportWrapper("dynCall_viififiii");
-/** @type {function(...*):?} */
-var dynCall_vififiii = Module["dynCall_vififiii"] = createExportWrapper("dynCall_vififiii");
-/** @type {function(...*):?} */
-var dynCall_fiffi = Module["dynCall_fiffi"] = createExportWrapper("dynCall_fiffi");
-/** @type {function(...*):?} */
-var dynCall_viiiidi = Module["dynCall_viiiidi"] = createExportWrapper("dynCall_viiiidi");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiiii = Module["dynCall_iiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiidii = Module["dynCall_iiiiiiidii"] = createExportWrapper("dynCall_iiiiiiidii");
-/** @type {function(...*):?} */
-var dynCall_dii = Module["dynCall_dii"] = createExportWrapper("dynCall_dii");
-/** @type {function(...*):?} */
-var dynCall_ji = Module["dynCall_ji"] = createExportWrapper("dynCall_ji");
-/** @type {function(...*):?} */
-var dynCall_jiii = Module["dynCall_jiii"] = createExportWrapper("dynCall_jiii");
-/** @type {function(...*):?} */
-var dynCall_viijii = Module["dynCall_viijii"] = createExportWrapper("dynCall_viijii");
+var dynCall_viiiiiffi = Module["dynCall_viiiiiffi"] = createExportWrapper("dynCall_viiiiiffi");
 /** @type {function(...*):?} */
 var dynCall_viiiiiiiii = Module["dynCall_viiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiifiii = Module["dynCall_iiiiiiiifiii"] = createExportWrapper("dynCall_iiiiiiiifiii");
+var dynCall_ffi = Module["dynCall_ffi"] = createExportWrapper("dynCall_ffi");
 /** @type {function(...*):?} */
-var dynCall_iiiiifiiiii = Module["dynCall_iiiiifiiiii"] = createExportWrapper("dynCall_iiiiifiiiii");
-/** @type {function(...*):?} */
-var dynCall_ifi = Module["dynCall_ifi"] = createExportWrapper("dynCall_ifi");
+var dynCall_fii = Module["dynCall_fii"] = createExportWrapper("dynCall_fii");
 /** @type {function(...*):?} */
 var dynCall_viffi = Module["dynCall_viffi"] = createExportWrapper("dynCall_viffi");
 /** @type {function(...*):?} */
-var dynCall_viiifi = Module["dynCall_viiifi"] = createExportWrapper("dynCall_viiifi");
-/** @type {function(...*):?} */
-var dynCall_ffi = Module["dynCall_ffi"] = createExportWrapper("dynCall_ffi");
-/** @type {function(...*):?} */
-var dynCall_viiiiiii = Module["dynCall_viiiiiii"] = createExportWrapper("dynCall_viiiiiii");
-/** @type {function(...*):?} */
-var dynCall_viiiiiiiiii = Module["dynCall_viiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_iiiiiifii = Module["dynCall_iiiiiifii"] = createExportWrapper("dynCall_iiiiiifii");
-/** @type {function(...*):?} */
 var dynCall_viiiiifi = Module["dynCall_viiiiifi"] = createExportWrapper("dynCall_viiiiifi");
+/** @type {function(...*):?} */
+var dynCall_iiiiifi = Module["dynCall_iiiiifi"] = createExportWrapper("dynCall_iiiiifi");
+/** @type {function(...*):?} */
+var dynCall_iffi = Module["dynCall_iffi"] = createExportWrapper("dynCall_iffi");
 /** @type {function(...*):?} */
 var dynCall_viji = Module["dynCall_viji"] = createExportWrapper("dynCall_viji");
 /** @type {function(...*):?} */
 var dynCall_dddi = Module["dynCall_dddi"] = createExportWrapper("dynCall_dddi");
 /** @type {function(...*):?} */
-var dynCall_viiiiiffi = Module["dynCall_viiiiiffi"] = createExportWrapper("dynCall_viiiiiffi");
+var dynCall_viiifi = Module["dynCall_viiifi"] = createExportWrapper("dynCall_viiifi");
 /** @type {function(...*):?} */
-var dynCall_viifii = Module["dynCall_viifii"] = createExportWrapper("dynCall_viifii");
+var dynCall_iiiiiiiifiii = Module["dynCall_iiiiiiiifiii"] = createExportWrapper("dynCall_iiiiiiiifiii");
 /** @type {function(...*):?} */
-var dynCall_fi = Module["dynCall_fi"] = createExportWrapper("dynCall_fi");
+var dynCall_iiiiifiiiii = Module["dynCall_iiiiifiiiii"] = createExportWrapper("dynCall_iiiiifiiiii");
 /** @type {function(...*):?} */
-var dynCall_fffi = Module["dynCall_fffi"] = createExportWrapper("dynCall_fffi");
+var dynCall_iiifii = Module["dynCall_iiifii"] = createExportWrapper("dynCall_iiifii");
 /** @type {function(...*):?} */
-var dynCall_vifffi = Module["dynCall_vifffi"] = createExportWrapper("dynCall_vifffi");
+var dynCall_viiififiii = Module["dynCall_viiififiii"] = createExportWrapper("dynCall_viiififiii");
 /** @type {function(...*):?} */
-var dynCall_viiifii = Module["dynCall_viiifii"] = createExportWrapper("dynCall_viiifii");
+var dynCall_fiiffi = Module["dynCall_fiiffi"] = createExportWrapper("dynCall_fiiffi");
 /** @type {function(...*):?} */
-var dynCall_viffffi = Module["dynCall_viffffi"] = createExportWrapper("dynCall_viffffi");
+var dynCall_viififiiii = Module["dynCall_viififiiii"] = createExportWrapper("dynCall_viififiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiifii = Module["dynCall_iiiiiiifii"] = createExportWrapper("dynCall_iiiiiiifii");
+var dynCall_vififiiii = Module["dynCall_vififiiii"] = createExportWrapper("dynCall_vififiiii");
 /** @type {function(...*):?} */
-var dynCall_viifiiiiii = Module["dynCall_viifiiiiii"] = createExportWrapper("dynCall_viifiiiiii");
-/** @type {function(...*):?} */
-var dynCall_iifii = Module["dynCall_iifii"] = createExportWrapper("dynCall_iifii");
-/** @type {function(...*):?} */
-var dynCall_vfi = Module["dynCall_vfi"] = createExportWrapper("dynCall_vfi");
-/** @type {function(...*):?} */
-var dynCall_fiiii = Module["dynCall_fiiii"] = createExportWrapper("dynCall_fiiii");
-/** @type {function(...*):?} */
-var dynCall_viiiiiiiiiii = Module["dynCall_viiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_vifii = Module["dynCall_vifii"] = createExportWrapper("dynCall_vifii");
-/** @type {function(...*):?} */
-var dynCall_iifiii = Module["dynCall_iifiii"] = createExportWrapper("dynCall_iifiii");
-/** @type {function(...*):?} */
-var dynCall_viiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_viifffffi = Module["dynCall_viifffffi"] = createExportWrapper("dynCall_viifffffi");
-/** @type {function(...*):?} */
-var dynCall_fifi = Module["dynCall_fifi"] = createExportWrapper("dynCall_fifi");
-/** @type {function(...*):?} */
-var dynCall_viiiiifffiii = Module["dynCall_viiiiifffiii"] = createExportWrapper("dynCall_viiiiifffiii");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiiiiji = Module["dynCall_iiiiiiiiiji"] = createExportWrapper("dynCall_iiiiiiiiiji");
-/** @type {function(...*):?} */
-var dynCall_vji = Module["dynCall_vji"] = createExportWrapper("dynCall_vji");
-/** @type {function(...*):?} */
-var dynCall_iiji = Module["dynCall_iiji"] = createExportWrapper("dynCall_iiji");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiiiii = Module["dynCall_iiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_diii = Module["dynCall_diii"] = createExportWrapper("dynCall_diii");
-/** @type {function(...*):?} */
-var dynCall_iidi = Module["dynCall_iidi"] = createExportWrapper("dynCall_iidi");
-/** @type {function(...*):?} */
-var dynCall_iiiifi = Module["dynCall_iiiifi"] = createExportWrapper("dynCall_iiiifi");
-/** @type {function(...*):?} */
-var dynCall_iiifi = Module["dynCall_iiifi"] = createExportWrapper("dynCall_iiifi");
+var dynCall_fiffi = Module["dynCall_fiffi"] = createExportWrapper("dynCall_fiffi");
 /** @type {function(...*):?} */
 var dynCall_viidiji = Module["dynCall_viidiji"] = createExportWrapper("dynCall_viidiji");
 /** @type {function(...*):?} */
 var dynCall_viidjii = Module["dynCall_viidjii"] = createExportWrapper("dynCall_viidjii");
 /** @type {function(...*):?} */
+var dynCall_viiiifii = Module["dynCall_viiiifii"] = createExportWrapper("dynCall_viiiifii");
+/** @type {function(...*):?} */
 var dynCall_viiffi = Module["dynCall_viiffi"] = createExportWrapper("dynCall_viiffi");
 /** @type {function(...*):?} */
-var dynCall_ddiii = Module["dynCall_ddiii"] = createExportWrapper("dynCall_ddiii");
+var dynCall_vijii = Module["dynCall_vijii"] = createExportWrapper("dynCall_vijii");
+/** @type {function(...*):?} */
+var dynCall_iijiii = Module["dynCall_iijiii"] = createExportWrapper("dynCall_iijiii");
+/** @type {function(...*):?} */
+var dynCall_ji = Module["dynCall_ji"] = createExportWrapper("dynCall_ji");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiiji = Module["dynCall_iiiiiiiiiji"] = createExportWrapper("dynCall_iiiiiiiiiji");
+/** @type {function(...*):?} */
+var dynCall_vji = Module["dynCall_vji"] = createExportWrapper("dynCall_vji");
+/** @type {function(...*):?} */
+var dynCall_jiii = Module["dynCall_jiii"] = createExportWrapper("dynCall_jiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiifii = Module["dynCall_iiiiiifii"] = createExportWrapper("dynCall_iiiiiifii");
+/** @type {function(...*):?} */
+var dynCall_vidi = Module["dynCall_vidi"] = createExportWrapper("dynCall_vidi");
+/** @type {function(...*):?} */
+var dynCall_fi = Module["dynCall_fi"] = createExportWrapper("dynCall_fi");
+/** @type {function(...*):?} */
+var dynCall_vffi = Module["dynCall_vffi"] = createExportWrapper("dynCall_vffi");
+/** @type {function(...*):?} */
+var dynCall_iifiii = Module["dynCall_iifiii"] = createExportWrapper("dynCall_iifiii");
+/** @type {function(...*):?} */
+var dynCall_vfi = Module["dynCall_vfi"] = createExportWrapper("dynCall_vfi");
+/** @type {function(...*):?} */
+var dynCall_fiiii = Module["dynCall_fiiii"] = createExportWrapper("dynCall_fiiii");
+/** @type {function(...*):?} */
+var dynCall_viiifii = Module["dynCall_viiifii"] = createExportWrapper("dynCall_viiifii");
+/** @type {function(...*):?} */
+var dynCall_viifii = Module["dynCall_viifii"] = createExportWrapper("dynCall_viifii");
+/** @type {function(...*):?} */
+var dynCall_fffi = Module["dynCall_fffi"] = createExportWrapper("dynCall_fffi");
+/** @type {function(...*):?} */
+var dynCall_vifffi = Module["dynCall_vifffi"] = createExportWrapper("dynCall_vifffi");
+/** @type {function(...*):?} */
+var dynCall_iiji = Module["dynCall_iiji"] = createExportWrapper("dynCall_iiji");
+/** @type {function(...*):?} */
+var dynCall_viiiji = Module["dynCall_viiiji"] = createExportWrapper("dynCall_viiiji");
+/** @type {function(...*):?} */
+var dynCall_viiiidi = Module["dynCall_viiiidi"] = createExportWrapper("dynCall_viiiidi");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiidii = Module["dynCall_iiiiiiidii"] = createExportWrapper("dynCall_iiiiiiidii");
+/** @type {function(...*):?} */
+var dynCall_dii = Module["dynCall_dii"] = createExportWrapper("dynCall_dii");
+/** @type {function(...*):?} */
+var dynCall_vifii = Module["dynCall_vifii"] = createExportWrapper("dynCall_vifii");
+/** @type {function(...*):?} */
+var dynCall_viiiifi = Module["dynCall_viiiifi"] = createExportWrapper("dynCall_viiiifi");
+/** @type {function(...*):?} */
+var dynCall_iiiifi = Module["dynCall_iiiifi"] = createExportWrapper("dynCall_iiiifi");
+/** @type {function(...*):?} */
+var dynCall_viifffffi = Module["dynCall_viifffffi"] = createExportWrapper("dynCall_viifffffi");
+/** @type {function(...*):?} */
+var dynCall_fifi = Module["dynCall_fifi"] = createExportWrapper("dynCall_fifi");
+/** @type {function(...*):?} */
+var dynCall_viiiiffiiiiiiii = Module["dynCall_viiiiffiiiiiiii"] = createExportWrapper("dynCall_viiiiffiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiiiii = Module["dynCall_viiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiiii = Module["dynCall_viiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_di = Module["dynCall_di"] = createExportWrapper("dynCall_di");
+/** @type {function(...*):?} */
+var dynCall_iifi = Module["dynCall_iifi"] = createExportWrapper("dynCall_iifi");
+/** @type {function(...*):?} */
+var dynCall_viidi = Module["dynCall_viidi"] = createExportWrapper("dynCall_viidi");
+/** @type {function(...*):?} */
+var dynCall_viiiiiifii = Module["dynCall_viiiiiifii"] = createExportWrapper("dynCall_viiiiiifii");
+/** @type {function(...*):?} */
+var dynCall_iidi = Module["dynCall_iidi"] = createExportWrapper("dynCall_iidi");
+/** @type {function(...*):?} */
+var dynCall_viiiifiiii = Module["dynCall_viiiifiiii"] = createExportWrapper("dynCall_viiiifiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiifiiii = Module["dynCall_viiiiifiiii"] = createExportWrapper("dynCall_viiiiifiiii");
+/** @type {function(...*):?} */
+var dynCall_iiifi = Module["dynCall_iiifi"] = createExportWrapper("dynCall_iiifi");
 /** @type {function(...*):?} */
 var dynCall_iiddi = Module["dynCall_iiddi"] = createExportWrapper("dynCall_iiddi");
 /** @type {function(...*):?} */
@@ -16768,9 +17187,11 @@ var dynCall_iiidii = Module["dynCall_iiidii"] = createExportWrapper("dynCall_iii
 /** @type {function(...*):?} */
 var dynCall_fiiiii = Module["dynCall_fiiiii"] = createExportWrapper("dynCall_fiiiii");
 /** @type {function(...*):?} */
-var dynCall_jijii = Module["dynCall_jijii"] = createExportWrapper("dynCall_jijii");
+var dynCall_jjji = Module["dynCall_jjji"] = createExportWrapper("dynCall_jjji");
 /** @type {function(...*):?} */
-var dynCall_ijji = Module["dynCall_ijji"] = createExportWrapper("dynCall_ijji");
+var dynCall_jiiiii = Module["dynCall_jiiiii"] = createExportWrapper("dynCall_jiiiii");
+/** @type {function(...*):?} */
+var dynCall_ddiii = Module["dynCall_ddiii"] = createExportWrapper("dynCall_ddiii");
 /** @type {function(...*):?} */
 var dynCall_j = Module["dynCall_j"] = createExportWrapper("dynCall_j");
 /** @type {function(...*):?} */
@@ -16778,9 +17199,13 @@ var dynCall_iijii = Module["dynCall_iijii"] = createExportWrapper("dynCall_iijii
 /** @type {function(...*):?} */
 var dynCall_vijiii = Module["dynCall_vijiii"] = createExportWrapper("dynCall_vijiii");
 /** @type {function(...*):?} */
+var dynCall_ijji = Module["dynCall_ijji"] = createExportWrapper("dynCall_ijji");
+/** @type {function(...*):?} */
 var dynCall_vjjjiiii = Module["dynCall_vjjjiiii"] = createExportWrapper("dynCall_vjjjiiii");
 /** @type {function(...*):?} */
 var dynCall_vjiiiii = Module["dynCall_vjiiiii"] = createExportWrapper("dynCall_vjiiiii");
+/** @type {function(...*):?} */
+var dynCall_jijii = Module["dynCall_jijii"] = createExportWrapper("dynCall_jijii");
 /** @type {function(...*):?} */
 var dynCall_fiiiiii = Module["dynCall_fiiiiii"] = createExportWrapper("dynCall_fiiiiii");
 /** @type {function(...*):?} */
@@ -16794,6 +17219,8 @@ var dynCall_iiifiiii = Module["dynCall_iiifiiii"] = createExportWrapper("dynCall
 /** @type {function(...*):?} */
 var dynCall_iiffiii = Module["dynCall_iiffiii"] = createExportWrapper("dynCall_iiffiii");
 /** @type {function(...*):?} */
+var dynCall_iifii = Module["dynCall_iifii"] = createExportWrapper("dynCall_iifii");
+/** @type {function(...*):?} */
 var dynCall_ifii = Module["dynCall_ifii"] = createExportWrapper("dynCall_ifii");
 /** @type {function(...*):?} */
 var dynCall_viffii = Module["dynCall_viffii"] = createExportWrapper("dynCall_viffii");
@@ -16802,23 +17229,19 @@ var dynCall_iiiji = Module["dynCall_iiiji"] = createExportWrapper("dynCall_iiiji
 /** @type {function(...*):?} */
 var dynCall_viiiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiiiii = Module["dynCall_iiiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiiii = Module["dynCall_iiiiiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiii");
-/** @type {function(...*):?} */
 var dynCall_iiiiji = Module["dynCall_iiiiji"] = createExportWrapper("dynCall_iiiiji");
 /** @type {function(...*):?} */
 var dynCall_iiiiiji = Module["dynCall_iiiiiji"] = createExportWrapper("dynCall_iiiiiji");
 /** @type {function(...*):?} */
 var dynCall_viiijii = Module["dynCall_viiijii"] = createExportWrapper("dynCall_viiijii");
 /** @type {function(...*):?} */
+var dynCall_ifi = Module["dynCall_ifi"] = createExportWrapper("dynCall_ifi");
+/** @type {function(...*):?} */
 var dynCall_jji = Module["dynCall_jji"] = createExportWrapper("dynCall_jji");
 /** @type {function(...*):?} */
 var dynCall_fji = Module["dynCall_fji"] = createExportWrapper("dynCall_fji");
 /** @type {function(...*):?} */
 var dynCall_dji = Module["dynCall_dji"] = createExportWrapper("dynCall_dji");
-/** @type {function(...*):?} */
-var dynCall_jiiii = Module["dynCall_jiiii"] = createExportWrapper("dynCall_jiiii");
 /** @type {function(...*):?} */
 var dynCall_vjii = Module["dynCall_vjii"] = createExportWrapper("dynCall_vjii");
 /** @type {function(...*):?} */
@@ -16830,6 +17253,16 @@ var dynCall_ijjiii = Module["dynCall_ijjiii"] = createExportWrapper("dynCall_ijj
 /** @type {function(...*):?} */
 var dynCall_ijiii = Module["dynCall_ijiii"] = createExportWrapper("dynCall_ijiii");
 /** @type {function(...*):?} */
+var dynCall_iiiifiiiiii = Module["dynCall_iiiifiiiiii"] = createExportWrapper("dynCall_iiiifiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiifiiiii = Module["dynCall_iiiifiiiii"] = createExportWrapper("dynCall_iiiifiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiifiiii = Module["dynCall_iiiifiiii"] = createExportWrapper("dynCall_iiiifiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiifiii = Module["dynCall_iiiifiii"] = createExportWrapper("dynCall_iiiifiii");
+/** @type {function(...*):?} */
+var dynCall_viffffi = Module["dynCall_viffffi"] = createExportWrapper("dynCall_viffffi");
+/** @type {function(...*):?} */
 var dynCall_iffffi = Module["dynCall_iffffi"] = createExportWrapper("dynCall_iffffi");
 /** @type {function(...*):?} */
 var dynCall_diiiii = Module["dynCall_diiiii"] = createExportWrapper("dynCall_diiiii");
@@ -16838,11 +17271,7 @@ var dynCall_vijji = Module["dynCall_vijji"] = createExportWrapper("dynCall_vijji
 /** @type {function(...*):?} */
 var dynCall_vfffi = Module["dynCall_vfffi"] = createExportWrapper("dynCall_vfffi");
 /** @type {function(...*):?} */
-var dynCall_vffi = Module["dynCall_vffi"] = createExportWrapper("dynCall_vffi");
-/** @type {function(...*):?} */
 var dynCall_vffffi = Module["dynCall_vffffi"] = createExportWrapper("dynCall_vffffi");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiii = Module["dynCall_iiiiiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiii");
 /** @type {function(...*):?} */
 var dynCall_viiiffii = Module["dynCall_viiiffii"] = createExportWrapper("dynCall_viiiffii");
 /** @type {function(...*):?} */
@@ -16860,8 +17289,6 @@ var dynCall_vfiii = Module["dynCall_vfiii"] = createExportWrapper("dynCall_vfiii
 /** @type {function(...*):?} */
 var dynCall_ffffi = Module["dynCall_ffffi"] = createExportWrapper("dynCall_ffffi");
 /** @type {function(...*):?} */
-var dynCall_iffi = Module["dynCall_iffi"] = createExportWrapper("dynCall_iffi");
-/** @type {function(...*):?} */
 var dynCall_fffifffi = Module["dynCall_fffifffi"] = createExportWrapper("dynCall_fffifffi");
 /** @type {function(...*):?} */
 var dynCall_fdi = Module["dynCall_fdi"] = createExportWrapper("dynCall_fdi");
@@ -16878,13 +17305,13 @@ var dynCall_jjjji = Module["dynCall_jjjji"] = createExportWrapper("dynCall_jjjji
 /** @type {function(...*):?} */
 var dynCall_vjiiii = Module["dynCall_vjiiii"] = createExportWrapper("dynCall_vjiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiifiiiiii = Module["dynCall_iiiifiiiiii"] = createExportWrapper("dynCall_iiiifiiiiii");
+var dynCall_vijjii = Module["dynCall_vijjii"] = createExportWrapper("dynCall_vijjii");
 /** @type {function(...*):?} */
-var dynCall_iiiifiiiii = Module["dynCall_iiiifiiiii"] = createExportWrapper("dynCall_iiiifiiiii");
+var dynCall_vjji = Module["dynCall_vjji"] = createExportWrapper("dynCall_vjji");
 /** @type {function(...*):?} */
-var dynCall_iiiifiiii = Module["dynCall_iiiifiiii"] = createExportWrapper("dynCall_iiiifiiii");
+var dynCall_iiiiiiifiiii = Module["dynCall_iiiiiiifiiii"] = createExportWrapper("dynCall_iiiiiiifiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiifiii = Module["dynCall_iiiifiii"] = createExportWrapper("dynCall_iiiifiii");
+var dynCall_viiiiiiiijijiiiii = Module["dynCall_viiiiiiiijijiiiii"] = createExportWrapper("dynCall_viiiiiiiijijiiiii");
 /** @type {function(...*):?} */
 var dynCall_viiiiiiiiiiifii = Module["dynCall_viiiiiiiiiiifii"] = createExportWrapper("dynCall_viiiiiiiiiiifii");
 /** @type {function(...*):?} */
@@ -16894,19 +17321,9 @@ var dynCall_viiiiidddddii = Module["dynCall_viiiiidddddii"] = createExportWrappe
 /** @type {function(...*):?} */
 var dynCall_viiiiiiiiidddddii = Module["dynCall_viiiiiiiiidddddii"] = createExportWrapper("dynCall_viiiiiiiiidddddii");
 /** @type {function(...*):?} */
-var dynCall_vijjii = Module["dynCall_vijjii"] = createExportWrapper("dynCall_vijjii");
-/** @type {function(...*):?} */
-var dynCall_viiiiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_viiiiiiiiiiii = Module["dynCall_viiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiii");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiifiiii = Module["dynCall_iiiiiiifiiii"] = createExportWrapper("dynCall_iiiiiiifiiii");
-/** @type {function(...*):?} */
-var dynCall_viiiiiiiijijiii = Module["dynCall_viiiiiiiijijiii"] = createExportWrapper("dynCall_viiiiiiiijijiii");
-/** @type {function(...*):?} */
-var dynCall_vjji = Module["dynCall_vjji"] = createExportWrapper("dynCall_vjji");
-/** @type {function(...*):?} */
 var dynCall_viiiiiffii = Module["dynCall_viiiiiffii"] = createExportWrapper("dynCall_viiiiiffii");
+/** @type {function(...*):?} */
+var dynCall_ifffi = Module["dynCall_ifffi"] = createExportWrapper("dynCall_ifffi");
 /** @type {function(...*):?} */
 var dynCall_viffffii = Module["dynCall_viffffii"] = createExportWrapper("dynCall_viffffii");
 /** @type {function(...*):?} */
@@ -16920,19 +17337,27 @@ var dynCall_viiififi = Module["dynCall_viiififi"] = createExportWrapper("dynCall
 /** @type {function(...*):?} */
 var dynCall_viiififfi = Module["dynCall_viiififfi"] = createExportWrapper("dynCall_viiififfi");
 /** @type {function(...*):?} */
-var dynCall_iiiiifi = Module["dynCall_iiiiifi"] = createExportWrapper("dynCall_iiiiifi");
-/** @type {function(...*):?} */
 var dynCall_viifiiii = Module["dynCall_viifiiii"] = createExportWrapper("dynCall_viifiiii");
 /** @type {function(...*):?} */
 var dynCall_iiiiifiii = Module["dynCall_iiiiifiii"] = createExportWrapper("dynCall_iiiiifiii");
 /** @type {function(...*):?} */
 var dynCall_vifffffi = Module["dynCall_vifffffi"] = createExportWrapper("dynCall_vifffffi");
 /** @type {function(...*):?} */
+var dynCall_iiifiiiiiii = Module["dynCall_iiifiiiiiii"] = createExportWrapper("dynCall_iiifiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iifiiiiiii = Module["dynCall_iifiiiiiii"] = createExportWrapper("dynCall_iifiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiifiiiiiiii = Module["dynCall_iiifiiiiiiii"] = createExportWrapper("dynCall_iiifiiiiiiii");
+/** @type {function(...*):?} */
 var dynCall_viffiiii = Module["dynCall_viffiiii"] = createExportWrapper("dynCall_viffiiii");
 /** @type {function(...*):?} */
 var dynCall_viiiffffiiii = Module["dynCall_viiiffffiiii"] = createExportWrapper("dynCall_viiiffffiiii");
 /** @type {function(...*):?} */
 var dynCall_viifffffffiiiii = Module["dynCall_viifffffffiiiii"] = createExportWrapper("dynCall_viifffffffiiiii");
+/** @type {function(...*):?} */
+var dynCall_ffii = Module["dynCall_ffii"] = createExportWrapper("dynCall_ffii");
+/** @type {function(...*):?} */
+var dynCall_viiiifiii = Module["dynCall_viiiifiii"] = createExportWrapper("dynCall_viiiifiii");
 /** @type {function(...*):?} */
 var dynCall_iiiiiiffiiiiiiiiiffffiiii = Module["dynCall_iiiiiiffiiiiiiiiiffffiiii"] = createExportWrapper("dynCall_iiiiiiffiiiiiiiiiffffiiii");
 /** @type {function(...*):?} */
@@ -16950,7 +17375,9 @@ var dynCall_viiffffi = Module["dynCall_viiffffi"] = createExportWrapper("dynCall
 /** @type {function(...*):?} */
 var dynCall_fifffi = Module["dynCall_fifffi"] = createExportWrapper("dynCall_fifffi");
 /** @type {function(...*):?} */
-var dynCall_ifffi = Module["dynCall_ifffi"] = createExportWrapper("dynCall_ifffi");
+var dynCall_fiifii = Module["dynCall_fiifii"] = createExportWrapper("dynCall_fiifii");
+/** @type {function(...*):?} */
+var dynCall_fiifiii = Module["dynCall_fiifiii"] = createExportWrapper("dynCall_fiifiii");
 /** @type {function(...*):?} */
 var dynCall_fiffffi = Module["dynCall_fiffffi"] = createExportWrapper("dynCall_fiffffi");
 /** @type {function(...*):?} */
@@ -16972,6 +17399,8 @@ var dynCall_viiffiiiiii = Module["dynCall_viiffiiiiii"] = createExportWrapper("d
 /** @type {function(...*):?} */
 var dynCall_iiiffiiii = Module["dynCall_iiiffiiii"] = createExportWrapper("dynCall_iiiffiiii");
 /** @type {function(...*):?} */
+var dynCall_viififiii = Module["dynCall_viififiii"] = createExportWrapper("dynCall_viififiii");
+/** @type {function(...*):?} */
 var dynCall_fffffi = Module["dynCall_fffffi"] = createExportWrapper("dynCall_fffffi");
 /** @type {function(...*):?} */
 var dynCall_iiiiffiiii = Module["dynCall_iiiiffiiii"] = createExportWrapper("dynCall_iiiiffiiii");
@@ -16984,21 +17413,15 @@ var dynCall_vifiiiiii = Module["dynCall_vifiiiiii"] = createExportWrapper("dynCa
 /** @type {function(...*):?} */
 var dynCall_viiffiiii = Module["dynCall_viiffiiii"] = createExportWrapper("dynCall_viiffiiii");
 /** @type {function(...*):?} */
-var dynCall_viiiiiifii = Module["dynCall_viiiiiifii"] = createExportWrapper("dynCall_viiiiiifii");
-/** @type {function(...*):?} */
 var dynCall_iijjjiii = Module["dynCall_iijjjiii"] = createExportWrapper("dynCall_iijjjiii");
 /** @type {function(...*):?} */
 var dynCall_viiffii = Module["dynCall_viiffii"] = createExportWrapper("dynCall_viiffii");
-/** @type {function(...*):?} */
-var dynCall_ffii = Module["dynCall_ffii"] = createExportWrapper("dynCall_ffii");
 /** @type {function(...*):?} */
 var dynCall_viifiii = Module["dynCall_viifiii"] = createExportWrapper("dynCall_viifiii");
 /** @type {function(...*):?} */
 var dynCall_fifii = Module["dynCall_fifii"] = createExportWrapper("dynCall_fifii");
 /** @type {function(...*):?} */
 var dynCall_viiifffi = Module["dynCall_viiifffi"] = createExportWrapper("dynCall_viiifffi");
-/** @type {function(...*):?} */
-var dynCall_fiifii = Module["dynCall_fiifii"] = createExportWrapper("dynCall_fiifii");
 /** @type {function(...*):?} */
 var dynCall_iifffi = Module["dynCall_iifffi"] = createExportWrapper("dynCall_iifffi");
 /** @type {function(...*):?} */
@@ -17070,9 +17493,17 @@ var dynCall_viifffi = Module["dynCall_viifffi"] = createExportWrapper("dynCall_v
 /** @type {function(...*):?} */
 var dynCall_viifffii = Module["dynCall_viifffii"] = createExportWrapper("dynCall_viifffii");
 /** @type {function(...*):?} */
-var dynCall_viiffiffiiiiiiiiiiiiiiiiiiii = Module["dynCall_viiffiffiiiiiiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiffiffiiiiiiiiiiiiiiiiiiii");
+var dynCall_vifiii = Module["dynCall_vifiii"] = createExportWrapper("dynCall_vifiii");
 /** @type {function(...*):?} */
-var dynCall_viiffiffiiiiiiiiiiiiiiiiiiiiiiii = Module["dynCall_viiffiffiiiiiiiiiiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiffiffiiiiiiiiiiiiiiiiiiiiiiii");
+var dynCall_viiiiifffiii = Module["dynCall_viiiiifffiii"] = createExportWrapper("dynCall_viiiiifffiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiffiffiiiiiiiiiiiiiiiiiiii = Module["dynCall_viiiiffiffiiiiiiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiffiffiiiiiiiiiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiffiffiiiiiiiii = Module["dynCall_viiiiffiffiiiiiiiii"] = createExportWrapper("dynCall_viiiiffiffiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiffiffiiiiiiiiiiiiiiiiiiiiiiii = Module["dynCall_viiiiiffiffiiiiiiiiiiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiffiffiiiiiiiiiiiiiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiffiffiiiiiiiiiiii = Module["dynCall_viiiiiffiffiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiffiffiiiiiiiiiiii");
 /** @type {function(...*):?} */
 var dynCall_viiffiiiiiiiiiiiiiii = Module["dynCall_viiffiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiffiiiiiiiiiiiiiii");
 /** @type {function(...*):?} */
@@ -17080,27 +17511,47 @@ var dynCall_viiffiiiiiiiiiiiiiiiiiiiiiiiiii = Module["dynCall_viiffiiiiiiiiiiiii
 /** @type {function(...*):?} */
 var dynCall_viiiiiffiiiii = Module["dynCall_viiiiiffiiiii"] = createExportWrapper("dynCall_viiiiiffiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiiiiifiiiiiii = Module["dynCall_iiiiiiiiiiiiiifiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiifiiiiiii");
+var dynCall_viiiiiiiifii = Module["dynCall_viiiiiiiifii"] = createExportWrapper("dynCall_viiiiiiiifii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiiiiiiifiiiiiii = Module["dynCall_iiiiiiiiiiiiiiiifiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiiiifiiiiiii");
+var dynCall_iiiiiiifiii = Module["dynCall_iiiiiiifiii"] = createExportWrapper("dynCall_iiiiiiifiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiiiifiiiiiii = Module["dynCall_iiiiiiiiiiiiifiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiifiiiiiii");
+var dynCall_iiiiiiiiiiiiiifiiiiiiii = Module["dynCall_iiiiiiiiiiiiiifiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiifiiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiiiiiifiiiiiii = Module["dynCall_iiiiiiiiiiiiiiifiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiiifiiiiiii");
+var dynCall_iiiiiiiiiiiiifiiiiiiii = Module["dynCall_iiiiiiiiiiiiifiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiifiiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_iiiiiiiiiiiiiiiiifiiiiiii = Module["dynCall_iiiiiiiiiiiiiiiiifiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiiiiifiiiiiii");
+var dynCall_iiiiiiiiiiiiiiiifiiiiiiii = Module["dynCall_iiiiiiiiiiiiiiiifiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiiiifiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiiiiifiiiiiiii = Module["dynCall_iiiiiiiiiiiifiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiifiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiifii = Module["dynCall_iiiiiiifii"] = createExportWrapper("dynCall_iiiiiiifii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiiiiiiiifiiiiiiii = Module["dynCall_iiiiiiiiiiiiiiifiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiiifiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_iiiiiiiiiiiiiiiiifiiiiiiii = Module["dynCall_iiiiiiiiiiiiiiiiifiiiiiiii"] = createExportWrapper("dynCall_iiiiiiiiiiiiiiiiifiiiiiiii");
 /** @type {function(...*):?} */
 var dynCall_vijjjji = Module["dynCall_vijjjji"] = createExportWrapper("dynCall_vijjjji");
 /** @type {function(...*):?} */
 var dynCall_iijjjji = Module["dynCall_iijjjji"] = createExportWrapper("dynCall_iijjjji");
 /** @type {function(...*):?} */
+var dynCall_viiiiifii = Module["dynCall_viiiiifii"] = createExportWrapper("dynCall_viiiiifii");
+/** @type {function(...*):?} */
 var dynCall_viiiffffi = Module["dynCall_viiiffffi"] = createExportWrapper("dynCall_viiiffffi");
+/** @type {function(...*):?} */
+var dynCall_ffiiifffi = Module["dynCall_ffiiifffi"] = createExportWrapper("dynCall_ffiiifffi");
+/** @type {function(...*):?} */
+var dynCall_fifiii = Module["dynCall_fifiii"] = createExportWrapper("dynCall_fifiii");
 /** @type {function(...*):?} */
 var dynCall_viiiifffi = Module["dynCall_viiiifffi"] = createExportWrapper("dynCall_viiiifffi");
 /** @type {function(...*):?} */
+var dynCall_viiiiiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiiiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiiiiiiiiiiiiiiii = Module["dynCall_viiiiiiiiiiiiiiiiiiii"] = createExportWrapper("dynCall_viiiiiiiiiiiiiiiiiiii");
+/** @type {function(...*):?} */
 var dynCall_vifiiiii = Module["dynCall_vifiiiii"] = createExportWrapper("dynCall_vifiiiii");
 /** @type {function(...*):?} */
-var dynCall_vifiii = Module["dynCall_vifiii"] = createExportWrapper("dynCall_vifiii");
+var dynCall_viiiiiiifiiii = Module["dynCall_viiiiiiifiiii"] = createExportWrapper("dynCall_viiiiiiifiiii");
 /** @type {function(...*):?} */
 var dynCall_iiidi = Module["dynCall_iiidi"] = createExportWrapper("dynCall_iiidi");
 /** @type {function(...*):?} */
@@ -17110,15 +17561,19 @@ var dynCall_iiiidi = Module["dynCall_iiiidi"] = createExportWrapper("dynCall_iii
 /** @type {function(...*):?} */
 var dynCall_viifffifi = Module["dynCall_viifffifi"] = createExportWrapper("dynCall_viifffifi");
 /** @type {function(...*):?} */
+var dynCall_viifiiiiii = Module["dynCall_viifiiiiii"] = createExportWrapper("dynCall_viifiiiiii");
+/** @type {function(...*):?} */
 var dynCall_viifiiiiiii = Module["dynCall_viifiiiiiii"] = createExportWrapper("dynCall_viifiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_viiiifiiii = Module["dynCall_viiiifiiii"] = createExportWrapper("dynCall_viiiifiiii");
+var dynCall_iiiiiifiiiiii = Module["dynCall_iiiiiifiiiiii"] = createExportWrapper("dynCall_iiiiiifiiiiii");
 /** @type {function(...*):?} */
 var dynCall_iiiiiiifi = Module["dynCall_iiiiiiifi"] = createExportWrapper("dynCall_iiiiiiifi");
 /** @type {function(...*):?} */
 var dynCall_iiiiiiiifii = Module["dynCall_iiiiiiiifii"] = createExportWrapper("dynCall_iiiiiiiifii");
 /** @type {function(...*):?} */
 var dynCall_iiiiiiiifiiiii = Module["dynCall_iiiiiiiifiiiii"] = createExportWrapper("dynCall_iiiiiiiifiiiii");
+/** @type {function(...*):?} */
+var dynCall_viiiiiifi = Module["dynCall_viiiiiifi"] = createExportWrapper("dynCall_viiiiiifi");
 /** @type {function(...*):?} */
 var dynCall_vffiii = Module["dynCall_vffiii"] = createExportWrapper("dynCall_vffiii");
 /** @type {function(...*):?} */
@@ -17133,10 +17588,6 @@ var dynCall_ifiiiifiii = Module["dynCall_ifiiiifiii"] = createExportWrapper("dyn
 var dynCall_viiffffiiiii = Module["dynCall_viiffffiiiii"] = createExportWrapper("dynCall_viiffffiiiii");
 /** @type {function(...*):?} */
 var dynCall_vifiifiifi = Module["dynCall_vifiifiifi"] = createExportWrapper("dynCall_vifiifiifi");
-/** @type {function(...*):?} */
-var dynCall_vififiiii = Module["dynCall_vififiiii"] = createExportWrapper("dynCall_vififiiii");
-/** @type {function(...*):?} */
-var dynCall_viiiifiii = Module["dynCall_viiiifiii"] = createExportWrapper("dynCall_viiiifiii");
 /** @type {function(...*):?} */
 var dynCall_viiffffffi = Module["dynCall_viiffffffi"] = createExportWrapper("dynCall_viiffffffi");
 /** @type {function(...*):?} */
@@ -17256,7 +17707,7 @@ var dynCall_viijjii = Module["dynCall_viijjii"] = createExportWrapper("dynCall_v
 /** @type {function(...*):?} */
 var dynCall_fiff = Module["dynCall_fiff"] = createExportWrapper("dynCall_fiff");
 /** @type {function(...*):?} */
-var dynCall_vififii = Module["dynCall_vififii"] = createExportWrapper("dynCall_vififii");
+var dynCall_vififiii = Module["dynCall_vififiii"] = createExportWrapper("dynCall_vififiii");
 /** @type {function(...*):?} */
 var dynCall_iiiiidii = Module["dynCall_iiiiidii"] = createExportWrapper("dynCall_iiiiidii");
 /** @type {function(...*):?} */
@@ -17296,27 +17747,27 @@ var dynCall_vidjii = Module["dynCall_vidjii"] = createExportWrapper("dynCall_vid
 /** @type {function(...*):?} */
 var dynCall_vdi = Module["dynCall_vdi"] = createExportWrapper("dynCall_vdi");
 /** @type {function(...*):?} */
+var dynCall_fff = Module["dynCall_fff"] = createExportWrapper("dynCall_fff");
+/** @type {function(...*):?} */
 var dynCall_vif = Module["dynCall_vif"] = createExportWrapper("dynCall_vif");
 /** @type {function(...*):?} */
 var dynCall_viif = Module["dynCall_viif"] = createExportWrapper("dynCall_viif");
 /** @type {function(...*):?} */
-var dynCall_fff = Module["dynCall_fff"] = createExportWrapper("dynCall_fff");
-/** @type {function(...*):?} */
-var dynCall_vid = Module["dynCall_vid"] = createExportWrapper("dynCall_vid");
-/** @type {function(...*):?} */
-var dynCall_vjiiiiiii = Module["dynCall_vjiiiiiii"] = createExportWrapper("dynCall_vjiiiiiii");
-/** @type {function(...*):?} */
 var dynCall_ijj = Module["dynCall_ijj"] = createExportWrapper("dynCall_ijj");
-/** @type {function(...*):?} */
-var dynCall_viffff = Module["dynCall_viffff"] = createExportWrapper("dynCall_viffff");
-/** @type {function(...*):?} */
-var dynCall_vf = Module["dynCall_vf"] = createExportWrapper("dynCall_vf");
 /** @type {function(...*):?} */
 var dynCall_vffff = Module["dynCall_vffff"] = createExportWrapper("dynCall_vffff");
 /** @type {function(...*):?} */
-var dynCall_vff = Module["dynCall_vff"] = createExportWrapper("dynCall_vff");
+var dynCall_vfff = Module["dynCall_vfff"] = createExportWrapper("dynCall_vfff");
 /** @type {function(...*):?} */
-var dynCall_iiij = Module["dynCall_iiij"] = createExportWrapper("dynCall_iiij");
+var dynCall_viffff = Module["dynCall_viffff"] = createExportWrapper("dynCall_viffff");
+/** @type {function(...*):?} */
+var dynCall_iiiij = Module["dynCall_iiiij"] = createExportWrapper("dynCall_iiiij");
+/** @type {function(...*):?} */
+var dynCall_iiijj = Module["dynCall_iiijj"] = createExportWrapper("dynCall_iiijj");
+/** @type {function(...*):?} */
+var dynCall_vid = Module["dynCall_vid"] = createExportWrapper("dynCall_vid");
+/** @type {function(...*):?} */
+var dynCall_viiidd = Module["dynCall_viiidd"] = createExportWrapper("dynCall_viiidd");
 /** @type {function(...*):?} */
 var dynCall_viiiiiji = Module["dynCall_viiiiiji"] = createExportWrapper("dynCall_viiiiiji");
 /** @type {function(...*):?} */
@@ -17338,21 +17789,29 @@ var dynCall_viff = Module["dynCall_viff"] = createExportWrapper("dynCall_viff");
 /** @type {function(...*):?} */
 var dynCall_vij = Module["dynCall_vij"] = createExportWrapper("dynCall_vij");
 /** @type {function(...*):?} */
-var dynCall_viiidd = Module["dynCall_viiidd"] = createExportWrapper("dynCall_viiidd");
+var dynCall_ij = Module["dynCall_ij"] = createExportWrapper("dynCall_ij");
 /** @type {function(...*):?} */
-var dynCall_viijj = Module["dynCall_viijj"] = createExportWrapper("dynCall_viijj");
+var dynCall_vf = Module["dynCall_vf"] = createExportWrapper("dynCall_vf");
 /** @type {function(...*):?} */
-var dynCall_iiiij = Module["dynCall_iiiij"] = createExportWrapper("dynCall_iiiij");
+var dynCall_vff = Module["dynCall_vff"] = createExportWrapper("dynCall_vff");
 /** @type {function(...*):?} */
-var dynCall_iiijj = Module["dynCall_iiijj"] = createExportWrapper("dynCall_iiijj");
+var dynCall_iiij = Module["dynCall_iiij"] = createExportWrapper("dynCall_iiij");
 /** @type {function(...*):?} */
 var dynCall_viiiif = Module["dynCall_viiiif"] = createExportWrapper("dynCall_viiiif");
-/** @type {function(...*):?} */
-var dynCall_iiiijiii = Module["dynCall_iiiijiii"] = createExportWrapper("dynCall_iiiijiii");
 /** @type {function(...*):?} */
 var dynCall_iiif = Module["dynCall_iiif"] = createExportWrapper("dynCall_iiif");
 /** @type {function(...*):?} */
 var dynCall_fif = Module["dynCall_fif"] = createExportWrapper("dynCall_fif");
+/** @type {function(...*):?} */
+var dynCall_iiiiiifffiiifiii = Module["dynCall_iiiiiifffiiifiii"] = createExportWrapper("dynCall_iiiiiifffiiifiii");
+/** @type {function(...*):?} */
+var dynCall_viiiffffffi = Module["dynCall_viiiffffffi"] = createExportWrapper("dynCall_viiiffffffi");
+/** @type {function(...*):?} */
+var dynCall_iijjiii = Module["dynCall_iijjiii"] = createExportWrapper("dynCall_iijjiii");
+/** @type {function(...*):?} */
+var dynCall_vijjjii = Module["dynCall_vijjjii"] = createExportWrapper("dynCall_vijjjii");
+/** @type {function(...*):?} */
+var dynCall_viid = Module["dynCall_viid"] = createExportWrapper("dynCall_viid");
 /** @type {function(...*):?} */
 var dynCall_iiiiiifff = Module["dynCall_iiiiiifff"] = createExportWrapper("dynCall_iiiiiifff");
 /** @type {function(...*):?} */
@@ -17398,21 +17857,23 @@ var dynCall_viij = Module["dynCall_viij"] = createExportWrapper("dynCall_viij");
 /** @type {function(...*):?} */
 var dynCall_viijijj = Module["dynCall_viijijj"] = createExportWrapper("dynCall_viijijj");
 /** @type {function(...*):?} */
+var dynCall_viijj = Module["dynCall_viijj"] = createExportWrapper("dynCall_viijj");
+/** @type {function(...*):?} */
 var dynCall_viiiij = Module["dynCall_viiiij"] = createExportWrapper("dynCall_viiiij");
 /** @type {function(...*):?} */
-var dynCall_iiiiiifffiiifiii = Module["dynCall_iiiiiifffiiifiii"] = createExportWrapper("dynCall_iiiiiifffiiifiii");
-/** @type {function(...*):?} */
-var dynCall_viid = Module["dynCall_viid"] = createExportWrapper("dynCall_viid");
-/** @type {function(...*):?} */
 var dynCall_fiiiif = Module["dynCall_fiiiif"] = createExportWrapper("dynCall_fiiiif");
+/** @type {function(...*):?} */
+var dynCall_vifiiifi = Module["dynCall_vifiiifi"] = createExportWrapper("dynCall_vifiiifi");
+/** @type {function(...*):?} */
+var dynCall_viififi = Module["dynCall_viififi"] = createExportWrapper("dynCall_viififi");
 /** @type {function(...*):?} */
 var dynCall_ff = Module["dynCall_ff"] = createExportWrapper("dynCall_ff");
 /** @type {function(...*):?} */
 var dynCall_iiiiiff = Module["dynCall_iiiiiff"] = createExportWrapper("dynCall_iiiiiff");
 /** @type {function(...*):?} */
-var dynCall_ij = Module["dynCall_ij"] = createExportWrapper("dynCall_ij");
+var dynCall_vjiiiiiii = Module["dynCall_vjiiiiiii"] = createExportWrapper("dynCall_vjiiiiiii");
 /** @type {function(...*):?} */
-var dynCall_vfff = Module["dynCall_vfff"] = createExportWrapper("dynCall_vfff");
+var dynCall_iiiijiii = Module["dynCall_iiiijiii"] = createExportWrapper("dynCall_iiiijiii");
 /** @type {function(...*):?} */
 var dynCall_iiff = Module["dynCall_iiff"] = createExportWrapper("dynCall_iiff");
 /** @type {function(...*):?} */
@@ -17427,8 +17888,6 @@ var dynCall_if = Module["dynCall_if"] = createExportWrapper("dynCall_if");
 var dynCall_viiiiiiiiiifii = Module["dynCall_viiiiiiiiiifii"] = createExportWrapper("dynCall_viiiiiiiiiifii");
 /** @type {function(...*):?} */
 var dynCall_viiiiiiiiidddddi = Module["dynCall_viiiiiiiiidddddi"] = createExportWrapper("dynCall_viiiiiiiiidddddi");
-/** @type {function(...*):?} */
-var dynCall_iiiiiiifiii = Module["dynCall_iiiiiiifiii"] = createExportWrapper("dynCall_iiiiiiifiii");
 /** @type {function(...*):?} */
 var dynCall_fiif = Module["dynCall_fiif"] = createExportWrapper("dynCall_fiif");
 /** @type {function(...*):?} */
@@ -17614,6 +18073,17 @@ function invoke_iiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   }
 }
 
+function invoke_iiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
@@ -17647,6 +18117,17 @@ function invoke_viiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   }
 }
 
+function invoke_viiiiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_viiiiii(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
@@ -17669,10 +18150,10 @@ function invoke_viiiii(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_ddiii(index,a1,a2,a3,a4) {
+function invoke_iiiidii(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    return dynCall_ddiii(index,a1,a2,a3,a4);
+    return dynCall_iiiidii(index,a1,a2,a3,a4,a5,a6);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17691,32 +18172,10 @@ function invoke_iiiifii(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_fi(index,a1) {
+function invoke_vifi(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return dynCall_fi(index,a1);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iiiidii(index,a1,a2,a3,a4,a5,a6) {
-  var sp = stackSave();
-  try {
-    return dynCall_iiiidii(index,a1,a2,a3,a4,a5,a6);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiiifi(index,a1,a2,a3,a4,a5,a6) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiifi(index,a1,a2,a3,a4,a5,a6);
+    dynCall_vifi(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17746,10 +18205,10 @@ function invoke_fii(index,a1,a2) {
   }
 }
 
-function invoke_fiiii(index,a1,a2,a3,a4) {
+function invoke_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   var sp = stackSave();
   try {
-    return dynCall_fiiii(index,a1,a2,a3,a4);
+    return dynCall_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17757,10 +18216,10 @@ function invoke_fiiii(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_di(index,a1) {
+function invoke_fi(index,a1) {
   var sp = stackSave();
   try {
-    return dynCall_di(index,a1);
+    return dynCall_fi(index,a1);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17768,10 +18227,43 @@ function invoke_di(index,a1) {
   }
 }
 
-function invoke_iiifii(index,a1,a2,a3,a4,a5) {
+function invoke_iiiiiiiifiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
   var sp = stackSave();
   try {
-    return dynCall_iiifii(index,a1,a2,a3,a4,a5);
+    return dynCall_iiiiiiiifiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iiiiifi(index,a1,a2,a3,a4,a5,a6) {
+  var sp = stackSave();
+  try {
+    return dynCall_iiiiifi(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iffi(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    return dynCall_iffi(index,a1,a2,a3);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiiifi(index,a1,a2,a3,a4,a5,a6,a7) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiiifi(index,a1,a2,a3,a4,a5,a6,a7);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17790,10 +18282,10 @@ function invoke_viiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   }
 }
 
-function invoke_vifi(index,a1,a2,a3) {
+function invoke_viiiiiffi(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   var sp = stackSave();
   try {
-    dynCall_vifi(index,a1,a2,a3);
+    dynCall_viiiiiffi(index,a1,a2,a3,a4,a5,a6,a7,a8);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17801,10 +18293,10 @@ function invoke_vifi(index,a1,a2,a3) {
   }
 }
 
-function invoke_iifi(index,a1,a2,a3) {
+function invoke_viiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   var sp = stackSave();
   try {
-    return dynCall_iifi(index,a1,a2,a3);
+    dynCall_viiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17812,10 +18304,10 @@ function invoke_iifi(index,a1,a2,a3) {
   }
 }
 
-function invoke_viiiidi(index,a1,a2,a3,a4,a5,a6) {
+function invoke_ffi(index,a1,a2) {
   var sp = stackSave();
   try {
-    dynCall_viiiidi(index,a1,a2,a3,a4,a5,a6);
+    return dynCall_ffi(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17823,10 +18315,10 @@ function invoke_viiiidi(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_iiiiiiffiiiiiiiiiffffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23) {
+function invoke_viffi(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiiffiiiiiiiiiffffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23);
+    dynCall_viffi(index,a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17834,10 +18326,10 @@ function invoke_iiiiiiffiiiiiiiiiffffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a1
   }
 }
 
-function invoke_viiifii(index,a1,a2,a3,a4,a5,a6) {
+function invoke_dddi(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    dynCall_viiifii(index,a1,a2,a3,a4,a5,a6);
+    return dynCall_dddi(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17845,10 +18337,10 @@ function invoke_viiifii(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_viifiii(index,a1,a2,a3,a4,a5,a6) {
+function invoke_viiifi(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    dynCall_viifiii(index,a1,a2,a3,a4,a5,a6);
+    dynCall_viiifi(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17856,10 +18348,10 @@ function invoke_viifiii(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_vidi(index,a1,a2,a3) {
+function invoke_iiiiifiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   var sp = stackSave();
   try {
-    dynCall_vidi(index,a1,a2,a3);
+    return dynCall_iiiiifiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17867,10 +18359,10 @@ function invoke_vidi(index,a1,a2,a3) {
   }
 }
 
-function invoke_viidi(index,a1,a2,a3,a4) {
+function invoke_iiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   var sp = stackSave();
   try {
-    dynCall_viidi(index,a1,a2,a3,a4);
+    return dynCall_iiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17878,10 +18370,10 @@ function invoke_viidi(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_dii(index,a1,a2) {
+function invoke_iiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   var sp = stackSave();
   try {
-    return dynCall_dii(index,a1,a2);
+    return dynCall_iiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17889,10 +18381,21 @@ function invoke_dii(index,a1,a2) {
   }
 }
 
-function invoke_vififiii(index,a1,a2,a3,a4,a5,a6,a7) {
+function invoke_iiifii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    dynCall_vififiii(index,a1,a2,a3,a4,a5,a6,a7);
+    return dynCall_iiifii(index,a1,a2,a3,a4,a5);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_vififiiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
+  var sp = stackSave();
+  try {
+    dynCall_vififiiii(index,a1,a2,a3,a4,a5,a6,a7,a8);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17933,10 +18436,10 @@ function invoke_fiiffi(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_iiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
+function invoke_iiiiiiffiiiiiiiiiffffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8);
+    return dynCall_iiiiiiffiiiiiiiiiffffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17944,10 +18447,10 @@ function invoke_iiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   }
 }
 
-function invoke_iiiiiiidii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+function invoke_viiifii(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiiidii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
+    dynCall_viiifii(index,a1,a2,a3,a4,a5,a6);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17955,10 +18458,10 @@ function invoke_iiiiiiidii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   }
 }
 
-function invoke_viiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+function invoke_viifiii(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    dynCall_viiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
+    dynCall_viifiii(index,a1,a2,a3,a4,a5,a6);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17966,10 +18469,10 @@ function invoke_viiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   }
 }
 
-function invoke_iiiiiiiifiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
+function invoke_viiffi(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiiiifiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11);
+    dynCall_viiffi(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17977,10 +18480,10 @@ function invoke_iiiiiiiifiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
   }
 }
 
-function invoke_iiiiifiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
+function invoke_iifi(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiifiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10);
+    return dynCall_iifi(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17988,10 +18491,10 @@ function invoke_iiiiifiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   }
 }
 
-function invoke_ifi(index,a1,a2) {
+function invoke_iiif(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return dynCall_ifi(index,a1,a2);
+    return dynCall_iiif(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -17999,10 +18502,10 @@ function invoke_ifi(index,a1,a2) {
   }
 }
 
-function invoke_viffi(index,a1,a2,a3,a4) {
+function invoke_vffi(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    dynCall_viffi(index,a1,a2,a3,a4);
+    dynCall_vffi(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18010,10 +18513,10 @@ function invoke_viffi(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_viiifi(index,a1,a2,a3,a4,a5) {
+function invoke_vidi(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    dynCall_viiifi(index,a1,a2,a3,a4,a5);
+    dynCall_vidi(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18021,10 +18524,10 @@ function invoke_viiifi(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_ffi(index,a1,a2) {
+function invoke_fiiii(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
-    return dynCall_ffi(index,a1,a2);
+    return dynCall_fiiii(index,a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18032,10 +18535,10 @@ function invoke_ffi(index,a1,a2) {
   }
 }
 
-function invoke_iiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
+function invoke_iifiii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8);
+    return dynCall_iifiii(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18043,32 +18546,10 @@ function invoke_iiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
   }
 }
 
-function invoke_viiiiifi(index,a1,a2,a3,a4,a5,a6,a7) {
+function invoke_vfi(index,a1,a2) {
   var sp = stackSave();
   try {
-    dynCall_viiiiifi(index,a1,a2,a3,a4,a5,a6,a7);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_dddi(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    return dynCall_dddi(index,a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiiiiffi(index,a1,a2,a3,a4,a5,a6,a7,a8) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiiiffi(index,a1,a2,a3,a4,a5,a6,a7,a8);
+    dynCall_vfi(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18109,10 +18590,10 @@ function invoke_vifffi(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_viffffi(index,a1,a2,a3,a4,a5,a6) {
+function invoke_viiiidi(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    dynCall_viffffi(index,a1,a2,a3,a4,a5,a6);
+    dynCall_viiiidi(index,a1,a2,a3,a4,a5,a6);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18120,10 +18601,10 @@ function invoke_viffffi(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_iiiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+function invoke_dii(index,a1,a2) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
+    return dynCall_dii(index,a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18131,43 +18612,10 @@ function invoke_iiiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   }
 }
 
-function invoke_viifiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+function invoke_iiiiiiidii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   var sp = stackSave();
   try {
-    dynCall_viifiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iifii(index,a1,a2,a3,a4) {
-  var sp = stackSave();
-  try {
-    return dynCall_iifii(index,a1,a2,a3,a4);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_vfi(index,a1,a2) {
-  var sp = stackSave();
-  try {
-    dynCall_vfi(index,a1,a2);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11);
+    return dynCall_iiiiiiidii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18186,21 +18634,10 @@ function invoke_vifii(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_iifiii(index,a1,a2,a3,a4,a5) {
+function invoke_viiiifi(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    return dynCall_iifiii(index,a1,a2,a3,a4,a5);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13);
+    dynCall_viiiifi(index,a1,a2,a3,a4,a5,a6);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18241,10 +18678,10 @@ function invoke_fiiiii(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_viiiiifffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
+function invoke_viiiiffiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14) {
   var sp = stackSave();
   try {
-    dynCall_viiiiifffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11);
+    dynCall_viiiiffiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18252,10 +18689,65 @@ function invoke_viiiiifffiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
   }
 }
 
-function invoke_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+function invoke_viiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13) {
   var sp = stackSave();
   try {
-    return dynCall_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
+    dynCall_viiiiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_di(index,a1) {
+  var sp = stackSave();
+  try {
+    return dynCall_di(index,a1);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viidi(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    dynCall_viidi(index,a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiiiifii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiifiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
+  var sp = stackSave();
+  try {
+    dynCall_viiiifiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18274,10 +18766,10 @@ function invoke_iiifi(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_viiffi(index,a1,a2,a3,a4,a5) {
+function invoke_ddiii(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
-    dynCall_viiffi(index,a1,a2,a3,a4,a5);
+    return dynCall_ddiii(index,a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18300,6 +18792,17 @@ function invoke_fiiiiii(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
     return dynCall_fiiiiii(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_jiiii(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    return dynCall_jiiii(index,a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18373,28 +18876,6 @@ function invoke_j(index) {
   }
 }
 
-function invoke_jiii(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    return dynCall_jiii(index,a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iiiijii(index,a1,a2,a3,a4,a5,a6,a7) {
-  var sp = stackSave();
-  try {
-    return dynCall_iiiijii(index,a1,a2,a3,a4,a5,a6,a7);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
 function invoke_iji(index,a1,a2,a3) {
   var sp = stackSave();
   try {
@@ -18417,10 +18898,10 @@ function invoke_jjji(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_jiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
+function invoke_jiii(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return dynCall_jiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10);
+    return dynCall_jiii(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18428,10 +18909,21 @@ function invoke_jiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   }
 }
 
-function invoke_jiiiii(index,a1,a2,a3,a4,a5) {
+function invoke_iiiijii(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
-    return dynCall_jiiiii(index,a1,a2,a3,a4,a5);
+    return dynCall_iiiijii(index,a1,a2,a3,a4,a5,a6,a7);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viji(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    dynCall_viji(index,a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18483,39 +18975,6 @@ function invoke_iijiii(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_viji(index,a1,a2,a3,a4) {
-  var sp = stackSave();
-  try {
-    dynCall_viji(index,a1,a2,a3,a4);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiiji(index,a1,a2,a3,a4,a5,a6) {
-  var sp = stackSave();
-  try {
-    dynCall_viiiji(index,a1,a2,a3,a4,a5,a6);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viidiji(index,a1,a2,a3,a4,a5,a6,a7) {
-  var sp = stackSave();
-  try {
-    dynCall_viidiji(index,a1,a2,a3,a4,a5,a6,a7);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
 function invoke_iiiiiiiiiji(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
   var sp = stackSave();
   try {
@@ -18549,10 +19008,10 @@ function invoke_iiji(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_jijii(index,a1,a2,a3,a4,a5) {
+function invoke_viiiji(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
-    return dynCall_jijii(index,a1,a2,a3,a4,a5);
+    dynCall_viiiji(index,a1,a2,a3,a4,a5,a6);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18560,10 +19019,10 @@ function invoke_jijii(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_ijji(index,a1,a2,a3,a4,a5) {
+function invoke_viidiji(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
-    return dynCall_ijji(index,a1,a2,a3,a4,a5);
+    dynCall_viidiji(index,a1,a2,a3,a4,a5,a6,a7);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18571,10 +19030,10 @@ function invoke_ijji(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_jiji(index,a1,a2,a3,a4) {
+function invoke_jiiiii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    return dynCall_jiji(index,a1,a2,a3,a4);
+    return dynCall_jiiiii(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18582,10 +19041,10 @@ function invoke_jiji(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_iijji(index,a1,a2,a3,a4,a5,a6) {
+function invoke_jiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   var sp = stackSave();
   try {
-    return dynCall_iijji(index,a1,a2,a3,a4,a5,a6);
+    return dynCall_jiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18597,6 +19056,17 @@ function invoke_iijii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
     return dynCall_iijii(index,a1,a2,a3,a4,a5);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_ijji(index,a1,a2,a3,a4,a5) {
+  var sp = stackSave();
+  try {
+    return dynCall_ijji(index,a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
@@ -18637,6 +19107,39 @@ function invoke_vjiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
   }
 }
 
+function invoke_jiji(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    return dynCall_jiji(index,a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_iijji(index,a1,a2,a3,a4,a5,a6) {
+  var sp = stackSave();
+  try {
+    return dynCall_iijji(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_jijii(index,a1,a2,a3,a4,a5) {
+  var sp = stackSave();
+  try {
+    return dynCall_jijii(index,a1,a2,a3,a4,a5);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
@@ -18650,6 +19153,7 @@ Module["cwrap"] = cwrap;
 Module["stackTrace"] = stackTrace;
 var missingLibrarySymbols = [
   'convertPCtoSourceLocation',
+  'runMainThreadEmAsm',
   'jstoi_s',
   'listenOnce',
   'autoResumeAudioContext',
@@ -18726,6 +19230,13 @@ var missingLibrarySymbols = [
   'allocate',
   'writeStringToMemory',
   'writeAsciiToMemory',
+  'wgpuSupportedWgslLanguageFeatures',
+  'wgpuPipelineCreationFailed',
+  'geolocationId',
+  'JS_DeviceOrientationPermissions',
+  'JS_CalculateHeading',
+  'JS_OrientationEventHandler',
+  'JS_RegisterCompass',
   'videoInstanceIdCounter',
   'jsVideoEnded',
   'jsVideoAllAudioTracksAreDisabled',
@@ -18771,6 +19282,7 @@ var unexportedSymbols = [
   'zeroMemory',
   'exitJS',
   'getHeapMax',
+  'abortOnCannotGrowMemory',
   'emscripten_realloc_buffer',
   'ENV',
   'MONTH_DAYS_REGULAR',
@@ -18805,7 +19317,6 @@ var unexportedSymbols = [
   'readEmAsmArgsArray',
   'readEmAsmArgs',
   'runEmAsmFunction',
-  'runMainThreadEmAsm',
   'jstoi_q',
   'getExecutableName',
   'dynCallLegacy',
@@ -18961,15 +19472,17 @@ var unexportedSymbols = [
   'jsAudioCreateChannel',
   'jsDomCssEscapeId',
   'jsCanvasSelector',
-  'fs',
-  'debugDir',
   'wgpu',
+  'wgpuOffscreenCanvases',
   'wgpuIdCounter',
   'wgpuStore',
+  'wgpuLinkParentAndChild',
   'wgpuStoreAndSetParent',
   'wgpuReadArrayOfWgpuObjects',
   'wgpuReadI53FromU64HeapIdx',
-  'wgpuWriteU64HeapIdx',
+  'wgpuWriteI53ToU64HeapIdx',
+  'wgpu_checked_shift',
+  'utf8',
   'wgpuDecodeStrings',
   'GPUTextureAndVertexFormats',
   'GPUBlendFactors',
@@ -18980,6 +19493,7 @@ var unexportedSymbols = [
   'GPUBufferMapStates',
   'GPUTextureDimensions',
   'GPUTextureViewDimensions',
+  'GPUStorageTextureSampleTypes',
   'GPUAddressModes',
   'GPUTextureAspects',
   'GPUPipelineStatisticNames',
@@ -18993,8 +19507,11 @@ var unexportedSymbols = [
   'GPUMipmapFilterModes',
   'GPULoadOps',
   'GPUStoreOps',
-  'GPUComputePassTimestampLocations',
   'GPUAutoLayoutMode',
+  'wgpuReadSupportedLimits',
+  'wgpuReadQueueDescriptor',
+  'wgpuReadFeaturesBitfield',
+  'wgpuReadDeviceDescriptor',
   'wgpuReadShaderModuleCompilationHints',
   'wgpuReadShaderModuleDescriptor',
   'wgpuReadGpuStencilFaceState',
@@ -19003,13 +19520,18 @@ var unexportedSymbols = [
   'wgpuReadBindGroupLayoutDescriptor',
   'wgpuReadConstants',
   'wgpuReadTimestampWrites',
+  'wgpuReadRenderPassDepthStencilAttachment',
   'wgpuReadGpuImageCopyBuffer',
   'wgpuReadGpuImageCopyTexture',
+  'orientationEventHandler',
+  'unregisterCompass',
+  'isPushedToDeinitializer',
+  'LogErrorWithAdditionalInformation',
+  'ExceptionsSeen',
   'mobile_input',
   'mobile_input_text',
   'mobile_input_hide_delay',
   'mobile_input_ignore_blur_event',
-  'IDBFS',
   'JS_ScreenOrientation_callback',
   'JS_ScreenOrientation_eventHandler',
   'JS_ScreenOrientation_requestedLockType',
@@ -19047,7 +19569,7 @@ var unexportedSymbols = [
   'JS_DeviceMotion_eventHandler',
   'JS_DeviceMotion_add',
   'JS_DeviceMotion_remove',
-  'UNETWebSocketsInstances',
+  'IDBFS',
   'videoInstances',
   'hasSRGBATextures',
   's2lTexture',

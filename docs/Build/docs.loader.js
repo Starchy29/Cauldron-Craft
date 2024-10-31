@@ -1,7 +1,6 @@
 function createUnityInstance(canvas, config, onProgress) {
   onProgress = onProgress || function () {};
 
-
   function showBanner(msg, type) {
     // Only ever show one error at most - other banner messages after that should get ignored
     // to avoid noise.
@@ -55,7 +54,7 @@ function createUnityInstance(canvas, config, onProgress) {
       preserveDrawingBuffer: false,
       powerPreference: 2,
     },
-    wasmFileSize: 81108969,
+    wasmFileSize: 94541128,
     cacheControl: function (url) {
       return (url == Module.dataUrl || url.match(/\.bundle/)) ? "must-revalidate" : "no-store";
     },
@@ -202,7 +201,7 @@ function createUnityInstance(canvas, config, onProgress) {
       });
     },
     GetMetricsInfo: function () {
-      var metricsInfoPtr = Module._getMetricsInfo();
+      var metricsInfoPtr = Number(Module._getMetricsInfo()) >>> 0;
       // pointer arithmetic to then index into the WASM heap, we go up by 4 bytes for Uint32 or 8 bytes for doubles.
       var totalWASMHeapSizePtr = metricsInfoPtr;
       var usedWASMHeapSizePtr = totalWASMHeapSizePtr + 4; // + 4 because totalWasHeapSize is size_t (4 bytes/ 32-bit unsigned int)
@@ -304,8 +303,8 @@ function createUnityInstance(canvas, config, onProgress) {
     webgpuVersion = 0;
     canvas = document.createElement("canvas");
     if (canvas) {
-      gl = canvas.getContext("webgl2");
-      glVersion = gl ? 2 : 0;
+      var gl = canvas.getContext("webgl2");
+      var glVersion = gl ? 2 : 0;
       if (!gl) {
         if (gl = canvas && canvas.getContext("webgl")) glVersion = 1;
       }
@@ -316,8 +315,25 @@ function createUnityInstance(canvas, config, onProgress) {
 
     }
 
+    // Returns true on success, and a string on failure that denotes which sub-feature was missing.
+    function testWasm2023Supported() {
+      try {
+        if (!window.WebAssembly) return 'WebAssembly';
+        if (!WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,5,3,1,0,1,10,13,1,11,0,65,0,65,0,65,1,252,11,0,11]))) return 'bulk-memory';
+        if (!WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,10,11,1,9,1,1,125,32,0,252,0,26,11]))) return 'non-trapping fp-to-int';
+        if (!WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,10,10,1,8,1,1,126,32,0,194,26,11]))) return 'sign-extend';
+        if (!WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,10,9,1,7,0,65,0,253,15,26,11]))) return 'wasm-simd128';
+        if (!WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,10,10,1,8,0,6,64,1,25,1,11,11]))) return 'wasm-exceptions';
+        return true;
+      } catch(e) {
+        return 'Exception: ' + e;
+      }
+    }
+
     var hasThreads = typeof SharedArrayBuffer !== 'undefined';
     var hasWasm = typeof WebAssembly === "object" && typeof WebAssembly.compile === "function";
+    var hasWasm2023 = hasWasm && testWasm2023Supported() === true;
+
     return {
       width: screen.width,
       height: screen.height,
@@ -335,6 +351,8 @@ function createUnityInstance(canvas, config, onProgress) {
       hasFullscreen: !!document.body.requestFullscreen || !!document.body.webkitRequestFullscreen, // Safari still uses the webkit prefixed version
       hasThreads: hasThreads,
       hasWasm: hasWasm,
+      hasWasm2023: hasWasm2023,
+      missingWasm2023Feature: hasWasm2023 ? null : testWasm2023Supported(),
       // This should be updated when we re-enable wasm threads. Previously it checked for WASM thread
       // support with: var wasmMemory = hasWasm && hasThreads && new WebAssembly.Memory({"initial": 1, "maximum": 1, "shared": true});
       // which caused Chrome to have a warning that SharedArrayBuffer requires cross origin isolation.
@@ -1055,9 +1073,9 @@ Module.UnityCache = function () {
           cache.revalidated = true;
 
           unityCache.updateRequestMetaData(cache.metaData).then(function () {
-            log("'" + cache.metaData.url + "' successfully revalidated and served from the indexedDB cache");
+            log("'" + cache.metaData.url + "' successfully revalidated and served from the browser cache");
           }).catch(function (error) {
-            log("'" + cache.metaData.url + "' successfully revalidated but not stored in the indexedDB cache due to the error: " + error);
+            log("'" + cache.metaData.url + "' successfully revalidated but not stored in the browser cache due to the error: " + error);
           });
 
           return readBodyWithProgress(cache.response, init.onProgress, init.enableStreamingDownload);
@@ -1075,9 +1093,9 @@ Module.UnityCache = function () {
               unityCache.storeRequest(resource, clonedResponse),
               unityCache.updateRequestMetaData(cache.metaData)
             ]).then(function () {
-              log("'" + url + "' successfully downloaded and stored in the indexedDB cache");
+              log("'" + url + "' successfully downloaded and stored in the browser cache");
             }).catch(function (error) {
-              log("'" + url + "' successfully downloaded but not stored in the indexedDB cache due to the error: " + error);
+              log("'" + url + "' successfully downloaded but not stored in the browser cache due to the error: " + error);
             });
 
             return response;
@@ -1111,7 +1129,7 @@ Module.UnityCache = function () {
       if (cache.control == "immutable") {
         cache.revalidated = true;
         unityCache.updateRequestMetaData(metaData).then(function () {
-          log("'" + cache.metaData.url + "' served from the indexedDB cache without revalidation");
+          log("'" + cache.metaData.url + "' served from the browser cache without revalidation");
         });
 
         return readBodyWithProgress(response, init.onProgress, init.enableStreamingDownload);
@@ -1122,7 +1140,7 @@ Module.UnityCache = function () {
           });
           if (cache.revalidated) {
             unityCache.updateRequestMetaData(metaData).then(function () {
-              log("'" + cache.metaData.url  + "' successfully revalidated and served from the indexedDB cache");
+              log("'" + cache.metaData.url  + "' successfully revalidated and served from the browser cache");
             });
 
             return readBodyWithProgress(cache.response, init.onProgress, init.enableStreamingDownload);
@@ -1145,8 +1163,8 @@ Module.UnityCache = function () {
         return fetchAndStoreInCache(resource, init);
       }
     }).catch(function (error) {
-      // Fallback to regular fetch if and IndexDB error occurs
-      log("Failed to load '" + cache.metaData.url  + "' from indexedDB cache due to the error: " + error);
+      // Fallback to regular fetch if an error occurs
+      log("Failed to load '" + cache.metaData.url  + "' from browser cache due to the error: " + error);
       return fetchWithProgress(resource, init);
     });
   }
@@ -1315,6 +1333,21 @@ Module.UnityCache = function () {
       });
   }
 
+  // WebGPU is only available if both navigator.gpu exists,
+  // and if requestAdapter returns a non-null adapter.
+  function checkForWebGPU() {
+    return new Promise(function (resolve, reject) {
+      if (!navigator.gpu) {
+        resolve(false);
+        return;
+      }
+      navigator.gpu.requestAdapter().then(function (adapter) {
+        Module.SystemInfo.hasWebGPU = !!adapter;
+        resolve(Module.SystemInfo.hasWebGPU);
+      });
+    });
+  }
+
   function loadBuild() {
     var codeDownloadTimeStartup = performance.now();
     downloadFramework().then(function (unityFramework) {
@@ -1386,11 +1419,17 @@ Module.UnityCache = function () {
       onProgress(0);
       Module.postRun.push(function () {
         onProgress(1);
-        delete Module.startupErrorHandler;
-        resolve(unityInstance);
-        Module.pageStartupTime = performance.now();
+        Module.WebPlayer.WaitForInitialization().then(function () {
+          delete Module.startupErrorHandler;
+          resolve(unityInstance);
+          Module.pageStartupTime = performance.now();
+        });
       });
-      loadBuild();
+      // Checking for WebGPU availability is asynchronous, so wait until
+      // it has finished checking before loading the build.
+      checkForWebGPU().then(function () {
+        loadBuild();
+      });
     }
   });
 }

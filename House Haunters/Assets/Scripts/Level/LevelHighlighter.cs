@@ -23,7 +23,7 @@ public class LevelHighlighter : MonoBehaviour
     private Vector2Int resolution;
     private const int TILE_PIXEL_WIDTH = 96;
 
-    private ComputeBuffer tileBuffer;
+    //private ComputeBuffer tileBuffer;
     private Vector3Int groupCounts;
 
     private float t;
@@ -36,18 +36,31 @@ public class LevelHighlighter : MonoBehaviour
         public bool selected;
     }
 
-    private struct TileInfo {
+    /*private struct TileInfo {
         public const int STRIDE = 4 * sizeof(int);
 
         public int floorType; // 0: ground, 1: wall, 2: pit
         public int highlightType;
         public int terrainController;
         public int capturer;
-    }
+    }*/
 
     private Team[] teams;
     private TileTraits[,] traitArray;
-    private TileInfo[] infoArray;
+    //private TileInfo[] infoArray;
+
+    private struct TileData {
+        public int[] floorType; // 0: ground, 1: wall, 2: pit
+        public int[] highlightType;
+        public int[] terrainController;
+        public int[] capturer;
+    }
+    private TileData dataArrays;
+
+    private ComputeBuffer floorBuffer;
+    private ComputeBuffer highlightBuffer;
+    private ComputeBuffer terrainBuffer;
+    private ComputeBuffer captureBuffer;
 
     private Dictionary<HighlightType, List<Vector2Int>> highlightedTiles;
 
@@ -70,7 +83,7 @@ public class LevelHighlighter : MonoBehaviour
     }
 
     ~LevelHighlighter() {
-        tileBuffer.Dispose();
+        //tileBuffer.Dispose();
         texture.Release();
     }
 
@@ -99,10 +112,24 @@ public class LevelHighlighter : MonoBehaviour
         }
 
         UpdateHighlightData();
-        tileBuffer.SetData(infoArray);
-        material.SetBuffer("_TileData", tileBuffer);
+        SetBufferData();
+        //tileBuffer.SetData(infoArray);
+        //material.SetBuffer("_TileData", tileBuffer);
         //computeShader.SetBuffer(0, "_TileData", tileBuffer);
         //computeShader.Dispatch(0, groupCounts.x, groupCounts.y, groupCounts.z);
+    }
+
+    // since webGL does not support structured buffers, each variable is split into a separate array
+    private void SetBufferData() {
+        floorBuffer.SetData(dataArrays.floorType);
+        highlightBuffer.SetData(dataArrays.highlightType);
+        terrainBuffer.SetData(dataArrays.terrainController);
+        captureBuffer.SetData(dataArrays.capturer);
+
+        material.SetBuffer("floorTypes", floorBuffer);
+        material.SetBuffer("highlightTypes", highlightBuffer);
+        material.SetBuffer("terrainControllers", terrainBuffer);
+        material.SetBuffer("capturers", captureBuffer);
     }
 
     public void ColorTiles(List<Vector2Int> tiles, HighlightType type) {
@@ -139,9 +166,10 @@ public class LevelHighlighter : MonoBehaviour
                 captureCode = controller == teams[0] ? 1 : 2;
             }
 
-            TileInfo info = infoArray[index];
-            info.capturer = captureCode;
-            infoArray[index] = info;
+            //TileInfo info = infoArray[index];
+            //info.capturer = captureCode;
+            //infoArray[index] = info;
+            dataArrays.capturer[index] = captureCode;
         }
     }
 
@@ -213,8 +241,20 @@ public class LevelHighlighter : MonoBehaviour
     private void SetUpShader() {
         LevelGrid level = LevelGrid.Instance;
         traitArray = new TileTraits[level.Width, level.Height];
-        tileBuffer = new ComputeBuffer(level.Width * level.Height, TileInfo.STRIDE);
-        infoArray = new TileInfo[level.Width * level.Height];
+
+        //tileBuffer = new ComputeBuffer(level.Width * level.Height, TileInfo.STRIDE);
+        //infoArray = new TileInfo[level.Width * level.Height];
+        int tileCount = level.Width * level.Height;
+        dataArrays.floorType = new int[tileCount];
+        dataArrays.highlightType = new int[tileCount];
+        dataArrays.terrainController = new int[tileCount];
+        dataArrays.capturer = new int[tileCount];
+
+        floorBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        highlightBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        terrainBuffer = new ComputeBuffer(tileCount, sizeof(int));
+        captureBuffer = new ComputeBuffer(tileCount, sizeof(int));
+
         for(int y = 0; y < level.Height; y++) {
             for(int x = 0; x < level.Width; x++) {
                 byte groundType = 2;
@@ -226,9 +266,10 @@ public class LevelHighlighter : MonoBehaviour
                     groundType = 1;
                 }
 
-                infoArray[x + y * level.Width] = new TileInfo {
+                /*infoArray[x + y * level.Width] = new TileInfo {
                     floorType = groundType
-                };
+                };*/
+                dataArrays.floorType[x + y * level.Width] = groundType;
             }
         }
 
@@ -257,7 +298,7 @@ public class LevelHighlighter : MonoBehaviour
                 // transfer highlight data
                 int index = x + traitArray.GetLength(0) * y;
                 TileTraits traits = traitArray[x, y];
-                TileInfo data = infoArray[index];
+                //TileInfo data = infoArray[index];
 
                 int highlightCode = 0;
                 if(traits.selected) {
@@ -276,8 +317,9 @@ public class LevelHighlighter : MonoBehaviour
                     highlightCode = 1;
                 }
 
-                data.highlightType = highlightCode;
-                infoArray[index] = data;
+                //data.highlightType = highlightCode;
+                //infoArray[index] = data;
+                dataArrays.highlightType[index] = highlightCode;
             }
         }
     }
@@ -285,15 +327,17 @@ public class LevelHighlighter : MonoBehaviour
     // needs to be queued in the animation manager to appear and disappear at the correct times
     public void UpdateZoneController(Vector2Int tile, Team controller) {
         int index = tile.x + traitArray.GetLength(0) * tile.y;
-        TileInfo data = infoArray[index];
+        //TileInfo data = infoArray[index];
 
         // check zone controller
         if(controller == null) {
-            data.terrainController = 0;
+            //data.terrainController = 0;
+            dataArrays.terrainController[index] = 0;
         } else {
-            data.terrainController = controller == teams[0] ? 1 : 2;
+            //data.terrainController = controller == teams[0] ? 1 : 2;
+            dataArrays.terrainController[index] = controller == teams[0] ? 1 : 2;
         }
 
-        infoArray[index] = data;
+        //infoArray[index] = data;
     }
 }

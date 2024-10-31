@@ -72,7 +72,11 @@ Shader "Unlit/LevelShaderPS"
             int cursorTileY;
             int hoveredZoneCenterX;
             int hoveredZoneCenterY;
-            StructuredBuffer<TileInfo> _TileData;
+            //StructuredBuffer<TileInfo> _TileData;
+            Buffer<int> floorTypes;
+            Buffer<int> highlightTypes;
+            Buffer<int> terrainControllers;
+            Buffer<int> capturers;
 
             TileInfo getTile(int x, int y) {
                 if (x < 0 || y < 0 || x >= tilesWide || y >= tilesTall) {
@@ -82,7 +86,13 @@ Shader "Unlit/LevelShaderPS"
                     return junk;
                 }
 
-                return _TileData[x + tilesWide * y];
+                int index = x + tilesWide * y;
+                TileInfo tile;
+                tile.floorType = floorTypes[index];
+                tile.highlightType = highlightTypes[index];
+                tile.terrainController = terrainControllers[index];
+                tile.capturer = capturers[index];
+                return tile;
             }
 
             float getDistFromEdge(float2 tileUV, bool checkLeft, bool checkRight, bool checkDown, bool checkUp) {

@@ -55,7 +55,10 @@ public class LevelHighlighter : MonoBehaviour
         public float[] terrainController;
         public float[] capturer;
     }
-    private TileData dataArrays;
+    //private TileData dataArrays;
+
+    // x is floorType, y is highlightType, z is terrainController, w is capturer
+    private Vector4[] tileData;
 
     //private ComputeBuffer floorBuffer;
     //private ComputeBuffer highlightBuffer;
@@ -121,6 +124,8 @@ public class LevelHighlighter : MonoBehaviour
 
     // since webGL does not support structured buffers, each variable is split into a separate array
     private void SetBufferData() {
+        // behold the graveyard of failed methodologies (blame webGL compatability)
+
         //floorBuffer.SetData(dataArrays.floorType);
         //highlightBuffer.SetData(dataArrays.highlightType);
         //terrainBuffer.SetData(dataArrays.terrainController);
@@ -130,10 +135,11 @@ public class LevelHighlighter : MonoBehaviour
         //material.SetBuffer("highlightTypes", highlightBuffer);
         //material.SetBuffer("terrainControllers", terrainBuffer);
         //material.SetBuffer("capturers", captureBuffer);
-        material.SetFloatArray("floorTypes", dataArrays.floorType);
-        material.SetFloatArray("highlightTypes", dataArrays.highlightType);
-        material.SetFloatArray("terrainControllers", dataArrays.terrainController);
-        material.SetFloatArray("capturers", dataArrays.capturer);
+        //material.SetFloatArray("floorTypes", dataArrays.floorType);
+        //material.SetFloatArray("highlightTypes", dataArrays.highlightType);
+        //material.SetFloatArray("terrainControllers", dataArrays.terrainController);
+        //material.SetFloatArray("capturers", dataArrays.capturer);
+        material.SetVectorArray("tileData", tileData);
     }
 
     public void ColorTiles(List<Vector2Int> tiles, HighlightType type) {
@@ -173,7 +179,8 @@ public class LevelHighlighter : MonoBehaviour
             //TileInfo info = infoArray[index];
             //info.capturer = captureCode;
             //infoArray[index] = info;
-            dataArrays.capturer[index] = captureCode;
+            //dataArrays.capturer[index] = captureCode;
+            tileData[index].w = captureCode;
         }
     }
 
@@ -249,10 +256,11 @@ public class LevelHighlighter : MonoBehaviour
         //tileBuffer = new ComputeBuffer(level.Width * level.Height, TileInfo.STRIDE);
         //infoArray = new TileInfo[level.Width * level.Height];
         int tileCount = level.Width * level.Height;
-        dataArrays.floorType = new float[tileCount];
-        dataArrays.highlightType = new float[tileCount];
-        dataArrays.terrainController = new float[tileCount];
-        dataArrays.capturer = new float[tileCount];
+        //dataArrays.floorType = new float[tileCount];
+        //dataArrays.highlightType = new float[tileCount];
+        //dataArrays.terrainController = new float[tileCount];
+        //dataArrays.capturer = new float[tileCount];
+        tileData = new Vector4[tileCount];
 
         //floorBuffer = new ComputeBuffer(tileCount, sizeof(int));
         //highlightBuffer = new ComputeBuffer(tileCount, sizeof(int));
@@ -273,7 +281,7 @@ public class LevelHighlighter : MonoBehaviour
                 /*infoArray[x + y * level.Width] = new TileInfo {
                     floorType = groundType
                 };*/
-                dataArrays.floorType[x + y * level.Width] = groundType;
+                tileData[x + y * level.Width].x = groundType;
             }
         }
 
@@ -286,7 +294,7 @@ public class LevelHighlighter : MonoBehaviour
         material.SetInt("tilesTall", level.Height);
         material.SetInt("pixPerTile", TILE_PIXEL_WIDTH);
 
-        uint sizeX, sizeY, sizeZ;
+        //uint sizeX, sizeY, sizeZ;
         //computeShader.GetKernelThreadGroupSizes(0, out sizeX, out sizeY, out sizeZ);
         /*groupCounts = new Vector3Int(
             Mathf.CeilToInt((float)resolution.x / sizeX), 
@@ -323,7 +331,8 @@ public class LevelHighlighter : MonoBehaviour
 
                 //data.highlightType = highlightCode;
                 //infoArray[index] = data;
-                dataArrays.highlightType[index] = highlightCode;
+                //dataArrays.highlightType[index] = highlightCode;
+                tileData[index].y = highlightCode;
             }
         }
     }
@@ -336,10 +345,12 @@ public class LevelHighlighter : MonoBehaviour
         // check zone controller
         if(controller == null) {
             //data.terrainController = 0;
-            dataArrays.terrainController[index] = 0;
+            //dataArrays.terrainController[index] = 0;
+            tileData[index].z = 0;
         } else {
             //data.terrainController = controller == teams[0] ? 1 : 2;
-            dataArrays.terrainController[index] = controller == teams[0] ? 1 : 2;
+            // dataArrays.terrainController[index] = controller == teams[0] ? 1 : 2;
+            tileData[index].z = controller == teams[0] ? 1 : 2;
         }
 
         //infoArray[index] = data;

@@ -78,25 +78,30 @@ Shader "Unlit/LevelShaderPS"
             //Buffer<int> terrainControllers;
             //Buffer<int> capturers;
 
-            uniform float floorTypes[361]; // 19x19 level
-            uniform float highlightTypes[361];
-            uniform float terrainControllers[361];
-            uniform float capturers[361];
+            //uniform float floorTypes[361]; // 19x19 level
+            //uniform float highlightTypes[361];
+            //uniform float terrainControllers[361];
+            //uniform float capturers[361];
+
+            uniform float4 tileData[361]; // 19x19 level
 
             TileInfo getTile(int x, int y) {
                 if (x < 0 || y < 0 || x >= tilesWide || y >= tilesTall) {
                     TileInfo junk;
+                    junk.floorType = 0;
                     junk.terrainController = -1;
                     junk.highlightType = -1;
+                    junk.capturer = 0;
                     return junk;
                 }
 
                 int index = x + tilesWide * y;
+                float4 data = tileData[index];
                 TileInfo tile;
-                tile.floorType = floorTypes[index];
-                tile.highlightType = highlightTypes[index];
-                tile.terrainController = terrainControllers[index];
-                tile.capturer = capturers[index];
+                tile.floorType = data.x;
+                tile.highlightType = data.y;
+                tile.terrainController = data.z;
+                tile.capturer = data.w;
                 return tile;
             }
 

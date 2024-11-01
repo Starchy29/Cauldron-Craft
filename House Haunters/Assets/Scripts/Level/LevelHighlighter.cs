@@ -91,8 +91,10 @@ public class LevelHighlighter : MonoBehaviour
     }
 
     void Update() {
-        Debug.Log($"position: {transform.position.x}, {transform.position.y}");
-
+        Debug.Log("position x");
+        Debug.Log(transform.position.x);
+        Debug.Log("position y");
+        Debug.Log(transform.position.y);
         t += Time.deltaTime / 2f;
         t %= 1f;
         material.SetFloat("t", t);

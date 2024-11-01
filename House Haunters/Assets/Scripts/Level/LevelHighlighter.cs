@@ -213,7 +213,7 @@ public class LevelHighlighter : MonoBehaviour
         Vector2 levelWorldScale = new Vector2(level.Width, level.Height);
 
         transform.position = new Vector3(levelWorldScale.x / 2f, levelWorldScale.y / 2f, 0); // center in the level
-        Debug.Log("position: " + transform.position);
+        Debug.Log($"position: {transform.position.x}, {transform.position.y}");
 
         // create rectangle mesh covering the level
         Mesh mesh = new Mesh();

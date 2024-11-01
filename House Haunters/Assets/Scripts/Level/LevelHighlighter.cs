@@ -207,11 +207,13 @@ public class LevelHighlighter : MonoBehaviour
     }
 
     private void SetUpTexture() {
+        Debug.Log("starting texture set up");
         LevelGrid level = LevelGrid.Instance;
         Camera camera = Camera.main;
         Vector2 levelWorldScale = new Vector2(level.Width, level.Height);
 
         transform.position = new Vector3(levelWorldScale.x / 2f, levelWorldScale.y / 2f, 0); // center in the level
+        Debug.Log("position: " + transform.position);
 
         // create rectangle mesh covering the level
         Mesh mesh = new Mesh();
@@ -247,6 +249,8 @@ public class LevelHighlighter : MonoBehaviour
 
         meshRenderer.sharedMaterial.mainTexture = texture;
         meshRenderer.sortingLayerName = "Tile Highlight";
+
+        Debug.Log("finished texture set up");
     }
 
     private void SetUpShader() {

@@ -251,7 +251,7 @@ Shader "Unlit/LevelShaderPS"
                         }
                     }
                 }
-                return fixed4(0, 0, 1, 1);
+                return fixed4(0, 0, 1, 1) + color;
                 return color + fixed4(0, 0, 0.3, 0.3);
             }
             ENDCG

@@ -133,7 +133,7 @@ Shader "Unlit/LevelShaderPS"
                 float2 tileUV = stretchedUV % 1;
                 TileInfo tileData = getTile(tile.x, tile.y);
 
-                float4 color = float4(0, 0, 0, 0);
+                fixed4 color = float4(0, 0, 0, 0);
 
                 // fill in highlight
                 switch (tileData.highlightType) {
@@ -252,7 +252,7 @@ Shader "Unlit/LevelShaderPS"
                     }
                 }
 
-                return color + float4(0, 0, 0.3, 0.3);
+                return color + fixed4(0, 0, 0.3, 0.3);
             }
             ENDCG
         }

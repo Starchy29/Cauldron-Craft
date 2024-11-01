@@ -19,6 +19,24 @@ public class CameraController : MonoBehaviour
         if(GameManager.Instance.CurrentTurn.AI == null) {
             PlayerUpdate();
         }
+
+        // BUILD DEBUG
+        Vector3 direction = Vector3.zero;
+        if(Keyboard.current.leftArrowKey.isPressed) {
+            direction.x -= 1;
+        }
+        if(Keyboard.current.rightArrowKey.isPressed) {
+            direction.x += 1;
+        }
+        if(Keyboard.current.upArrowKey.isPressed) {
+            direction.y += 1;
+        }
+        if(Keyboard.current.downArrowKey.isPressed) {
+            direction.y -= 1;
+        }
+
+        transform.position += 10 * Time.deltaTime * direction;
+        // END DEBUG
     }
     private void PlayerUpdate() {
         if(Mouse.current == null || CameraAnimator.CameraLocked) {

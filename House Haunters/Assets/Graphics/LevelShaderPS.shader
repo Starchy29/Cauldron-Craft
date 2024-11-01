@@ -124,6 +124,7 @@ Shader "Unlit/LevelShaderPS"
 
             fixed4 frag(v2f i) : SV_Target
             {
+                return float4(0, 0, 0.8, 1);
                 int2 tileDims = int2(tilesWide, tilesTall);
                 int2 cursorTile = int2(cursorTileX, cursorTileY);
                 int2 hoveredZoneCenter = int2(hoveredZoneCenterX, hoveredZoneCenterY);

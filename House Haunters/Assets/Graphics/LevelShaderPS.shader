@@ -252,7 +252,7 @@ Shader "Unlit/LevelShaderPS"
                     }
                 }
 
-                return color;
+                return color + float4(0, 0, 0.3, 0.3);
             }
             ENDCG
         }
